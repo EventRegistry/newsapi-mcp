@@ -55,9 +55,4 @@ export const suggestTools: ToolDef[] = [
     "Look up author URIs by name. Use this to find the URI for a journalist or author before using it in search filters.",
     "/suggestAuthorsFast",
   ),
-  suggestTool(
-    "suggest_event_types",
-    "Look up event type URIs by name. Event types are relations like mergers, layoffs, product launches, natural disasters. Use this to find URIs for the search_mentions tool.",
-    "/suggestEventTypes",
-  ),
 ];

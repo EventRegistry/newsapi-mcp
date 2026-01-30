@@ -354,11 +354,10 @@ describe("suggestTools", () => {
     suggest_sources: "/suggestSourcesFast",
     suggest_locations: "/suggestLocationsFast",
     suggest_authors: "/suggestAuthorsFast",
-    suggest_event_types: "/suggestEventTypes",
   };
 
-  it("has 6 suggest tools", () => {
-    expect(suggestTools).toHaveLength(6);
+  it("has 5 suggest tools", () => {
+    expect(suggestTools).toHaveLength(5);
   });
 
   for (const [name, path] of Object.entries(expectedPaths)) {

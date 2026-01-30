@@ -125,9 +125,9 @@ afterAll(async () => {
 });
 
 describe("MCP server E2E", () => {
-  it("lists all 24 tools", async () => {
+  it("lists all 23 tools", async () => {
     const result = await client.listTools();
-    expect(result.tools).toHaveLength(24);
+    expect(result.tools).toHaveLength(23);
 
     const names = result.tools.map((t) => t.name).sort();
     expect(names).toContain("search_articles");
