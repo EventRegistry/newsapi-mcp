@@ -140,7 +140,12 @@ export const findEventForText: ToolDef = {
     required: ["text"],
   },
   handler: async (params) => {
-    return apiPost("/event/getEventForText", { text: params.text });
+    return apiPost("/event/getEvents", {
+      keyword: params.text,
+      resultType: "events",
+      eventsCount: 1,
+      eventsSortBy: "rel",
+    });
   },
 };
 

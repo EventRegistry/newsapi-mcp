@@ -178,8 +178,11 @@ describe("findEventForText", () => {
   it("calls correct endpoint with text param", async () => {
     await findEventForText.handler({ text: "A big earthquake hit Japan" });
 
-    expect(mockedApiPost).toHaveBeenCalledWith("/event/getEventForText", {
-      text: "A big earthquake hit Japan",
+    expect(mockedApiPost).toHaveBeenCalledWith("/event/getEvents", {
+      keyword: "A big earthquake hit Japan",
+      resultType: "events",
+      eventsCount: 1,
+      eventsSortBy: "rel",
     });
   });
 });
