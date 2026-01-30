@@ -46,6 +46,8 @@ export const searchMentions: ToolDef = {
       mentionsCount: {
         type: "integer",
         description: "Mentions per page (max 100). Default: 100.",
+        default: 100,
+        maximum: 100,
       },
       mentionsSortBy: {
         type: "string",

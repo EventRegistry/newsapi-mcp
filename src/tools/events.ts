@@ -35,6 +35,8 @@ export const searchEvents: ToolDef = {
       eventsCount: {
         type: "integer",
         description: "Events per page (max 50). Default: 50.",
+        default: 50,
+        maximum: 50,
       },
       eventsSortBy: {
         type: "string",
@@ -102,6 +104,7 @@ export const streamEvents: ToolDef = {
       recentActivityEventsMaxEventCount: {
         type: "integer",
         description: "Max events to return. Default: 50.",
+        default: 50,
       },
       recentActivityEventsUpdatesAfterUri: {
         type: "string",

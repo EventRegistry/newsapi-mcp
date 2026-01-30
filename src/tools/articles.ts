@@ -137,6 +137,8 @@ export const searchArticles: ToolDef = {
       articlesCount: {
         type: "integer",
         description: "Articles per page (max 100). Default: 100.",
+        default: 100,
+        maximum: 100,
       },
       articlesSortBy: {
         type: "string",
@@ -207,6 +209,8 @@ export const streamArticles: ToolDef = {
         type: "integer",
         description:
           "Max articles to return (up to 2000). Token cost scales proportionally. Default: 100.",
+        default: 100,
+        maximum: 2000,
       },
       recentActivityArticlesNewsUpdatesAfterUri: {
         type: "string",

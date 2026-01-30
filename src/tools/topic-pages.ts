@@ -19,6 +19,8 @@ export const getTopicPageArticles: ToolDef = {
       articlesCount: {
         type: "integer",
         description: "Articles per page (max 100). Default: 100.",
+        default: 100,
+        maximum: 100,
       },
       articlesSortBy: {
         type: "string",
@@ -60,6 +62,8 @@ export const getTopicPageEvents: ToolDef = {
       eventsCount: {
         type: "integer",
         description: "Events per page (max 50). Default: 50.",
+        default: 50,
+        maximum: 50,
       },
       eventsSortBy: {
         type: "string",
