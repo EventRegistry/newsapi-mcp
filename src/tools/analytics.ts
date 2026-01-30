@@ -119,6 +119,12 @@ export const computeSemanticSimilarity: ToolDef = {
         type: "string",
         description: "Second text to compare.",
       },
+      distanceMeasure: {
+        type: "string",
+        description:
+          'Distance measure to use: "cosine" or "jaccard". Defaults to "cosine".',
+        enum: ["cosine", "jaccard"],
+      },
     },
     required: ["text1", "text2"],
   },
@@ -126,6 +132,7 @@ export const computeSemanticSimilarity: ToolDef = {
     return analyticsPost("/semanticSimilarity", {
       text1: params.text1,
       text2: params.text2,
+      distanceMeasure: (params.distanceMeasure as string) ?? "cosine",
     });
   },
 };

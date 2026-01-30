@@ -273,7 +273,7 @@ describe("detectLanguage", () => {
 });
 
 describe("computeSemanticSimilarity", () => {
-  it("calls analyticsPost with /semanticSimilarity", async () => {
+  it("calls analyticsPost with /semanticSimilarity and default distanceMeasure", async () => {
     await computeSemanticSimilarity.handler({
       text1: "Hello world",
       text2: "Hi there",
@@ -282,6 +282,21 @@ describe("computeSemanticSimilarity", () => {
     expect(mockedAnalyticsPost).toHaveBeenCalledWith("/semanticSimilarity", {
       text1: "Hello world",
       text2: "Hi there",
+      distanceMeasure: "cosine",
+    });
+  });
+
+  it("passes custom distanceMeasure", async () => {
+    await computeSemanticSimilarity.handler({
+      text1: "Hello world",
+      text2: "Hi there",
+      distanceMeasure: "jaccard",
+    });
+
+    expect(mockedAnalyticsPost).toHaveBeenCalledWith("/semanticSimilarity", {
+      text1: "Hello world",
+      text2: "Hi there",
+      distanceMeasure: "jaccard",
     });
   });
 });
