@@ -186,6 +186,22 @@ describe("MCP server E2E", () => {
     expect(content.text).toContain("403");
   });
 
+  it("sends lang=eng in suggest_locations when lang not provided", async () => {
+    mockFetchOk([
+      { uri: "http://en.wikipedia.org/wiki/Berlin", label: "Berlin" },
+    ]);
+
+    await client.callTool({
+      name: "suggest_locations",
+      arguments: { prefix: "Berlin" },
+    });
+
+    const lastCall = fetchSpy.mock.calls[fetchSpy.mock.calls.length - 1];
+    const body = JSON.parse(lastCall[1].body);
+    expect(body).toHaveProperty("lang", "eng");
+    expect(body).toHaveProperty("prefix", "Berlin");
+  });
+
   it("calls analytics tool via correct base URL", async () => {
     mockFetchOk({ sentiment: 0.8 });
 
