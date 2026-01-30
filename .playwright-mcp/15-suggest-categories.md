@@ -1,0 +1,160 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e5]:
+    - navigation [ref=e6]:
+      - generic [ref=e7]:
+        - img [ref=e12]
+        - generic [ref=e23] [cursor=pointer]:
+          - generic [ref=e24]: Rest API
+          - generic [ref=e25]: 
+        - generic [ref=e26]: Sign in
+        - generic [ref=e30] [cursor=pointer]: 
+    - generic [ref=e34]:
+      - generic [ref=e36]:
+        - button "Introduction" [ref=e38] [cursor=pointer]:
+          - generic [ref=e39]: Introduction
+        - generic:
+          - separator
+        - generic [ref=e40]:
+          - button "Most Used" [ref=e41] [cursor=pointer]:
+            - generic [ref=e42]: Most Used
+          - generic [ref=e43]:
+            - button "Get articles" [ref=e44] [cursor=pointer]:
+              - generic [ref=e45]: Get articles
+            - button "Get events" [ref=e46] [cursor=pointer]:
+              - generic [ref=e47]: Get events
+            - button "Suggest concepts" [ref=e48] [cursor=pointer]:
+              - generic [ref=e49]: Suggest concepts
+        - generic:
+          - separator
+        - generic [ref=e50]:
+          - button "Text Analytics" [ref=e51] [cursor=pointer]:
+            - generic [ref=e52]: Text Analytics
+          - generic:
+            - button "Annotate" [ref=e53] [cursor=pointer]:
+              - generic [ref=e54]: Annotate
+            - button "Categorize" [ref=e55] [cursor=pointer]:
+              - generic [ref=e56]: Categorize
+            - button "Semantic similarity" [ref=e57] [cursor=pointer]:
+              - generic [ref=e58]: Semantic similarity
+            - button "Sentiment" [ref=e59] [cursor=pointer]:
+              - generic [ref=e60]: Sentiment
+            - button "Extract article information" [ref=e61] [cursor=pointer]:
+              - generic [ref=e62]: Extract article information
+            - button "Detect language" [ref=e63] [cursor=pointer]:
+              - generic [ref=e64]: Detect language
+            - button "Train topic" [ref=e65] [cursor=pointer]:
+              - generic [ref=e66]: Train topic
+        - generic [ref=e67]:
+          - button "Articles" [ref=e68] [cursor=pointer]:
+            - generic [ref=e69]: Articles
+          - generic:
+            - button "Get articles" [ref=e70] [cursor=pointer]:
+              - generic [ref=e71]: Get articles
+            - button "Get articles for topic page" [ref=e72] [cursor=pointer]:
+              - generic [ref=e73]: Get articles for topic page
+            - button "Get article details" [ref=e74] [cursor=pointer]:
+              - generic [ref=e75]: Get article details
+            - button "Stream of new articles" [ref=e76] [cursor=pointer]:
+              - generic [ref=e77]: Stream of new articles
+        - generic [ref=e78]:
+          - button "Events" [ref=e79] [cursor=pointer]:
+            - generic [ref=e80]: Events
+          - generic:
+            - button "Get events" [ref=e81] [cursor=pointer]:
+              - generic [ref=e82]: Get events
+            - button "Get events for a topic page" [ref=e83] [cursor=pointer]:
+              - generic [ref=e84]: Get events for a topic page
+            - button "Get event details" [ref=e85] [cursor=pointer]:
+              - generic [ref=e86]: Get event details
+            - button "Stream of events" [ref=e87] [cursor=pointer]:
+              - generic [ref=e88]: Stream of events
+            - button "Get list of breaking events" [ref=e89] [cursor=pointer]:
+              - generic [ref=e90]: Get list of breaking events
+        - generic [ref=e91]:
+          - button "Event Types" [ref=e92] [cursor=pointer]:
+            - generic [ref=e93]: Event Types
+          - button "Get mentions" [ref=e94] [cursor=pointer]:
+            - generic [ref=e95]: Get mentions
+        - generic [ref=e96]:
+          - button "Autosuggest" [ref=e97] [cursor=pointer]:
+            - generic [ref=e98]: Autosuggest
+          - generic [ref=e4880]:
+            - button "Suggest concepts" [ref=e99] [cursor=pointer]:
+              - generic [ref=e100]: Suggest concepts
+            - button "Suggest categories" [ref=e101] [cursor=pointer]:
+              - generic [ref=e102]: Suggest categories
+            - button "Suggest sources" [ref=e103] [cursor=pointer]:
+              - generic [ref=e104]: Suggest sources
+            - button "Suggest authors" [ref=e105] [cursor=pointer]:
+              - generic [ref=e106]: Suggest authors
+            - button "Suggest locations" [ref=e107] [cursor=pointer]:
+              - generic [ref=e108]: Suggest locations
+            - button "Suggest event types" [ref=e109] [cursor=pointer]:
+              - generic [ref=e110]: Suggest event types
+        - generic [ref=e111]:
+          - button "Other" [ref=e112] [cursor=pointer]:
+            - generic [ref=e113]: Other
+          - generic:
+            - button "API Usage" [ref=e114] [cursor=pointer]:
+              - generic [ref=e115]: API Usage
+            - button "Get event for text" [ref=e116] [cursor=pointer]:
+              - generic [ref=e117]: Get event for text
+        - generic:
+          - separator
+        - button "Terminology" [ref=e119] [cursor=pointer]:
+          - generic [ref=e120]: Terminology
+        - button "Data Models" [ref=e122] [cursor=pointer]:
+          - generic [ref=e123]: Data Models
+        - generic [ref=e124]:
+          - button "n8n Integration" [ref=e125] [cursor=pointer]:
+            - generic [ref=e126]: n8n Integration
+          - generic:
+            - button "Overview" [ref=e127] [cursor=pointer]:
+              - generic [ref=e128]: Overview
+            - button "Example 1" [ref=e129] [cursor=pointer]:
+              - generic [ref=e130]: Example 1
+            - button "Example 2" [ref=e131] [cursor=pointer]:
+              - generic [ref=e132]: Example 2
+            - button "Example 3" [ref=e133] [cursor=pointer]:
+              - generic [ref=e134]: Example 3
+      - generic [ref=e4882]:
+        - generic [ref=e4883]:
+          - heading "Suggest categories" [level=1] [ref=e4885]
+          - generic [ref=e4887]:
+            - text: Try in sandbox
+            - generic [ref=e4888]: 
+        - paragraph [ref=e4891]: Retrieve the category URI for a given category label/prefix.
+        - paragraph [ref=e4894]:
+          - paragraph [ref=e4895]:
+            - text: Use this API endpoint to map the category label into the category URI that can be used when specifying the
+            - code [ref=e4896]: categoryUri
+            - text: filter in various API calls. The label can also be a partial name.
+          - paragraph [ref=e4897]: The returned value will contain an array of candidates that match the input label. The returned list is sorted based on how frequently the category occurs in Event Registry data.
+        - generic [ref=e4899]:
+          - text: Endpoint
+          - generic [ref=e4901]: GET | POST
+          - text: https://eventregistry.org/api/v1/suggestCategoriesFast
+        - generic [ref=e4903]: "HeadersContent-Type: application/json"
+        - generic [ref=e4906]:
+          - generic [ref=e4908]:
+            - button "Code examples" [ref=e4910] [cursor=pointer]
+            - button "Example output" [ref=e4912] [cursor=pointer]
+            - button "Output schema" [ref=e4914] [cursor=pointer]
+          - generic [ref=e4917]:
+            - button "Example 1" [ref=e4921] [cursor=pointer]
+            - generic [ref=e4924]:
+              - paragraph [ref=e4927]: Find the list of categories whose label matches the term "Business". The matching is case-insensitive and the term can appear anywhere inside the category name.
+              - generic [ref=e4930]: Request body
+        - generic [ref=e4932]:
+          - generic [ref=e4936] [cursor=pointer]:
+            - generic [ref=e4938]: 
+            - generic [ref=e4939]: Parameters
+          - generic [ref=e4942]:
+            - generic [ref=e4944]:
+              - generic [ref=e4946]: apiKey string (required)
+              - paragraph [ref=e4949]: Your API key
+            - generic [ref=e4951]:
+              - generic [ref=e4953]: prefix string
+              - paragraph [ref=e4956]: Partial or full name of the category.
+  - button "Open chat window" [ref=e259] [cursor=pointer]:
+    - img [ref=e260]

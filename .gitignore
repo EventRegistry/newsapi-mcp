@@ -1,0 +1,22 @@
+node_modules/
+dist/
+.env
+*.tsbuildinfo
+
+# Logs
+*.log
+npm-debug.log*
+
+# Coverage
+coverage/
+
+# Editor/OS
+.DS_Store
+*.swp
+*.swo
+.vscode/
+.idea/
+
+# Misc
+*.tgz
+.eslintcache

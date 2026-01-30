@@ -1,0 +1,488 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e5]:
+    - navigation [ref=e6]:
+      - generic [ref=e7]:
+        - img [ref=e12]
+        - generic [ref=e23] [cursor=pointer]:
+          - generic [ref=e24]: Rest API
+          - generic [ref=e25]: 
+        - generic [ref=e26]: Sign in
+        - generic [ref=e30] [cursor=pointer]: 
+    - generic [ref=e34]:
+      - generic [ref=e36]:
+        - button "Introduction" [ref=e38] [cursor=pointer]:
+          - generic [ref=e39]: Introduction
+        - generic:
+          - separator
+        - generic [ref=e40]:
+          - button "Most Used" [ref=e41] [cursor=pointer]:
+            - generic [ref=e42]: Most Used
+          - generic [ref=e43]:
+            - button "Get articles" [ref=e44] [cursor=pointer]:
+              - generic [ref=e45]: Get articles
+            - button "Get events" [ref=e46] [cursor=pointer]:
+              - generic [ref=e47]: Get events
+            - button "Suggest concepts" [ref=e48] [cursor=pointer]:
+              - generic [ref=e49]: Suggest concepts
+        - generic:
+          - separator
+        - generic [ref=e50]:
+          - button "Text Analytics" [ref=e51] [cursor=pointer]:
+            - generic [ref=e52]: Text Analytics
+          - generic:
+            - button "Annotate" [ref=e53] [cursor=pointer]:
+              - generic [ref=e54]: Annotate
+            - button "Categorize" [ref=e55] [cursor=pointer]:
+              - generic [ref=e56]: Categorize
+            - button "Semantic similarity" [ref=e57] [cursor=pointer]:
+              - generic [ref=e58]: Semantic similarity
+            - button "Sentiment" [ref=e59] [cursor=pointer]:
+              - generic [ref=e60]: Sentiment
+            - button "Extract article information" [ref=e61] [cursor=pointer]:
+              - generic [ref=e62]: Extract article information
+            - button "Detect language" [ref=e63] [cursor=pointer]:
+              - generic [ref=e64]: Detect language
+            - button "Train topic" [ref=e65] [cursor=pointer]:
+              - generic [ref=e66]: Train topic
+        - generic [ref=e67]:
+          - button "Articles" [ref=e68] [cursor=pointer]:
+            - generic [ref=e69]: Articles
+          - generic:
+            - button "Get articles" [ref=e70] [cursor=pointer]:
+              - generic [ref=e71]: Get articles
+            - button "Get articles for topic page" [ref=e72] [cursor=pointer]:
+              - generic [ref=e73]: Get articles for topic page
+            - button "Get article details" [ref=e74] [cursor=pointer]:
+              - generic [ref=e75]: Get article details
+            - button "Stream of new articles" [ref=e76] [cursor=pointer]:
+              - generic [ref=e77]: Stream of new articles
+        - generic [ref=e78]:
+          - button "Events" [ref=e79] [cursor=pointer]:
+            - generic [ref=e80]: Events
+          - generic [ref=e1779]:
+            - button "Get events" [ref=e81] [cursor=pointer]:
+              - generic [ref=e82]: Get events
+            - button "Get events for a topic page" [ref=e83] [cursor=pointer]:
+              - generic [ref=e84]: Get events for a topic page
+            - button "Get event details" [ref=e85] [cursor=pointer]:
+              - generic [ref=e86]: Get event details
+            - button "Stream of events" [ref=e87] [cursor=pointer]:
+              - generic [ref=e88]: Stream of events
+            - button "Get list of breaking events" [ref=e89] [cursor=pointer]:
+              - generic [ref=e90]: Get list of breaking events
+        - generic [ref=e91]:
+          - button "Event Types" [ref=e92] [cursor=pointer]:
+            - generic [ref=e93]: Event Types
+          - button "Get mentions" [ref=e94] [cursor=pointer]:
+            - generic [ref=e95]: Get mentions
+        - generic [ref=e96]:
+          - button "Autosuggest" [ref=e97] [cursor=pointer]:
+            - generic [ref=e98]: Autosuggest
+          - generic:
+            - button "Suggest concepts" [ref=e99] [cursor=pointer]:
+              - generic [ref=e100]: Suggest concepts
+            - button "Suggest categories" [ref=e101] [cursor=pointer]:
+              - generic [ref=e102]: Suggest categories
+            - button "Suggest sources" [ref=e103] [cursor=pointer]:
+              - generic [ref=e104]: Suggest sources
+            - button "Suggest authors" [ref=e105] [cursor=pointer]:
+              - generic [ref=e106]: Suggest authors
+            - button "Suggest locations" [ref=e107] [cursor=pointer]:
+              - generic [ref=e108]: Suggest locations
+            - button "Suggest event types" [ref=e109] [cursor=pointer]:
+              - generic [ref=e110]: Suggest event types
+        - generic [ref=e111]:
+          - button "Other" [ref=e112] [cursor=pointer]:
+            - generic [ref=e113]: Other
+          - generic:
+            - button "API Usage" [ref=e114] [cursor=pointer]:
+              - generic [ref=e115]: API Usage
+            - button "Get event for text" [ref=e116] [cursor=pointer]:
+              - generic [ref=e117]: Get event for text
+        - generic:
+          - separator
+        - button "Terminology" [ref=e119] [cursor=pointer]:
+          - generic [ref=e120]: Terminology
+        - button "Data Models" [ref=e122] [cursor=pointer]:
+          - generic [ref=e123]: Data Models
+        - generic [ref=e124]:
+          - button "n8n Integration" [ref=e125] [cursor=pointer]:
+            - generic [ref=e126]: n8n Integration
+          - generic:
+            - button "Overview" [ref=e127] [cursor=pointer]:
+              - generic [ref=e128]: Overview
+            - button "Example 1" [ref=e129] [cursor=pointer]:
+              - generic [ref=e130]: Example 1
+            - button "Example 2" [ref=e131] [cursor=pointer]:
+              - generic [ref=e132]: Example 2
+            - button "Example 3" [ref=e133] [cursor=pointer]:
+              - generic [ref=e134]: Example 3
+      - generic [ref=e1781]:
+        - generic [ref=e1782]:
+          - heading "Get events for a topic page" [level=1] [ref=e1784]
+          - generic [ref=e1786]:
+            - text: Try in sandbox
+            - generic [ref=e1787]: 
+        - paragraph [ref=e1790]: Obtain events that match a user generated topic page.
+        - paragraph [ref=e1793]:
+          - paragraph [ref=e1794]:
+            - text: Retrieve the events that match the topic page the user generated on the
+            - link "Media Monitoring page" [ref=e1795] [cursor=pointer]:
+              - /url: https://eventregistry.org/monitoring
+            - text: .
+          - paragraph [ref=e1796]:
+            - text: The topic page has to be created using the web interface and can be defined by a list of concepts, keywords, news sources, categories and other available conditions. Each topic page has a uniqe id, called a URI. When you open the topic page, the URI is displayed in the url in the browser (e.g. "240f6a12-b9d8-40a6-b1c6-a220e31d08de"). Use that URI as the
+            - code [ref=e1797]: uri
+            - text: parameter when making the API calls.
+          - paragraph [ref=e1798]:
+            - text: Compared to the
+            - link "Get Events" [ref=e1799] [cursor=pointer]:
+              - /url: /documentation?tab=searchEvents
+            - text: API call, this endpoint is ideal when you want to find events that match a broader topic that can be defined using a set of concepts, keywords, categories, etc. These concepts and keywords don't all need to be mentioned in an event, but the more of them are mentioned, the higher the event will be in the list of results. By default, the returned events are sorted based on how well they match the topic, but you can also change the sorting by setting the sorting parameter.
+          - paragraph [ref=e1800]: The results of the search can be the list of matching events (default) or one of the various aggregates (summaries) of the matching events. In case of the aggregates, for example, the returned data can contain the geographic locations, where the events matching criteria occured, date of the matching events, etc.
+        - generic [ref=e1802]:
+          - text: Endpoint
+          - generic [ref=e1804]: GET | POST
+          - text: https://eventregistry.org/api/v1/event/getEventsForTopicPage
+        - generic [ref=e1806]: "HeadersContent-Type: application/json"
+        - generic [ref=e1809]:
+          - generic [ref=e1811]:
+            - button "Code examples" [ref=e1813] [cursor=pointer]
+            - button "Example output" [ref=e1815] [cursor=pointer]
+            - button "Output schema" [ref=e1817] [cursor=pointer]
+          - generic [ref=e1820]:
+            - button "Example 1" [ref=e1824] [cursor=pointer]
+            - generic [ref=e1827]:
+              - paragraph [ref=e1830]: Retrieve events that match a public topic page related to Renewable energy (with uri 240f6a12-b9d8-40a6-b1c6-a220e31d08de). Return events sorted by relevance (most relevant first).
+              - generic [ref=e1833]: Request body
+        - generic [ref=e1835]:
+          - generic [ref=e1839] [cursor=pointer]:
+            - generic [ref=e1841]: 
+            - generic [ref=e1842]: Parameters
+          - generic [ref=e1845]:
+            - generic [ref=e1847]:
+              - generic [ref=e1849]: apiKey string (required)
+              - paragraph [ref=e1852]: Your API key
+            - generic [ref=e1854]:
+              - generic [ref=e1856]: uri string (required)
+              - paragraph [ref=e1859]:
+                - text: URI of the topic page for which you wish to retrieve matching events. Obtain the URI from the URL on the
+                - link "monitoring page" [ref=e1860] [cursor=pointer]:
+                  - /url: https://eventregistry.org/monitoring
+                - text: when the topic page is opened.
+            - generic [ref=e1862]:
+              - generic [ref=e1864]: resultType string | string[]
+              - generic [ref=e1866]:
+                - paragraph [ref=e1867]: Define what kind of results you would like to get.
+                - generic [ref=e1868]:
+                  - text: "Available values:"
+                  - generic [ref=e1869]:
+                    - code [ref=e1870]: events
+                    - text: ","
+                    - code [ref=e1871]: uriWgtList
+                    - text: ","
+                    - code [ref=e1872]: timeAggr
+                    - text: ","
+                    - code [ref=e1873]: locAggr
+                    - text: ","
+                    - code [ref=e1874]: locTimeAggr
+                    - text: ","
+                    - code [ref=e1875]: sourceAggr
+                    - text: ","
+                    - code [ref=e1876]: authorAggr
+                    - text: ","
+                    - code [ref=e1877]: keywordAggr
+                    - text: ","
+                    - code [ref=e1878]: conceptAggr
+                    - text: ","
+                    - code [ref=e1879]: conceptGraph
+                    - text: ","
+                    - code [ref=e1880]: categoryAggr
+                    - text: ","
+                    - code [ref=e1881]: breakingEvents
+                    - text: ","
+                    - code [ref=e1882]: sentimentAggr
+                    - text: ","
+                    - code [ref=e1883]: dateMentionAggr
+                - generic [ref=e1884]:
+                  - text: "Default value:"
+                  - code [ref=e1885]: events
+            - generic [ref=e1887]:
+              - generic [ref=e1889]: eventsPage integer
+              - generic [ref=e1891]:
+                - paragraph [ref=e1892]:
+                  - text: Determines the page of the results to return (starting from 1). Relevant when
+                  - code [ref=e1893]: resultType = events
+                  - text: .
+                - generic [ref=e1894]:
+                  - text: "Default value:"
+                  - code [ref=e1895]: "1"
+            - generic [ref=e1897]:
+              - generic [ref=e1899]: eventsCount integer
+              - generic [ref=e1901]:
+                - paragraph [ref=e1902]:
+                  - text: Define how many events (up to 50) will be returned. Relevant when
+                  - code [ref=e1903]: resultType = events
+                  - text: .
+                - generic [ref=e1904]:
+                  - text: "Default value:"
+                  - code [ref=e1905]: "50"
+            - generic [ref=e1907]:
+              - generic [ref=e1909]: eventsSortBy string
+              - generic [ref=e1911]:
+                - paragraph [ref=e1912]:
+                  - text: Set how you would like to sort your results.
+                  - code [ref=e1913]: date
+                  - text: (by event date),
+                  - code [ref=e1914]: rel
+                  - text: (relevance to the query),
+                  - code [ref=e1915]: size
+                  - text: (number of articles),
+                  - code [ref=e1916]: socialScore
+                  - text: (amount of shares in social media). Relevant when
+                  - code [ref=e1917]: resultType = events
+                  - text: .
+                - generic [ref=e1918]:
+                  - text: "Available values:"
+                  - generic [ref=e1919]:
+                    - code [ref=e1920]: date
+                    - text: ","
+                    - code [ref=e1921]: rel
+                    - text: ","
+                    - code [ref=e1922]: size
+                    - text: ","
+                    - code [ref=e1923]: socialScore
+                - generic [ref=e1924]:
+                  - text: "Default value:"
+                  - code [ref=e1925]: rel
+            - generic [ref=e1927]:
+              - generic [ref=e1929]: eventsSortByAsc boolean
+              - generic [ref=e1931]:
+                - paragraph [ref=e1932]:
+                  - text: Should the results be ordered in ascending order or descending order (default) based on the sorting criteria. Relevant when
+                  - code [ref=e1933]: resultType = events
+                  - text: .
+                - generic [ref=e1934]:
+                  - text: "Default value:"
+                  - code [ref=e1935]: "false"
+        - generic [ref=e1937]:
+          - generic [ref=e1939] [cursor=pointer]:
+            - generic [ref=e1941]:
+              - generic [ref=e1943]: 
+              - generic [ref=e1944]: Returned Details
+            - paragraph [ref=e1947]: The API call can return more or less meta-data information about the events, articles, concepts, categories, sources and locations. Click to see the available properties that can be specified to determine the amount of returned information.
+          - generic:
+            - generic:
+              - generic:
+                - generic [ref=e1949]:
+                  - generic [ref=e1951]: includeEventTitle boolean
+                  - generic [ref=e1953]:
+                    - paragraph [ref=e1954]: Set this parameter to true to include the event title in the response.
+                    - generic [ref=e1955]:
+                      - text: "Default value:"
+                      - code [ref=e1956]: "true"
+                - generic [ref=e1958]:
+                  - generic [ref=e1960]: includeEventSummary boolean
+                  - generic [ref=e1962]:
+                    - paragraph [ref=e1963]: Set this parameter to true to include the event title in the response.
+                    - generic [ref=e1964]:
+                      - text: "Default value:"
+                      - code [ref=e1965]: "false"
+                - generic [ref=e1967]:
+                  - generic [ref=e1969]: includeEventSocialScore boolean
+                  - generic [ref=e1971]:
+                    - paragraph [ref=e1972]: Set this parameter to true to include the event social score in the response.
+                    - generic [ref=e1973]:
+                      - text: "Default value:"
+                      - code [ref=e1974]: "false"
+                - generic [ref=e1976]:
+                  - generic [ref=e1978]: includeEventSentiment boolean
+                  - generic [ref=e1980]:
+                    - paragraph [ref=e1981]: Set this parameter to true to include the event sentiment in the response.
+                    - generic [ref=e1982]:
+                      - text: "Default value:"
+                      - code [ref=e1983]: "true"
+                - generic [ref=e1985]:
+                  - generic [ref=e1987]: includeEventLocation boolean
+                  - generic [ref=e1989]:
+                    - paragraph [ref=e1990]: Set this parameter to true to include the event location in the response.
+                    - generic [ref=e1991]:
+                      - text: "Default value:"
+                      - code [ref=e1992]: "true"
+                - generic [ref=e1994]:
+                  - generic [ref=e1996]: includeEventDate boolean
+                  - generic [ref=e1998]:
+                    - paragraph [ref=e1999]: Set this parameter to true to include the event date in the response.
+                    - generic [ref=e2000]:
+                      - text: "Default value:"
+                      - code [ref=e2001]: "true"
+                - generic [ref=e2003]:
+                  - generic [ref=e2005]: includeEventArticleCounts boolean
+                  - generic [ref=e2007]:
+                    - paragraph [ref=e2008]: Set this parameter to true to include the article counts for events in the response.
+                    - generic [ref=e2009]:
+                      - text: "Default value:"
+                      - code [ref=e2010]: "true"
+                - generic [ref=e2012]:
+                  - generic [ref=e2014]: includeEventConcepts boolean
+                  - generic [ref=e2016]:
+                    - paragraph [ref=e2017]: Set this parameter to true to include the event concepts in the response.
+                    - generic [ref=e2018]:
+                      - text: "Default value:"
+                      - code [ref=e2019]: "true"
+                - generic [ref=e2021]:
+                  - generic [ref=e2023]: includeEventCategories boolean
+                  - generic [ref=e2025]:
+                    - paragraph [ref=e2026]: Set this parameter to true to include the event categories in the response.
+                    - generic [ref=e2027]:
+                      - text: "Default value:"
+                      - code [ref=e2028]: "true"
+                - generic [ref=e2030]:
+                  - generic [ref=e2032]: includeEventCommonDates boolean
+                  - generic [ref=e2034]:
+                    - paragraph [ref=e2035]: Set this parameter to true to include the event commmon dates in the response.
+                    - generic [ref=e2036]:
+                      - text: "Default value:"
+                      - code [ref=e2037]: "false"
+                - generic [ref=e2039]:
+                  - generic [ref=e2041]: includeEventStories boolean
+                  - generic [ref=e2043]:
+                    - paragraph [ref=e2044]: Set this parameter to true to include the event stories in the response.
+                    - generic [ref=e2045]:
+                      - text: "Default value:"
+                      - code [ref=e2046]: "false"
+                - generic [ref=e2048]:
+                  - generic [ref=e2050]: eventImageCount integer
+                  - generic [ref=e2052]:
+                    - paragraph [ref=e2053]: Define how many images you would like to have in the response.
+                    - generic [ref=e2054]:
+                      - text: "Default value:"
+                      - code [ref=e2055]: "0"
+                - generic [ref=e2057]:
+                  - generic [ref=e2059]: includeConceptLabel boolean
+                  - generic [ref=e2061]:
+                    - paragraph [ref=e2062]: Set this parameter to true to include the concept label in the response.
+                    - generic [ref=e2063]:
+                      - text: "Default value:"
+                      - code [ref=e2064]: "true"
+                - generic [ref=e2066]:
+                  - generic [ref=e2068]: includeConceptImage boolean
+                  - generic [ref=e2070]:
+                    - paragraph [ref=e2071]: Set this parameter to true to include the concept image in the response.
+                    - generic [ref=e2072]:
+                      - text: "Default value:"
+                      - code [ref=e2073]: "false"
+                - generic [ref=e2075]:
+                  - generic [ref=e2077]: includeConceptSynonyms boolean
+                  - generic [ref=e2079]:
+                    - paragraph [ref=e2080]: Set this parameter to true to include the concept synonyms in the response.
+                    - generic [ref=e2081]:
+                      - text: "Default value:"
+                      - code [ref=e2082]: "false"
+                - generic [ref=e2084]:
+                  - generic [ref=e2086]: conceptLang string
+                  - generic [ref=e2088]:
+                    - paragraph [ref=e2089]: Define the language of the concept label.
+                    - generic [ref=e2090]:
+                      - text: "Default value:"
+                      - code [ref=e2091]: eng
+                - generic [ref=e2093]:
+                  - generic [ref=e2095]: includeStoryBasicStats boolean
+                  - generic [ref=e2097]:
+                    - paragraph [ref=e2098]: Set this parameter to true to include story basic stats in the response.
+                    - generic [ref=e2099]:
+                      - text: "Default value:"
+                      - code [ref=e2100]: "false"
+                - generic [ref=e2102]:
+                  - generic [ref=e2104]: includeStoryTitle boolean
+                  - generic [ref=e2106]:
+                    - paragraph [ref=e2107]: Set this parameter to true to include the story title in the response.
+                    - generic [ref=e2108]:
+                      - text: "Default value:"
+                      - code [ref=e2109]: "false"
+                - generic [ref=e2111]:
+                  - generic [ref=e2113]: includeStoryLocation boolean
+                  - generic [ref=e2115]:
+                    - paragraph [ref=e2116]: Set this parameter to true to include the story location in the response.
+                    - generic [ref=e2117]:
+                      - text: "Default value:"
+                      - code [ref=e2118]: "false"
+                - generic [ref=e2120]:
+                  - generic [ref=e2122]: includeStoryDate boolean
+                  - generic [ref=e2124]:
+                    - paragraph [ref=e2125]: Set this parameter to true to include the story date in the response.
+                    - generic [ref=e2126]:
+                      - text: "Default value:"
+                      - code [ref=e2127]: "false"
+                - generic [ref=e2129]:
+                  - generic [ref=e2131]: includeStoryConcepts boolean
+                  - generic [ref=e2133]:
+                    - paragraph [ref=e2134]: Set this parameter to true to include the story concepts in the response.
+                    - generic [ref=e2135]:
+                      - text: "Default value:"
+                      - code [ref=e2136]: "false"
+                - generic [ref=e2138]:
+                  - generic [ref=e2140]: includeStoryCategories boolean
+                  - generic [ref=e2142]:
+                    - paragraph [ref=e2143]: Set this parameter to true to include the story categories in the response.
+                    - generic [ref=e2144]:
+                      - text: "Default value:"
+                      - code [ref=e2145]: "false"
+                - generic [ref=e2147]:
+                  - generic [ref=e2149]: includeStoryMedoidArticle boolean
+                  - generic [ref=e2151]:
+                    - paragraph [ref=e2152]: Set this parameter to true to include story medoid article in the response.
+                    - generic [ref=e2153]:
+                      - text: "Default value:"
+                      - code [ref=e2154]: "false"
+                - generic [ref=e2156]:
+                  - generic [ref=e2158]: includeStoryCommonDates boolean
+                  - generic [ref=e2160]:
+                    - paragraph [ref=e2161]: Set this parameter to true to include story common dates in the response.
+                    - generic [ref=e2162]:
+                      - text: "Default value:"
+                      - code [ref=e2163]: "false"
+                - generic [ref=e2165]:
+                  - generic [ref=e2167]: storyImageCount integer
+                  - generic [ref=e2169]:
+                    - paragraph [ref=e2170]: Define how many images you would like to have in the response.
+                    - generic [ref=e2171]:
+                      - text: "Default value:"
+                      - code [ref=e2172]: "0"
+                - generic [ref=e2174]:
+                  - generic [ref=e2176]: includeCategoryParentUri boolean
+                  - generic [ref=e2178]:
+                    - paragraph [ref=e2179]: Set this parameter to true to include category parent uri in the response.
+                    - generic [ref=e2180]:
+                      - text: "Default value:"
+                      - code [ref=e2181]: "false"
+                - generic [ref=e2183]:
+                  - generic [ref=e2185]: includeLocationPopulation boolean
+                  - generic [ref=e2187]:
+                    - paragraph [ref=e2188]: Set to true to include the population size of the location.
+                    - generic [ref=e2189]:
+                      - text: "Default value:"
+                      - code [ref=e2190]: "false"
+                - generic [ref=e2192]:
+                  - generic [ref=e2194]: includeLocationGeoNamesId boolean
+                  - generic [ref=e2196]:
+                    - paragraph [ref=e2197]: Set to true to include the GeoNames id of the location.
+                    - generic [ref=e2198]:
+                      - text: "Default value:"
+                      - code [ref=e2199]: "false"
+                - generic [ref=e2201]:
+                  - generic [ref=e2203]: includeLocationCountryArea boolean
+                  - generic [ref=e2205]:
+                    - paragraph [ref=e2206]: Set to true to include the are of the location in squared km.
+                    - generic [ref=e2207]:
+                      - text: "Default value:"
+                      - code [ref=e2208]: "false"
+                - generic [ref=e2210]:
+                  - generic [ref=e2212]: includeLocationCountryContinent boolean
+                  - generic [ref=e2214]:
+                    - paragraph [ref=e2215]: Set to true to get the continent of the country for location objects.
+                    - generic [ref=e2216]:
+                      - text: "Default value:"
+                      - code [ref=e2217]: "false"
+  - button "Open chat window" [ref=e259] [cursor=pointer]:
+    - img [ref=e260]

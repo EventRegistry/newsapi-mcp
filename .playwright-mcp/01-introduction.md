@@ -1,0 +1,240 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e5]:
+    - navigation [ref=e6]:
+      - generic [ref=e7]:
+        - img [ref=e12]
+        - generic [ref=e23] [cursor=pointer]:
+          - generic [ref=e24]: Rest API
+          - generic [ref=e25]: 
+        - generic [ref=e26]: Sign in
+        - generic [ref=e30] [cursor=pointer]: 
+    - generic [ref=e34]:
+      - generic [ref=e36]:
+        - button "Introduction" [ref=e38] [cursor=pointer]:
+          - generic [ref=e39]: Introduction
+        - generic:
+          - separator
+        - generic [ref=e40]:
+          - button "Most Used" [ref=e41] [cursor=pointer]:
+            - generic [ref=e42]: Most Used
+          - generic [ref=e43]:
+            - button "Get articles" [ref=e44] [cursor=pointer]:
+              - generic [ref=e45]: Get articles
+            - button "Get events" [ref=e46] [cursor=pointer]:
+              - generic [ref=e47]: Get events
+            - button "Suggest concepts" [ref=e48] [cursor=pointer]:
+              - generic [ref=e49]: Suggest concepts
+        - generic:
+          - separator
+        - generic [ref=e50]:
+          - button "Text Analytics" [ref=e51] [cursor=pointer]:
+            - generic [ref=e52]: Text Analytics
+          - generic:
+            - button "Annotate" [ref=e53] [cursor=pointer]:
+              - generic [ref=e54]: Annotate
+            - button "Categorize" [ref=e55] [cursor=pointer]:
+              - generic [ref=e56]: Categorize
+            - button "Semantic similarity" [ref=e57] [cursor=pointer]:
+              - generic [ref=e58]: Semantic similarity
+            - button "Sentiment" [ref=e59] [cursor=pointer]:
+              - generic [ref=e60]: Sentiment
+            - button "Extract article information" [ref=e61] [cursor=pointer]:
+              - generic [ref=e62]: Extract article information
+            - button "Detect language" [ref=e63] [cursor=pointer]:
+              - generic [ref=e64]: Detect language
+            - button "Train topic" [ref=e65] [cursor=pointer]:
+              - generic [ref=e66]: Train topic
+        - generic [ref=e67]:
+          - button "Articles" [ref=e68] [cursor=pointer]:
+            - generic [ref=e69]: Articles
+          - generic:
+            - button "Get articles" [ref=e70] [cursor=pointer]:
+              - generic [ref=e71]: Get articles
+            - button "Get articles for topic page" [ref=e72] [cursor=pointer]:
+              - generic [ref=e73]: Get articles for topic page
+            - button "Get article details" [ref=e74] [cursor=pointer]:
+              - generic [ref=e75]: Get article details
+            - button "Stream of new articles" [ref=e76] [cursor=pointer]:
+              - generic [ref=e77]: Stream of new articles
+        - generic [ref=e78]:
+          - button "Events" [ref=e79] [cursor=pointer]:
+            - generic [ref=e80]: Events
+          - generic:
+            - button "Get events" [ref=e81] [cursor=pointer]:
+              - generic [ref=e82]: Get events
+            - button "Get events for a topic page" [ref=e83] [cursor=pointer]:
+              - generic [ref=e84]: Get events for a topic page
+            - button "Get event details" [ref=e85] [cursor=pointer]:
+              - generic [ref=e86]: Get event details
+            - button "Stream of events" [ref=e87] [cursor=pointer]:
+              - generic [ref=e88]: Stream of events
+            - button "Get list of breaking events" [ref=e89] [cursor=pointer]:
+              - generic [ref=e90]: Get list of breaking events
+        - generic [ref=e91]:
+          - button "Event Types" [ref=e92] [cursor=pointer]:
+            - generic [ref=e93]: Event Types
+          - button "Get mentions" [ref=e94] [cursor=pointer]:
+            - generic [ref=e95]: Get mentions
+        - generic [ref=e96]:
+          - button "Autosuggest" [ref=e97] [cursor=pointer]:
+            - generic [ref=e98]: Autosuggest
+          - generic:
+            - button "Suggest concepts" [ref=e99] [cursor=pointer]:
+              - generic [ref=e100]: Suggest concepts
+            - button "Suggest categories" [ref=e101] [cursor=pointer]:
+              - generic [ref=e102]: Suggest categories
+            - button "Suggest sources" [ref=e103] [cursor=pointer]:
+              - generic [ref=e104]: Suggest sources
+            - button "Suggest authors" [ref=e105] [cursor=pointer]:
+              - generic [ref=e106]: Suggest authors
+            - button "Suggest locations" [ref=e107] [cursor=pointer]:
+              - generic [ref=e108]: Suggest locations
+            - button "Suggest event types" [ref=e109] [cursor=pointer]:
+              - generic [ref=e110]: Suggest event types
+        - generic [ref=e111]:
+          - button "Other" [ref=e112] [cursor=pointer]:
+            - generic [ref=e113]: Other
+          - generic:
+            - button "API Usage" [ref=e114] [cursor=pointer]:
+              - generic [ref=e115]: API Usage
+            - button "Get event for text" [ref=e116] [cursor=pointer]:
+              - generic [ref=e117]: Get event for text
+        - generic:
+          - separator
+        - button "Terminology" [ref=e119] [cursor=pointer]:
+          - generic [ref=e120]: Terminology
+        - button "Data Models" [ref=e122] [cursor=pointer]:
+          - generic [ref=e123]: Data Models
+        - generic [ref=e124]:
+          - button "n8n Integration" [ref=e125] [cursor=pointer]:
+            - generic [ref=e126]: n8n Integration
+          - generic:
+            - button "Overview" [ref=e127] [cursor=pointer]:
+              - generic [ref=e128]: Overview
+            - button "Example 1" [ref=e129] [cursor=pointer]:
+              - generic [ref=e130]: Example 1
+            - button "Example 2" [ref=e131] [cursor=pointer]:
+              - generic [ref=e132]: Example 2
+            - button "Example 3" [ref=e133] [cursor=pointer]:
+              - generic [ref=e134]: Example 3
+      - generic [ref=e136]:
+        - generic [ref=e137]:
+          - heading "API Documentation" [level=1] [ref=e140]
+          - paragraph [ref=e143]: This is the documentation page intended to demonstrate various API endpoints that you can use and the parameters that are available when calling them. Different API endpoints are grouped by topic in the left side menu. For most endpoints you can also check multiple code examples that demonstrate it's use using your preferred programming language.
+        - generic [ref=e144]:
+          - heading "Registration and authorization" [level=2] [ref=e147]
+          - generic [ref=e150]:
+            - paragraph [ref=e151]:
+              - text: In order to make the API requests you will need to provide an API key. To obtain an API key you have to
+              - strong [ref=e152]:
+                - link "create an account" [ref=e153] [cursor=pointer]:
+                  - /url: /register
+              - text: (registration is free and it gives you 2.000
+              - link "tokens" [ref=e154] [cursor=pointer]:
+                - /url: /tokens
+              - text: total for testing purposes). Once you activate your account and login, you will be able to find you API key on your
+              - link "settings page" [ref=e155] [cursor=pointer]:
+                - /url: /settings?tab=settings
+              - text: . When making REST API requests, your API key has to be provided as a parameter in the url (e.g.
+              - code [ref=e156]: apiKey=YOUR_API_KEY
+              - text: ).
+            - paragraph [ref=e157]:
+              - text: In order to use more than 2.000 tokens you will have to subscribe to a
+              - link "paid plan" [ref=e158] [cursor=pointer]:
+                - /url: /plans
+              - text: .
+        - generic [ref=e159]:
+          - heading "Python SDK, Node.js SDK" [level=2] [ref=e162]
+          - paragraph [ref=e165]:
+            - text: In order to make data access as easy as possible we have build
+            - link "Python" [ref=e166] [cursor=pointer]:
+              - /url: https://github.com/EventRegistry/event-registry-python
+            - text: and
+            - link "Node.js" [ref=e167] [cursor=pointer]:
+              - /url: https://github.com/EventRegistry/event-registry-node-js
+            - text: SDK libraries, which are accessible on our Github pages. You can check their corresponding documentation pages (
+            - link "Python" [ref=e168] [cursor=pointer]:
+              - /url: https://github.com/EventRegistry/event-registry-python/wiki
+            - text: ","
+            - link "Node.js" [ref=e169] [cursor=pointer]:
+              - /url: https://github.com/EventRegistry/event-registry-node-js/wiki
+            - text: ) for an introduction on how to use them.
+        - generic [ref=e170]:
+          - heading "OpenAPI specification" [level=2] [ref=e173]
+          - paragraph [ref=e176]:
+            - text: You can also find the whole API specification in a corresponding
+            - strong [ref=e177]:
+              - link "YAML file" [ref=e178] [cursor=pointer]:
+                - /url: https://eventregistry.org/static/api.yaml
+            - text: .
+        - generic [ref=e179]:
+          - heading "Response codes" [level=2] [ref=e182]
+          - generic [ref=e183]:
+            - generic [ref=e184]:
+              - paragraph [ref=e185]: Event Registry uses conventional HTTP response codes to indicate the success or failure of an API request.
+              - paragraph [ref=e186]: "In general: Codes in the 2xx range indicate success. Codes in the 4xx range indicate an error that failed given the information provided (e.g., a required parameter is missing, all tokens on the plan were already used, etc.). Codes in the 5xx range indicate an error with Event Registry's servers (happen very rarely)."
+            - table [ref=e188]:
+              - rowgroup [ref=e189]:
+                - row "HTTP status codes" [ref=e190]:
+                  - columnheader "HTTP status codes" [ref=e191]
+              - rowgroup [ref=e192]:
+                - row "200 Success. Everything worked as expected." [ref=e193]:
+                  - cell "200" [ref=e194]
+                  - cell "Success. Everything worked as expected." [ref=e195]
+                - row "204 Information not available. Request succeeded, but the requested information is not available." [ref=e196]:
+                  - cell "204" [ref=e197]
+                  - cell "Information not available. Request succeeded, but the requested information is not available." [ref=e198]
+                - row "400 Bad request. The request was unacceptable, most likely due to invalid or missing parameter." [ref=e199]:
+                  - cell "400" [ref=e200]
+                  - cell "Bad request. The request was unacceptable, most likely due to invalid or missing parameter." [ref=e201]
+                - row "401 User's limit reached. The user reached the limit of the tokens in his account. The requests are rejected." [ref=e202]:
+                  - cell "401" [ref=e203]
+                  - cell "User's limit reached. The user reached the limit of the tokens in his account. The requests are rejected." [ref=e204]
+                - row "429 Too many requests. The user is making too many simultaneous requests. The requests are rejected. Check the Rate Limiting section below to prevent such cases." [ref=e205]:
+                  - cell "429" [ref=e206]
+                  - cell "Too many requests. The user is making too many simultaneous requests. The requests are rejected. Check the Rate Limiting section below to prevent such cases." [ref=e207]
+                - row "403 Forbidden. The user's IP or account is disabled, or if all the tokens have been used. Check the error message for more details." [ref=e208]:
+                  - cell "403" [ref=e209]
+                  - cell "Forbidden. The user's IP or account is disabled, or if all the tokens have been used. Check the error message for more details." [ref=e210]
+                - row "500 Internal error. Internal error occured while processing the request." [ref=e211]:
+                  - cell "500" [ref=e212]
+                  - cell "Internal error. Internal error occured while processing the request." [ref=e213]
+                - row "503 Service unavailable. The service is currently not available." [ref=e214]:
+                  - cell "503" [ref=e215]
+                  - cell "Service unavailable. The service is currently not available." [ref=e216]
+        - generic [ref=e217]:
+          - heading "Rate limiting" [level=2] [ref=e220]
+          - paragraph [ref=e223]: Event Registry has rate limits in place to ensure that the service is available to all users. The rate limits are based on the number of simultaneous requests that the user is making at the same time. The maximum allowed number of simultaneous requests that the user can be executing at the same time is 5. If more requests are made, the user will receive a 503 status code in the response and the request will not be executed. The suggested approach is to not even make the code parallel but instead make requests sequentially, one after the other.
+        - generic [ref=e224]:
+          - heading "Limits on the conditions in the query" [level=2] [ref=e227]
+          - generic [ref=e228]:
+            - paragraph [ref=e230]: When making queries, you can specify multiple conditions, like keywords, concepts, categories, source, locations, etc. In some cases you need to provide multiple conditions of the same type, like multiple keywords. For each type of the condition, there is a maximum number of items that you can provide in a single query. The limits are set differently for free users vs. users with a paid API subscription and are shown in the table below.
+            - table [ref=e232]:
+              - rowgroup [ref=e233]:
+                - row "Free Paid subscribers" [ref=e234]:
+                  - columnheader [ref=e235]
+                  - columnheader "Free" [ref=e236]
+                  - columnheader "Paid subscribers" [ref=e237]
+              - rowgroup [ref=e238]:
+                - row "Sources 1,000 50,000" [ref=e239]:
+                  - cell "Sources" [ref=e240]
+                  - cell "1,000" [ref=e241]
+                  - cell "50,000" [ref=e242]
+                - row "Keywords 15 60" [ref=e243]:
+                  - cell "Keywords" [ref=e244]
+                  - cell "15" [ref=e245]
+                  - cell "60" [ref=e246]
+                - row "Concepts 15 60" [ref=e247]:
+                  - cell "Concepts" [ref=e248]
+                  - cell "15" [ref=e249]
+                  - cell "60" [ref=e250]
+                - row "Categories 10 20" [ref=e251]:
+                  - cell "Categories" [ref=e252]
+                  - cell "10" [ref=e253]
+                  - cell "20" [ref=e254]
+                - row "Languages 5 10" [ref=e255]:
+                  - cell "Languages" [ref=e256]
+                  - cell "5" [ref=e257]
+                  - cell "10" [ref=e258]
+  - button "Open chat window" [ref=e261] [cursor=pointer]:
+    - img [ref=e262]

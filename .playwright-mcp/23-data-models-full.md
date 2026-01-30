@@ -1,0 +1,149 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e5]:
+    - navigation [ref=e6]:
+      - generic [ref=e7]:
+        - img [ref=e12]
+        - generic [ref=e23] [cursor=pointer]:
+          - generic [ref=e24]: Rest API
+          - generic [ref=e25]: 
+        - generic [ref=e26]: Sign in
+        - generic [ref=e30] [cursor=pointer]: 
+    - generic [ref=e34]:
+      - generic [ref=e36]:
+        - button "Introduction" [ref=e38] [cursor=pointer]:
+          - generic [ref=e39]: Introduction
+        - generic:
+          - separator
+        - generic [ref=e40]:
+          - button "Most Used" [ref=e41] [cursor=pointer]:
+            - generic [ref=e42]: Most Used
+          - generic [ref=e43]:
+            - button "Get articles" [ref=e44] [cursor=pointer]:
+              - generic [ref=e45]: Get articles
+            - button "Get events" [ref=e46] [cursor=pointer]:
+              - generic [ref=e47]: Get events
+            - button "Suggest concepts" [ref=e48] [cursor=pointer]:
+              - generic [ref=e49]: Suggest concepts
+        - generic:
+          - separator
+        - generic [ref=e50]:
+          - button "Text Analytics" [ref=e51] [cursor=pointer]:
+            - generic [ref=e52]: Text Analytics
+          - generic:
+            - button "Annotate" [ref=e53] [cursor=pointer]:
+              - generic [ref=e54]: Annotate
+            - button "Categorize" [ref=e55] [cursor=pointer]:
+              - generic [ref=e56]: Categorize
+            - button "Semantic similarity" [ref=e57] [cursor=pointer]:
+              - generic [ref=e58]: Semantic similarity
+            - button "Sentiment" [ref=e59] [cursor=pointer]:
+              - generic [ref=e60]: Sentiment
+            - button "Extract article information" [ref=e61] [cursor=pointer]:
+              - generic [ref=e62]: Extract article information
+            - button "Detect language" [ref=e63] [cursor=pointer]:
+              - generic [ref=e64]: Detect language
+            - button "Train topic" [ref=e65] [cursor=pointer]:
+              - generic [ref=e66]: Train topic
+        - generic [ref=e67]:
+          - button "Articles" [ref=e68] [cursor=pointer]:
+            - generic [ref=e69]: Articles
+          - generic:
+            - button "Get articles" [ref=e70] [cursor=pointer]:
+              - generic [ref=e71]: Get articles
+            - button "Get articles for topic page" [ref=e72] [cursor=pointer]:
+              - generic [ref=e73]: Get articles for topic page
+            - button "Get article details" [ref=e74] [cursor=pointer]:
+              - generic [ref=e75]: Get article details
+            - button "Stream of new articles" [ref=e76] [cursor=pointer]:
+              - generic [ref=e77]: Stream of new articles
+        - generic [ref=e78]:
+          - button "Events" [ref=e79] [cursor=pointer]:
+            - generic [ref=e80]: Events
+          - generic:
+            - button "Get events" [ref=e81] [cursor=pointer]:
+              - generic [ref=e82]: Get events
+            - button "Get events for a topic page" [ref=e83] [cursor=pointer]:
+              - generic [ref=e84]: Get events for a topic page
+            - button "Get event details" [ref=e85] [cursor=pointer]:
+              - generic [ref=e86]: Get event details
+            - button "Stream of events" [ref=e87] [cursor=pointer]:
+              - generic [ref=e88]: Stream of events
+            - button "Get list of breaking events" [ref=e89] [cursor=pointer]:
+              - generic [ref=e90]: Get list of breaking events
+        - generic [ref=e91]:
+          - button "Event Types" [ref=e92] [cursor=pointer]:
+            - generic [ref=e93]: Event Types
+          - button "Get mentions" [ref=e94] [cursor=pointer]:
+            - generic [ref=e95]: Get mentions
+        - generic [ref=e96]:
+          - button "Autosuggest" [ref=e97] [cursor=pointer]:
+            - generic [ref=e98]: Autosuggest
+          - generic:
+            - button "Suggest concepts" [ref=e99] [cursor=pointer]:
+              - generic [ref=e100]: Suggest concepts
+            - button "Suggest categories" [ref=e101] [cursor=pointer]:
+              - generic [ref=e102]: Suggest categories
+            - button "Suggest sources" [ref=e103] [cursor=pointer]:
+              - generic [ref=e104]: Suggest sources
+            - button "Suggest authors" [ref=e105] [cursor=pointer]:
+              - generic [ref=e106]: Suggest authors
+            - button "Suggest locations" [ref=e107] [cursor=pointer]:
+              - generic [ref=e108]: Suggest locations
+            - button "Suggest event types" [ref=e109] [cursor=pointer]:
+              - generic [ref=e110]: Suggest event types
+        - generic [ref=e111]:
+          - button "Other" [ref=e112] [cursor=pointer]:
+            - generic [ref=e113]: Other
+          - generic:
+            - button "API Usage" [ref=e114] [cursor=pointer]:
+              - generic [ref=e115]: API Usage
+            - button "Get event for text" [ref=e116] [cursor=pointer]:
+              - generic [ref=e117]: Get event for text
+        - generic:
+          - separator
+        - button "Terminology" [ref=e119] [cursor=pointer]:
+          - generic [ref=e120]: Terminology
+        - button "Data Models" [ref=e122] [cursor=pointer]:
+          - generic [ref=e123]: Data Models
+        - generic [ref=e124]:
+          - button "n8n Integration" [ref=e125] [cursor=pointer]:
+            - generic [ref=e126]: n8n Integration
+          - generic:
+            - button "Overview" [ref=e127] [cursor=pointer]:
+              - generic [ref=e128]: Overview
+            - button "Example 1" [ref=e129] [cursor=pointer]:
+              - generic [ref=e130]: Example 1
+            - button "Example 2" [ref=e131] [cursor=pointer]:
+              - generic [ref=e132]: Example 2
+            - button "Example 3" [ref=e133] [cursor=pointer]:
+              - generic [ref=e134]: Example 3
+      - generic [ref=e5475]:
+        - generic [ref=e5476]:
+          - heading "Data models" [level=1] [ref=e5479]
+          - generic [ref=e5481]:
+            - paragraph [ref=e5482]: When making queries in Event Registry, there are different data types that are returned as json objects, such as information about an event, article, concept, category, etc. Below we will provide data models for common data types together with all possible fields.
+            - paragraph [ref=e5483]:
+              - text: Some of the displayed properties are not included in the returned JSON objects by default. In order to change which properties are returned, please check the different properties under the "Returned details" sections for each API call. Names of these properties start with
+              - code [ref=e5484]: include*
+              - text: .
+        - generic [ref=e5485]:
+          - heading "Article data model" [level=2] [ref=e5488]
+          - paragraph [ref=e5491]: Available details that can be returned about an individual article.
+          - code [ref=e5495]: "{ // article's URI (unique article's ID - not necessarily a number) \"uri\": \"143701955\", // web url \"url\": \"http://www.Newsmax.com/Newsfront/obama-staff-veterans-revamp/2013/12/18/id/542478\", // article's title \"title\": \"Desperate Obama Tries to Reset Agenda with New Staff\", // article's full body \"body\": \"As Phil Schiliro arrived at his first meeting last ...\", // date and time we found the article in UTC timezone (same as dateTime below, but split into date and time) \"date\": \"2013-12-18\", \"time\": \"11:40:00\", // datetime when we found and serialized the article in UTC timezone. Each next article added to Event Registry will have a higher value \"dateTime\": \"2013-12-18T11:40:00Z\", // the datetime provided in the RSS feed or in article's metadata. The value chosen is the value closest to the datetime when the article was identified. The value is not monotonically increasing as the articles are added to Event Registry \"dateTimePub\": \"2013-12-18T11:12:00Z\", // language of the article \"lang\": \"eng\", // is article a duplicate of another article? \"isDuplicate\": false, // type of the article (news, blog, or pr) \"dataType\": \"news\", // sentiment of the article (can be null if value is not set). Between -1 (very negative) and 1 (very positive). \"sentiment\": -0.2, // event URI to which the article is assigned to (if any) \"eventUri\": \"eng-2320588\", // relevance represents how well does the article match the query - the higher the value, the better the match. // If search results are sorted by relevance, this is the value used for sorting \"relevance\": 34, // cluster/story URI to which the article is assigned to (if any) \"storyUri\": \"eng-2320588\", // article's image \"image\": \"https://cdn.arstechnica.net/wp-content/uploads/2013/07/you-slow.jpg\", \"source\": { // details about the news source (see Source data model) }, \"categories\": [ // list of categories (see Category data model) ], \"concepts\": [ // list of concepts (see Concept data model) ], // list of article's authors \"authors\": [ { \"uri\": \"john_doe@techcrunch.com\", \"name\": \"John Doe\", \"type\": \"author\", \"isAgency\": false }, ... ], // list of links extracted from the article body \"links\": [ \"https://techcrunch.com/2017/11/29/coinbase-internal-revenue-service-taxation/\", ... ], // list of videos extracted from the body \"videos\": [ { \"uri\": \"https://www.youtube.com/embed/Phtb6nZWiW0\", \"label\": \"GoPro on a Cat Left Home Alone\" }, ... ], \"shares\": { \"facebook\": 1, // number of shares on Facebook \"googlePlus\": 5, // shares on Google Plus (discontinued) \"pinterest:\" 2, // shares on Pinterest \"linkedIn\": 1 // shares on LinkedIn (discontinued) } // if an article has duplicates, this list will contain the URIs of the duplicate articles \"duplicateList\": [], // dates that were extracted from the article \"extractedDates\": [ { \"amb\": false, // ambiguous? \"date\": \"2013-12-03\", // normalized date \"dateEnd\": \"2013-12-08\", \"detectedDate\": \"Dec. 3-8\", // detected string \"imp\": true, // was the year value imputed? \"posInText\": 6164, // location in text \"textSnippet\": \"ublican attacks. A Dec. 3-8 poll of 86 competit\" }, // remaining list of extracted dates ], \"location\": null, // was there explicit location extracted from dateline? \"originalArticle\": null, // if this is a duplicate, this would be original article's object \"sim\": 0.3906, // cosine similarity of the article to the centroid of the story \"wgt\": 12341243, // parameter used internally for sorting purposes (DO NOT USE THE VALUE) }"
+        - generic [ref=e5496]:
+          - heading "Event data model" [level=2] [ref=e5499]
+          - paragraph [ref=e5502]: Available details that can be returned about an individual event.
+        - generic [ref=e5505]:
+          - heading "Mention data model" [level=2] [ref=e5508]
+          - paragraph [ref=e5511]: Available details that can be returned about an individual mention.
+        - generic [ref=e5514]:
+          - heading "Concept data model" [level=2] [ref=e5517]
+          - paragraph [ref=e5520]: Events and articles can return a list of concepts that are associated with them. For each concept, a number of available properties can be returned.
+        - generic [ref=e5523]:
+          - heading "Category data model" [level=2] [ref=e5526]
+          - paragraph [ref=e5529]: Articles and events can return a list of categories that are associated with them. Here are the possible details provided for each category.
+        - generic [ref=e5532]:
+          - heading "News source data model" [level=2] [ref=e5535]
+          - paragraph [ref=e5538]: News articles are associated with a news source. Below is the available information about a news source.
+  - button "Open chat window" [ref=e259] [cursor=pointer]:
+    - img [ref=e260]

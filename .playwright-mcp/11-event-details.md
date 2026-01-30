@@ -1,0 +1,834 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e5]:
+    - navigation [ref=e6]:
+      - generic [ref=e7]:
+        - img [ref=e12]
+        - generic [ref=e23] [cursor=pointer]:
+          - generic [ref=e24]: Rest API
+          - generic [ref=e25]: 
+        - generic [ref=e26]: Sign in
+        - generic [ref=e30] [cursor=pointer]: 
+    - generic [ref=e34]:
+      - generic [ref=e36]:
+        - button "Introduction" [ref=e38] [cursor=pointer]:
+          - generic [ref=e39]: Introduction
+        - generic:
+          - separator
+        - generic [ref=e40]:
+          - button "Most Used" [ref=e41] [cursor=pointer]:
+            - generic [ref=e42]: Most Used
+          - generic [ref=e43]:
+            - button "Get articles" [ref=e44] [cursor=pointer]:
+              - generic [ref=e45]: Get articles
+            - button "Get events" [ref=e46] [cursor=pointer]:
+              - generic [ref=e47]: Get events
+            - button "Suggest concepts" [ref=e48] [cursor=pointer]:
+              - generic [ref=e49]: Suggest concepts
+        - generic:
+          - separator
+        - generic [ref=e50]:
+          - button "Text Analytics" [ref=e51] [cursor=pointer]:
+            - generic [ref=e52]: Text Analytics
+          - generic:
+            - button "Annotate" [ref=e53] [cursor=pointer]:
+              - generic [ref=e54]: Annotate
+            - button "Categorize" [ref=e55] [cursor=pointer]:
+              - generic [ref=e56]: Categorize
+            - button "Semantic similarity" [ref=e57] [cursor=pointer]:
+              - generic [ref=e58]: Semantic similarity
+            - button "Sentiment" [ref=e59] [cursor=pointer]:
+              - generic [ref=e60]: Sentiment
+            - button "Extract article information" [ref=e61] [cursor=pointer]:
+              - generic [ref=e62]: Extract article information
+            - button "Detect language" [ref=e63] [cursor=pointer]:
+              - generic [ref=e64]: Detect language
+            - button "Train topic" [ref=e65] [cursor=pointer]:
+              - generic [ref=e66]: Train topic
+        - generic [ref=e67]:
+          - button "Articles" [ref=e68] [cursor=pointer]:
+            - generic [ref=e69]: Articles
+          - generic:
+            - button "Get articles" [ref=e70] [cursor=pointer]:
+              - generic [ref=e71]: Get articles
+            - button "Get articles for topic page" [ref=e72] [cursor=pointer]:
+              - generic [ref=e73]: Get articles for topic page
+            - button "Get article details" [ref=e74] [cursor=pointer]:
+              - generic [ref=e75]: Get article details
+            - button "Stream of new articles" [ref=e76] [cursor=pointer]:
+              - generic [ref=e77]: Stream of new articles
+        - generic [ref=e78]:
+          - button "Events" [ref=e79] [cursor=pointer]:
+            - generic [ref=e80]: Events
+          - generic [ref=e1779]:
+            - button "Get events" [ref=e81] [cursor=pointer]:
+              - generic [ref=e82]: Get events
+            - button "Get events for a topic page" [ref=e83] [cursor=pointer]:
+              - generic [ref=e84]: Get events for a topic page
+            - button "Get event details" [ref=e85] [cursor=pointer]:
+              - generic [ref=e86]: Get event details
+            - button "Stream of events" [ref=e87] [cursor=pointer]:
+              - generic [ref=e88]: Stream of events
+            - button "Get list of breaking events" [ref=e89] [cursor=pointer]:
+              - generic [ref=e90]: Get list of breaking events
+        - generic [ref=e91]:
+          - button "Event Types" [ref=e92] [cursor=pointer]:
+            - generic [ref=e93]: Event Types
+          - button "Get mentions" [ref=e94] [cursor=pointer]:
+            - generic [ref=e95]: Get mentions
+        - generic [ref=e96]:
+          - button "Autosuggest" [ref=e97] [cursor=pointer]:
+            - generic [ref=e98]: Autosuggest
+          - generic:
+            - button "Suggest concepts" [ref=e99] [cursor=pointer]:
+              - generic [ref=e100]: Suggest concepts
+            - button "Suggest categories" [ref=e101] [cursor=pointer]:
+              - generic [ref=e102]: Suggest categories
+            - button "Suggest sources" [ref=e103] [cursor=pointer]:
+              - generic [ref=e104]: Suggest sources
+            - button "Suggest authors" [ref=e105] [cursor=pointer]:
+              - generic [ref=e106]: Suggest authors
+            - button "Suggest locations" [ref=e107] [cursor=pointer]:
+              - generic [ref=e108]: Suggest locations
+            - button "Suggest event types" [ref=e109] [cursor=pointer]:
+              - generic [ref=e110]: Suggest event types
+        - generic [ref=e111]:
+          - button "Other" [ref=e112] [cursor=pointer]:
+            - generic [ref=e113]: Other
+          - generic:
+            - button "API Usage" [ref=e114] [cursor=pointer]:
+              - generic [ref=e115]: API Usage
+            - button "Get event for text" [ref=e116] [cursor=pointer]:
+              - generic [ref=e117]: Get event for text
+        - generic:
+          - separator
+        - button "Terminology" [ref=e119] [cursor=pointer]:
+          - generic [ref=e120]: Terminology
+        - button "Data Models" [ref=e122] [cursor=pointer]:
+          - generic [ref=e123]: Data Models
+        - generic [ref=e124]:
+          - button "n8n Integration" [ref=e125] [cursor=pointer]:
+            - generic [ref=e126]: n8n Integration
+          - generic:
+            - button "Overview" [ref=e127] [cursor=pointer]:
+              - generic [ref=e128]: Overview
+            - button "Example 1" [ref=e129] [cursor=pointer]:
+              - generic [ref=e130]: Example 1
+            - button "Example 2" [ref=e131] [cursor=pointer]:
+              - generic [ref=e132]: Example 2
+            - button "Example 3" [ref=e133] [cursor=pointer]:
+              - generic [ref=e134]: Example 3
+      - generic [ref=e2219]:
+        - generic [ref=e2220]:
+          - heading "Get event details" [level=1] [ref=e2222]
+          - generic [ref=e2224]:
+            - text: Try in sandbox
+            - generic [ref=e2225]: 
+        - paragraph [ref=e2228]: Obtain details about a single event.
+        - paragraph [ref=e2231]:
+          - paragraph [ref=e2232]:
+            - text: The endpoint can be used to retrieve detailed information about a single event of interest. The event of interest should be provided with the
+            - code [ref=e2233]: eventUri
+            - text: parameter.
+          - paragraph [ref=e2234]:
+            - text: For each event you can retrieve multiple properties. The most common is retrieving the list of articles that report about the event. Alternatively, you can also generate various summaries, by using some other
+            - code [ref=e2235]: returnType
+            - text: value. The return type
+            - code [ref=e2236]: keywordAggr
+            - text: will, for example, return the top keywords that are mentioned in the articles about the event.
+          - paragraph [ref=e2237]:
+            - text: If you would like to retrieve only a subset of articles assigned to the event, you can do so by specifying one of the available filters (
+            - code [ref=e2238]: keyword
+            - text: ","
+            - code [ref=e2239]: conceptUri
+            - text: ", etc.)."
+        - generic [ref=e2241]:
+          - text: Endpoint
+          - generic [ref=e2243]: GET | POST
+          - text: https://eventregistry.org/api/v1/event/getEvent
+        - generic [ref=e2245]: "HeadersContent-Type: application/json"
+        - generic [ref=e2248]:
+          - generic [ref=e2250]:
+            - button "Code examples" [ref=e2252] [cursor=pointer]
+            - button "Example output" [ref=e2254] [cursor=pointer]
+            - button "Output schema" [ref=e2256] [cursor=pointer]
+          - generic [ref=e2259]:
+            - generic [ref=e2261]:
+              - button "Example 1" [ref=e2263] [cursor=pointer]
+              - button "Example 2" [ref=e2265] [cursor=pointer]
+              - button "Example 3" [ref=e2267] [cursor=pointer]
+            - generic [ref=e2270]:
+              - paragraph [ref=e2273]: Get articles that belong to a particular event with a given URI.
+              - generic [ref=e2276]: Request body
+        - generic [ref=e2278]:
+          - generic [ref=e2282] [cursor=pointer]:
+            - generic [ref=e2284]: 
+            - generic [ref=e2285]: Parameters
+          - generic [ref=e2288]:
+            - generic [ref=e2290]:
+              - generic [ref=e2292]: apiKey string (required)
+              - paragraph [ref=e2295]: Your API key
+            - generic [ref=e2297]:
+              - generic [ref=e2299]: eventUri string (required)
+              - paragraph [ref=e2302]: Specify the URI of the event you would like to see returned.
+            - generic [ref=e2304]:
+              - generic [ref=e2306]: resultType string | string[]
+              - generic [ref=e2308]:
+                - paragraph [ref=e2309]: Define what kind of results you would like to get. Each result type corresponds to the prefix that'll be used for other parameters.
+                - generic [ref=e2310]:
+                  - text: "Available values:"
+                  - generic [ref=e2311]:
+                    - code [ref=e2312]: info
+                    - text: ","
+                    - code [ref=e2313]: articles
+                    - text: ","
+                    - code [ref=e2314]: articleUris
+                    - text: ","
+                    - code [ref=e2315]: keywordAggr
+                    - text: ","
+                    - code [ref=e2316]: sourceExAggr
+                    - text: ","
+                    - code [ref=e2317]: dateMentionAggr
+                    - text: ","
+                    - code [ref=e2318]: articleTrend
+                    - text: ","
+                    - code [ref=e2319]: similarEvents
+                - generic [ref=e2320]:
+                  - text: "Default value:"
+                  - code [ref=e2321]: info
+            - generic [ref=e2323]:
+              - generic [ref=e2325]: articlesLang string | string[]
+              - paragraph [ref=e2328]:
+                - text: If resultType is
+                - code [ref=e2329]: articles
+                - text: then use this parameter if you wish to obtain only articles about the event in specific language(s).
+            - generic [ref=e2331]:
+              - generic [ref=e2333]: articlesIncludeDuplicates boolean
+              - generic [ref=e2335]:
+                - paragraph [ref=e2336]:
+                  - text: If resultType is
+                  - code [ref=e2337]: articles
+                  - text: then set this value to
+                  - code [ref=e2338]: "true"
+                  - text: in order to return also articles that are copies of other articles (possibly from other news sources).
+                - generic [ref=e2339]:
+                  - text: "Default value:"
+                  - code [ref=e2340]: "false"
+        - generic [ref=e2342]:
+          - generic [ref=e2344] [cursor=pointer]:
+            - generic [ref=e2346]:
+              - generic [ref=e2348]: 
+              - generic [ref=e2349]: Filters
+            - paragraph [ref=e2352]: Click to see possible parameters that you can specify to filter event's articles to a subset based on your criteria
+          - generic:
+            - generic:
+              - generic:
+                - generic [ref=e2354]:
+                  - generic [ref=e2356]: keyword string | string[]
+                  - generic [ref=e2358]:
+                    - paragraph [ref=e2359]:
+                      - text: Find articles that mention the specified keyword or a phrase. You can specify at most 60 keywords in a single search. If you specify multiple
+                      - code [ref=e2360]: keyword
+                      - text: parameters, then only articles that mention all of them will be returned, unless you specify
+                      - code [ref=e2361]: keywordOper
+                      - text: parameter and set it to
+                      - code [ref=e2362]: or
+                      - text: .
+                    - generic [ref=e2363]:
+                      - text: "Example value:"
+                      - code [ref=e2365]: Barack Obama
+                - generic [ref=e2367]:
+                  - generic [ref=e2369]: conceptUri string | string[]
+                  - generic [ref=e2371]:
+                    - paragraph [ref=e2372]:
+                      - text: Find articles that mention the concept with a concept uri. You can specify at most 50 concepts in a single search. If multiple
+                      - code [ref=e2373]: conceptUri
+                      - text: parameters are provided, then only articles that are about all specified concepts will be returned, unless you specify
+                      - code [ref=e2374]: conceptOper
+                      - text: parameter and set it to
+                      - code [ref=e2375]: or
+                      - text: . Check
+                      - link "autosuggest methods" [ref=e2376] [cursor=pointer]:
+                        - /url: /documentation?tab=suggConcepts
+                      - text: to get concept URI value for a specified concept label.
+                    - generic [ref=e2377]:
+                      - text: "Example value:"
+                      - code [ref=e2379]: http://en.wikipedia.org/wiki/World_Health_Organization
+                - generic [ref=e2381]:
+                  - generic [ref=e2383]: categoryUri string | string[]
+                  - generic [ref=e2385]:
+                    - paragraph [ref=e2386]:
+                      - text: Find articles that are assigned to a particular category. You can specify at most 20 categories in a single search. If multiple
+                      - code [ref=e2387]: categoryUri
+                      - text: parameters are provided, then articles that are about any of the specified categories will be returned, unless you specify
+                      - code [ref=e2388]: categoryOper
+                      - text: parameter and set it to
+                      - code [ref=e2389]: and
+                      - text: . Check
+                      - link "autosuggest methods" [ref=e2390] [cursor=pointer]:
+                        - /url: /documentation?tab=suggCategories
+                      - text: to get value for a specified category name.
+                    - generic [ref=e2391]:
+                      - text: "Example value:"
+                      - code [ref=e2393]: dmoz/Business/Accounting
+                - generic [ref=e2395]:
+                  - generic [ref=e2397]: sourceUri string | string[]
+                  - generic [ref=e2399]:
+                    - paragraph [ref=e2400]:
+                      - text: Find articles that have been published by a news source. If you specify multiple
+                      - code [ref=e2401]: sourceUri
+                      - text: parameters, then articles from any of the specified sources will be returned. Check
+                      - link "autosuggest methods" [ref=e2402] [cursor=pointer]:
+                        - /url: /documentation?tab=suggSources
+                      - text: to get value for a source name.
+                    - generic [ref=e2403]:
+                      - text: "Example value:"
+                      - code [ref=e2405]: bbc.co.uk
+                - generic [ref=e2407]:
+                  - generic [ref=e2409]: sourceLocationUri string | string[]
+                  - generic [ref=e2411]:
+                    - paragraph [ref=e2412]:
+                      - text: Find articles that were published by news sources located at the given geographic location (city or country). If you specify multiple
+                      - code [ref=e2413]: sourceLocationUri
+                      - text: parameters, then articles from sources from any of the specified sources will be returned. Check
+                      - link "autosuggest methods" [ref=e2414] [cursor=pointer]:
+                        - /url: /documentation?tab=suggLocations
+                      - text: to get value for a location name.
+                    - generic [ref=e2415]:
+                      - text: "Example value:"
+                      - code [ref=e2417]: http://en.wikipedia.org/wiki/Germany
+                - generic [ref=e2419]:
+                  - generic [ref=e2421]: sourceGroupUri string | string[]
+                  - generic [ref=e2423]:
+                    - paragraph [ref=e2424]:
+                      - text: Find articles that were published by news sources that are assigned to some predefined group of news sources. Check
+                      - link "autosuggest methods" [ref=e2425] [cursor=pointer]:
+                        - /url: /documentation?tab=suggSourceGroups
+                      - text: to get value for a source group or find the uri.
+                    - generic [ref=e2426]:
+                      - text: "Example value:"
+                      - code [ref=e2428]: general/ERtop10
+                - generic [ref=e2430]:
+                  - generic [ref=e2432]: authorUri string | string[]
+                  - generic [ref=e2434]:
+                    - paragraph [ref=e2435]:
+                      - text: Find articles that were written by a particular author. Check
+                      - link "autosuggest methods" [ref=e2436] [cursor=pointer]:
+                        - /url: /documentation?tab=suggAuthors
+                      - text: to get value for author uri based on the author name (and potentially source url).
+                    - generic [ref=e2437]:
+                      - text: "Example value:"
+                      - code [ref=e2439]: mark_mazzetti@nytimes.com
+                - generic [ref=e2441]:
+                  - generic [ref=e2443]: locationUri string | string[]
+                  - generic [ref=e2445]:
+                    - paragraph [ref=e2446]:
+                      - text: Find articles that describe something that occured at a particular location (based on the location mentioned in the dateline). Check
+                      - link "autosuggest methods" [ref=e2447] [cursor=pointer]:
+                        - /url: /documentation?tab=suggLocations
+                      - text: "to get value for a location name. NOTE: If a location will not be specified in the dateline (immediate start of the article), the article will not be returned. Consider also using"
+                      - code [ref=e2448]: conceptUri
+                      - text: to find articles that mention a particular location.
+                    - generic [ref=e2449]:
+                      - text: "Example value:"
+                      - code [ref=e2451]: http://en.wikipedia.org/wiki/United_States
+                - generic [ref=e2453]:
+                  - generic [ref=e2455]: dateStart string
+                  - generic [ref=e2457]:
+                    - paragraph [ref=e2458]: The starting date on or after the articles of interest were published. The date should be in the YYYY-MM-DD format.
+                    - generic [ref=e2459]:
+                      - text: "Example value:"
+                      - code [ref=e2461]: 2018-01-03
+                - generic [ref=e2463]:
+                  - generic [ref=e2465]: dateEnd string
+                  - generic [ref=e2467]:
+                    - paragraph [ref=e2468]: The last date on which the articles of interest were published. The date should be in the YYYY-MM-DD format.
+                    - generic [ref=e2469]:
+                      - text: "Example value:"
+                      - code [ref=e2471]: 2018-01-10
+                - generic [ref=e2473]:
+                  - generic [ref=e2475]: dateMentionStart string
+                  - generic [ref=e2477]:
+                    - paragraph [ref=e2478]:
+                      - text: Ignore events that contain one or more articles that explicitly mention a date that is equal or greater than
+                      - code [ref=e2479]: dateMentionStart
+                      - text: . The date should be in the YYYY-MM-DD format.
+                    - generic [ref=e2480]:
+                      - text: "Example value:"
+                      - code [ref=e2482]: 2018-01-10
+                - generic [ref=e2484]:
+                  - generic [ref=e2486]: dateMentionEnd string
+                  - generic [ref=e2488]:
+                    - paragraph [ref=e2489]:
+                      - text: Ignore events that contain one or more articles that explicitly mention a date that is lower or equal to
+                      - code [ref=e2490]: dateMentionEnd
+                      - text: . The date should be in the YYYY-MM-DD format.
+                    - generic [ref=e2491]:
+                      - text: "Example value:"
+                      - code [ref=e2493]: 2018-01-10
+                - generic [ref=e2495]:
+                  - generic [ref=e2497]: keywordLoc string
+                  - generic [ref=e2499]:
+                    - paragraph [ref=e2500]:
+                      - text: What data should be used when searching using the keywords provided by
+                      - code [ref=e2501]: keywords
+                      - text: parameter.
+                    - generic [ref=e2502]:
+                      - text: "Available values:"
+                      - generic [ref=e2503]:
+                        - code [ref=e2504]: body
+                        - text: ","
+                        - code [ref=e2505]: title
+                        - text: ","
+                        - code [ref=e2506]: body,title
+                    - generic [ref=e2507]:
+                      - text: "Default value:"
+                      - code [ref=e2508]: body
+                - generic [ref=e2510]:
+                  - generic [ref=e2512]: keywordOper string
+                  - generic [ref=e2514]:
+                    - paragraph [ref=e2515]:
+                      - text: If more keywords are provided with the
+                      - code [ref=e2516]: keyword
+                      - text: parameter, what should be the Boolean operator used. If
+                      - code [ref=e2517]: and
+                      - text: (default) then all of the specified keywords have to be present in the article; if
+                      - code [ref=e2518]: or
+                      - text: then an article will be returned if it mentions any of the provided keywords.
+                    - generic [ref=e2519]:
+                      - text: "Available values:"
+                      - generic [ref=e2520]:
+                        - code [ref=e2521]: and
+                        - text: ","
+                        - code [ref=e2522]: or
+                    - generic [ref=e2523]:
+                      - text: "Default value:"
+                      - code [ref=e2524]: and
+                - generic [ref=e2526]:
+                  - generic [ref=e2528]: conceptOper string
+                  - generic [ref=e2530]:
+                    - paragraph [ref=e2531]:
+                      - text: If more concepts are provided with the
+                      - code [ref=e2532]: conceptUri
+                      - text: parameter, what should be the Boolean operator used. If
+                      - code [ref=e2533]: and
+                      - text: (default) then all of the specified concepts have to be present in the article; if
+                      - code [ref=e2534]: or
+                      - text: then an article will be returned if it mentions any of the provided concepts.
+                    - generic [ref=e2535]:
+                      - text: "Available values:"
+                      - generic [ref=e2536]:
+                        - code [ref=e2537]: and
+                        - text: ","
+                        - code [ref=e2538]: or
+                    - generic [ref=e2539]:
+                      - text: "Default value:"
+                      - code [ref=e2540]: and
+                - generic [ref=e2542]:
+                  - generic [ref=e2544]: categoryOper string
+                  - generic [ref=e2546]:
+                    - paragraph [ref=e2547]:
+                      - text: If more categories are provided with the
+                      - code [ref=e2548]: categoryUri
+                      - text: parameter, what should be the Boolean operator used. If
+                      - code [ref=e2549]: and
+                      - text: then all of the specified categories have to be present in the article; if
+                      - code [ref=e2550]: or
+                      - text: then an article will be returned if it mentions any of the provided categories.
+                    - generic [ref=e2551]:
+                      - text: "Available values:"
+                      - generic [ref=e2552]:
+                        - code [ref=e2553]: and
+                        - text: ","
+                        - code [ref=e2554]: or
+                    - generic [ref=e2555]:
+                      - text: "Default value:"
+                      - code [ref=e2556]: or
+                - generic [ref=e2558]:
+                  - generic [ref=e2560]: startSourceRankPercentile integer
+                  - generic [ref=e2562]:
+                    - paragraph [ref=e2563]:
+                      - text: Starting
+                      - link "ranking percentile of the sources" [ref=e2564] [cursor=pointer]:
+                        - /url: https://github.com/EventRegistry/event-registry-python/wiki/Source-filtering#filtering-of-sources-based-on-their-ranking
+                      - text: "to consider in the results (default: 0). Value should be in range 0-90 and divisible by 10."
+                    - generic [ref=e2565]:
+                      - text: "Default value:"
+                      - code [ref=e2566]: "0"
+                - generic [ref=e2568]:
+                  - generic [ref=e2570]: endSourceRankPercentile integer
+                  - generic [ref=e2572]:
+                    - paragraph [ref=e2573]:
+                      - text: Ending
+                      - link "ranking percentile of the sources" [ref=e2574] [cursor=pointer]:
+                        - /url: https://github.com/EventRegistry/event-registry-python/wiki/Source-filtering#filtering-of-sources-based-on-their-ranking
+                      - text: "to consider in the results (default: 100). Value should be in range 10-100 and divisible by 10."
+                    - generic [ref=e2575]:
+                      - text: "Default value:"
+                      - code [ref=e2576]: "100"
+                - generic [ref=e2578]:
+                  - generic [ref=e2580]: minSentiment integer
+                  - paragraph [ref=e2583]: The minimum value of the sentiment, the article should have. Valid value is any floating number between -1 (very negative) to 1 (very positive). 0 represents neutral sentiment. Note that setting the value will automatically reduce results to just English articles, since the sentiment can only be computed for English language.
+                - generic [ref=e2585]:
+                  - generic [ref=e2587]: maxSentiment integer
+                  - paragraph [ref=e2590]: The maximum value of the sentiment, the article should have. Valid value is any floating number between -1 (very negative) to 1 (very positive). 0 represents neutral sentiment. Note that setting the value will automatically reduce results to just English articles, since the sentiment can only be computed for English language.
+        - generic [ref=e2592]:
+          - generic [ref=e2594] [cursor=pointer]:
+            - generic [ref=e2596]:
+              - generic [ref=e2598]: 
+              - generic [ref=e2599]: Returned Details
+            - paragraph [ref=e2602]: The API call can return more or less meta-data information about the events, articles, concepts, categories, sources and locations. Click to see the available properties that can be specified to determine the amount of returned information.
+          - generic:
+            - generic:
+              - generic:
+                - generic [ref=e2604]:
+                  - generic [ref=e2606]: includeEventTitle boolean
+                  - generic [ref=e2608]:
+                    - paragraph [ref=e2609]: Set this parameter to true to include the event title in the response.
+                    - generic [ref=e2610]:
+                      - text: "Default value:"
+                      - code [ref=e2611]: "true"
+                - generic [ref=e2613]:
+                  - generic [ref=e2615]: includeEventSummary boolean
+                  - generic [ref=e2617]:
+                    - paragraph [ref=e2618]: Set this parameter to true to include the event title in the response.
+                    - generic [ref=e2619]:
+                      - text: "Default value:"
+                      - code [ref=e2620]: "false"
+                - generic [ref=e2622]:
+                  - generic [ref=e2624]: includeEventSocialScore boolean
+                  - generic [ref=e2626]:
+                    - paragraph [ref=e2627]: Set this parameter to true to include the event social score in the response.
+                    - generic [ref=e2628]:
+                      - text: "Default value:"
+                      - code [ref=e2629]: "false"
+                - generic [ref=e2631]:
+                  - generic [ref=e2633]: includeEventSentiment boolean
+                  - generic [ref=e2635]:
+                    - paragraph [ref=e2636]: Set this parameter to true to include the event sentiment in the response.
+                    - generic [ref=e2637]:
+                      - text: "Default value:"
+                      - code [ref=e2638]: "true"
+                - generic [ref=e2640]:
+                  - generic [ref=e2642]: includeEventLocation boolean
+                  - generic [ref=e2644]:
+                    - paragraph [ref=e2645]: Set this parameter to true to include the event location in the response.
+                    - generic [ref=e2646]:
+                      - text: "Default value:"
+                      - code [ref=e2647]: "true"
+                - generic [ref=e2649]:
+                  - generic [ref=e2651]: includeEventDate boolean
+                  - generic [ref=e2653]:
+                    - paragraph [ref=e2654]: Set this parameter to true to include the event date in the response.
+                    - generic [ref=e2655]:
+                      - text: "Default value:"
+                      - code [ref=e2656]: "true"
+                - generic [ref=e2658]:
+                  - generic [ref=e2660]: includeEventArticleCounts boolean
+                  - generic [ref=e2662]:
+                    - paragraph [ref=e2663]: Set this parameter to true to include the article counts for events in the response.
+                    - generic [ref=e2664]:
+                      - text: "Default value:"
+                      - code [ref=e2665]: "true"
+                - generic [ref=e2667]:
+                  - generic [ref=e2669]: includeEventConcepts boolean
+                  - generic [ref=e2671]:
+                    - paragraph [ref=e2672]: Set this parameter to true to include the event concepts in the response.
+                    - generic [ref=e2673]:
+                      - text: "Default value:"
+                      - code [ref=e2674]: "true"
+                - generic [ref=e2676]:
+                  - generic [ref=e2678]: includeEventCategories boolean
+                  - generic [ref=e2680]:
+                    - paragraph [ref=e2681]: Set this parameter to true to include the event categories in the response.
+                    - generic [ref=e2682]:
+                      - text: "Default value:"
+                      - code [ref=e2683]: "true"
+                - generic [ref=e2685]:
+                  - generic [ref=e2687]: includeEventCommonDates boolean
+                  - generic [ref=e2689]:
+                    - paragraph [ref=e2690]: Set this parameter to true to include the event commmon dates in the response.
+                    - generic [ref=e2691]:
+                      - text: "Default value:"
+                      - code [ref=e2692]: "false"
+                - generic [ref=e2694]:
+                  - generic [ref=e2696]: includeEventStories boolean
+                  - generic [ref=e2698]:
+                    - paragraph [ref=e2699]: Set this parameter to true to include the event stories in the response.
+                    - generic [ref=e2700]:
+                      - text: "Default value:"
+                      - code [ref=e2701]: "false"
+                - generic [ref=e2703]:
+                  - generic [ref=e2705]: eventImageCount integer
+                  - generic [ref=e2707]:
+                    - paragraph [ref=e2708]: Define how many images you would like to have in the response.
+                    - generic [ref=e2709]:
+                      - text: "Default value:"
+                      - code [ref=e2710]: "0"
+                - generic [ref=e2712]:
+                  - generic [ref=e2714]: includeConceptLabel boolean
+                  - generic [ref=e2716]:
+                    - paragraph [ref=e2717]: Set this parameter to true to include the concept label in the response.
+                    - generic [ref=e2718]:
+                      - text: "Default value:"
+                      - code [ref=e2719]: "true"
+                - generic [ref=e2721]:
+                  - generic [ref=e2723]: includeConceptImage boolean
+                  - generic [ref=e2725]:
+                    - paragraph [ref=e2726]: Set this parameter to true to include the concept image in the response.
+                    - generic [ref=e2727]:
+                      - text: "Default value:"
+                      - code [ref=e2728]: "false"
+                - generic [ref=e2730]:
+                  - generic [ref=e2732]: includeConceptSynonyms boolean
+                  - generic [ref=e2734]:
+                    - paragraph [ref=e2735]: Set this parameter to true to include the concept synonyms in the response.
+                    - generic [ref=e2736]:
+                      - text: "Default value:"
+                      - code [ref=e2737]: "false"
+                - generic [ref=e2739]:
+                  - generic [ref=e2741]: conceptLang string
+                  - generic [ref=e2743]:
+                    - paragraph [ref=e2744]: Define the language of the concept label.
+                    - generic [ref=e2745]:
+                      - text: "Default value:"
+                      - code [ref=e2746]: eng
+                - generic [ref=e2748]:
+                  - generic [ref=e2750]: includeStoryBasicStats boolean
+                  - generic [ref=e2752]:
+                    - paragraph [ref=e2753]: Set this parameter to true to include story basic stats in the response.
+                    - generic [ref=e2754]:
+                      - text: "Default value:"
+                      - code [ref=e2755]: "false"
+                - generic [ref=e2757]:
+                  - generic [ref=e2759]: includeStoryTitle boolean
+                  - generic [ref=e2761]:
+                    - paragraph [ref=e2762]: Set this parameter to true to include the story title in the response.
+                    - generic [ref=e2763]:
+                      - text: "Default value:"
+                      - code [ref=e2764]: "false"
+                - generic [ref=e2766]:
+                  - generic [ref=e2768]: includeStoryLocation boolean
+                  - generic [ref=e2770]:
+                    - paragraph [ref=e2771]: Set this parameter to true to include the story location in the response.
+                    - generic [ref=e2772]:
+                      - text: "Default value:"
+                      - code [ref=e2773]: "false"
+                - generic [ref=e2775]:
+                  - generic [ref=e2777]: includeStoryDate boolean
+                  - generic [ref=e2779]:
+                    - paragraph [ref=e2780]: Set this parameter to true to include the story date in the response.
+                    - generic [ref=e2781]:
+                      - text: "Default value:"
+                      - code [ref=e2782]: "false"
+                - generic [ref=e2784]:
+                  - generic [ref=e2786]: includeStoryConcepts boolean
+                  - generic [ref=e2788]:
+                    - paragraph [ref=e2789]: Set this parameter to true to include the story concepts in the response.
+                    - generic [ref=e2790]:
+                      - text: "Default value:"
+                      - code [ref=e2791]: "false"
+                - generic [ref=e2793]:
+                  - generic [ref=e2795]: includeStoryCategories boolean
+                  - generic [ref=e2797]:
+                    - paragraph [ref=e2798]: Set this parameter to true to include the story categories in the response.
+                    - generic [ref=e2799]:
+                      - text: "Default value:"
+                      - code [ref=e2800]: "false"
+                - generic [ref=e2802]:
+                  - generic [ref=e2804]: includeStoryMedoidArticle boolean
+                  - generic [ref=e2806]:
+                    - paragraph [ref=e2807]: Set this parameter to true to include story medoid article in the response.
+                    - generic [ref=e2808]:
+                      - text: "Default value:"
+                      - code [ref=e2809]: "false"
+                - generic [ref=e2811]:
+                  - generic [ref=e2813]: includeStoryCommonDates boolean
+                  - generic [ref=e2815]:
+                    - paragraph [ref=e2816]: Set this parameter to true to include story common dates in the response.
+                    - generic [ref=e2817]:
+                      - text: "Default value:"
+                      - code [ref=e2818]: "false"
+                - generic [ref=e2820]:
+                  - generic [ref=e2822]: storyImageCount integer
+                  - generic [ref=e2824]:
+                    - paragraph [ref=e2825]: Define how many images you would like to have in the response.
+                    - generic [ref=e2826]:
+                      - text: "Default value:"
+                      - code [ref=e2827]: "0"
+                - generic [ref=e2829]:
+                  - generic [ref=e2831]: includeArticleTitle boolean
+                  - generic [ref=e2833]:
+                    - paragraph [ref=e2834]: Set this parameter to true to include the article title in the response.
+                    - generic [ref=e2835]:
+                      - text: "Default value:"
+                      - code [ref=e2836]: "true"
+                - generic [ref=e2838]:
+                  - generic [ref=e2840]: includeArticleBasicInfo boolean
+                  - generic [ref=e2842]:
+                    - paragraph [ref=e2843]: Set this parameter to true to include the core article information in the response.
+                    - generic [ref=e2844]:
+                      - text: "Default value:"
+                      - code [ref=e2845]: "true"
+                - generic [ref=e2847]:
+                  - generic [ref=e2849]: includeArticleBody boolean
+                  - generic [ref=e2851]:
+                    - paragraph [ref=e2852]: Set this parameter to true to include the article body in the response.
+                    - generic [ref=e2853]:
+                      - text: "Default value:"
+                      - code [ref=e2854]: "true"
+                - generic [ref=e2856]:
+                  - generic [ref=e2858]: includeArticleEventUri boolean
+                  - generic [ref=e2860]:
+                    - paragraph [ref=e2861]: Set this parameter to true to include the uri of the event (to which the article belongs) in the response.
+                    - generic [ref=e2862]:
+                      - text: "Default value:"
+                      - code [ref=e2863]: "true"
+                - generic [ref=e2865]:
+                  - generic [ref=e2867]: includeArticleSocialScore boolean
+                  - generic [ref=e2869]:
+                    - paragraph [ref=e2870]: Set this parameter to true to include the information about how many times the article was shared on different social media.
+                    - generic [ref=e2871]:
+                      - text: "Default value:"
+                      - code [ref=e2872]: "false"
+                - generic [ref=e2874]:
+                  - generic [ref=e2876]: includeArticleSentiment boolean
+                  - generic [ref=e2878]:
+                    - paragraph [ref=e2879]: Set this parameter to true to include the article sentiment in the response (value will be non-null only for English articles).
+                    - generic [ref=e2880]:
+                      - text: "Default value:"
+                      - code [ref=e2881]: "true"
+                - generic [ref=e2883]:
+                  - generic [ref=e2885]: includeArticleConcepts boolean
+                  - generic [ref=e2887]:
+                    - paragraph [ref=e2888]: Set this parameter to true to include the article concepts in the response.
+                    - generic [ref=e2889]:
+                      - text: "Default value:"
+                      - code [ref=e2890]: "false"
+                - generic [ref=e2892]:
+                  - generic [ref=e2894]: includeArticleCategories boolean
+                  - generic [ref=e2896]:
+                    - paragraph [ref=e2897]: Set this parameter to true to include the article categories in the response.
+                    - generic [ref=e2898]:
+                      - text: "Default value:"
+                      - code [ref=e2899]: "false"
+                - generic [ref=e2901]:
+                  - generic [ref=e2903]: includeArticleLocation boolean
+                  - generic [ref=e2905]:
+                    - paragraph [ref=e2906]: Set this parameter to true to include the article location in the response.
+                    - generic [ref=e2907]:
+                      - text: "Default value:"
+                      - code [ref=e2908]: "false"
+                - generic [ref=e2910]:
+                  - generic [ref=e2912]: includeArticleImage boolean
+                  - generic [ref=e2914]:
+                    - paragraph [ref=e2915]: Set this parameter to true to include the article image in the response.
+                    - generic [ref=e2916]:
+                      - text: "Default value:"
+                      - code [ref=e2917]: "true"
+                - generic [ref=e2919]:
+                  - generic [ref=e2921]: includeArticleAuthors boolean
+                  - generic [ref=e2923]:
+                    - paragraph [ref=e2924]: Set this parameter to true to include the article authors in the response.
+                    - generic [ref=e2925]:
+                      - text: "Default value:"
+                      - code [ref=e2926]: "true"
+                - generic [ref=e2928]:
+                  - generic [ref=e2930]: includeArticleVideos boolean
+                  - generic [ref=e2932]:
+                    - paragraph [ref=e2933]: Set this parameter to true to include the article videos in the response.
+                    - generic [ref=e2934]:
+                      - text: "Default value:"
+                      - code [ref=e2935]: "false"
+                - generic [ref=e2937]:
+                  - generic [ref=e2939]: includeArticleLinks boolean
+                  - generic [ref=e2941]:
+                    - paragraph [ref=e2942]: Set this parameter to true to include the article links in the response.
+                    - generic [ref=e2943]:
+                      - text: "Default value:"
+                      - code [ref=e2944]: "false"
+                - generic [ref=e2946]:
+                  - generic [ref=e2948]: includeArticleExtractedDates boolean
+                  - generic [ref=e2950]:
+                    - paragraph [ref=e2951]: Set this parameter to true to include article extracted dates in the response.
+                    - generic [ref=e2952]:
+                      - text: "Default value:"
+                      - code [ref=e2953]: "false"
+                - generic [ref=e2955]:
+                  - generic [ref=e2957]: includeArticleDuplicateList boolean
+                  - generic [ref=e2959]:
+                    - paragraph [ref=e2960]: Set this parameter to true to include the list of duplicate articles in the response.
+                    - generic [ref=e2961]:
+                      - text: "Default value:"
+                      - code [ref=e2962]: "false"
+                - generic [ref=e2964]:
+                  - generic [ref=e2966]: includeArticleOriginalArticle boolean
+                  - generic [ref=e2968]:
+                    - paragraph [ref=e2969]: Set this parameter to true to include the original article in the response.
+                    - generic [ref=e2970]:
+                      - text: "Default value:"
+                      - code [ref=e2971]: "false"
+                - generic [ref=e2973]:
+                  - generic [ref=e2975]: articleBodyLen integer
+                  - generic [ref=e2977]:
+                    - paragraph [ref=e2978]: Set the size of the article body that'll be returned in the response. Use -1 for full article body.
+                    - generic [ref=e2979]:
+                      - text: "Default value:"
+                      - code [ref=e2980]: "-1"
+                - generic [ref=e2982]:
+                  - generic [ref=e2984]: includeSourceTitle boolean
+                  - generic [ref=e2986]:
+                    - paragraph [ref=e2987]: Set this parameter to true to include the source title in the response.
+                    - generic [ref=e2988]:
+                      - text: "Default value:"
+                      - code [ref=e2989]: "true"
+                - generic [ref=e2991]:
+                  - generic [ref=e2993]: includeSourceDescription boolean
+                  - generic [ref=e2995]:
+                    - paragraph [ref=e2996]: Set this parameter to true to include the source description in the response.
+                    - generic [ref=e2997]:
+                      - text: "Default value:"
+                      - code [ref=e2998]: "false"
+                - generic [ref=e3000]:
+                  - generic [ref=e3002]: includeSourceLocation boolean
+                  - generic [ref=e3004]:
+                    - paragraph [ref=e3005]: Set this parameter to true to include the source location in the response.
+                    - generic [ref=e3006]:
+                      - text: "Default value:"
+                      - code [ref=e3007]: "false"
+                - generic [ref=e3009]:
+                  - generic [ref=e3011]: includeSourceRanking boolean
+                  - generic [ref=e3013]:
+                    - paragraph [ref=e3014]: Set this parameter to true to include the source ranking in the response.
+                    - generic [ref=e3015]:
+                      - text: "Default value:"
+                      - code [ref=e3016]: "false"
+                - generic [ref=e3018]:
+                  - generic [ref=e3020]: includeLocationPopulation boolean
+                  - generic [ref=e3022]:
+                    - paragraph [ref=e3023]: Set to true to include the population size of the location.
+                    - generic [ref=e3024]:
+                      - text: "Default value:"
+                      - code [ref=e3025]: "false"
+                - generic [ref=e3027]:
+                  - generic [ref=e3029]: includeLocationGeoNamesId boolean
+                  - generic [ref=e3031]:
+                    - paragraph [ref=e3032]: Set to true to include the GeoNames id of the location.
+                    - generic [ref=e3033]:
+                      - text: "Default value:"
+                      - code [ref=e3034]: "false"
+                - generic [ref=e3036]:
+                  - generic [ref=e3038]: includeLocationCountryArea boolean
+                  - generic [ref=e3040]:
+                    - paragraph [ref=e3041]: Set to true to include the are of the location in squared km.
+                    - generic [ref=e3042]:
+                      - text: "Default value:"
+                      - code [ref=e3043]: "false"
+                - generic [ref=e3045]:
+                  - generic [ref=e3047]: includeLocationCountryContinent boolean
+                  - generic [ref=e3049]:
+                    - paragraph [ref=e3050]: Set to true to get the continent of the country for location objects.
+                    - generic [ref=e3051]:
+                      - text: "Default value:"
+                      - code [ref=e3052]: "false"
+  - button "Open chat window" [ref=e259] [cursor=pointer]:
+    - img [ref=e260]
