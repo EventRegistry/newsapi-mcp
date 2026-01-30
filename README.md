@@ -281,6 +281,43 @@ npm test             # Run tests
 npm run test:watch   # Tests in watch mode
 ```
 
+### Testing with MCP Inspector
+
+The [MCP Inspector](https://github.com/modelcontextprotocol/inspector) provides a web UI for testing tools interactively.
+
+**1. Build and launch the inspector:**
+
+```bash
+npm run build
+npx @modelcontextprotocol/inspector node --env-file=.env dist/index.js
+```
+
+This starts two servers:
+- **Inspector UI** on `http://localhost:6274`
+- **Proxy server** on `http://localhost:6277`
+
+A session token is printed to the console — copy it.
+
+**2. Connect in the browser:**
+
+Open `http://localhost:6274`, then in the sidebar:
+
+1. Set **Transport Type** to `STDIO`
+2. Set **Command** to `node`
+3. Set **Arguments** to `--env-file=.env dist/index.js`
+4. Expand **Configuration** and paste the session token into **Proxy Session Token**
+5. Click **Connect**
+
+Once connected, click **List Tools** to see all available tools and test them.
+
+**Remote access (port forwarding):**
+
+If the inspector runs on a remote machine, forward both ports:
+
+```bash
+ssh -L 6274:localhost:6274 -L 6277:localhost:6277 your-server
+```
+
 ## Further Reading
 
 - [NewsAPI.ai Documentation](https://newsapi.ai/documentation)
