@@ -9,33 +9,24 @@ An MCP (Model Context Protocol) server that connects Claude to the [NewsAPI.ai](
 1. Register at [newsapi.ai/register](https://newsapi.ai/register) (free tier: 2,000 tokens)
 2. Copy your key from [Settings](https://newsapi.ai/settings?tab=settings)
 
-### 2. Install
+### 2. Add to Claude
+
+#### npx (recommended — no install needed)
+
+**Claude Code (CLI):**
 
 ```bash
-git clone <repo-url>
-cd newsapi-mcp
-npm install
-npm run build
+claude mcp add newsapi -e NEWSAPI_KEY=your_api_key_here -- npx -y newsapi-mcp
 ```
 
-### 3. Configure
-
-Create a `.env` file:
-
-```
-NEWSAPI_KEY=your_api_key_here
-```
-
-### 4. Add to Claude Desktop
-
-Add to your Claude Desktop config (`claude_desktop_config.json`):
+**Claude Desktop** (`claude_desktop_config.json`):
 
 ```json
 {
   "mcpServers": {
     "newsapi": {
-      "command": "node",
-      "args": ["/absolute/path/to/newsapi-mcp/dist/index.js"],
+      "command": "npx",
+      "args": ["-y", "newsapi-mcp"],
       "env": {
         "NEWSAPI_KEY": "your_api_key_here"
       }
@@ -44,9 +35,32 @@ Add to your Claude Desktop config (`claude_desktop_config.json`):
 }
 ```
 
-### 5. Add to Claude Code
+**Claude Code** (`.claude/settings.json` or `~/.claude/settings.json`):
 
-Add to your Claude Code config (`.claude/settings.json` or `~/.claude/settings.json`):
+```json
+{
+  "mcpServers": {
+    "newsapi": {
+      "command": "npx",
+      "args": ["-y", "newsapi-mcp"],
+      "env": {
+        "NEWSAPI_KEY": "your_api_key_here"
+      }
+    }
+  }
+}
+```
+
+#### From source (development)
+
+```bash
+git clone <repo-url>
+cd newsapi-mcp
+npm install
+npm run build
+```
+
+Then point your config to the local build:
 
 ```json
 {
@@ -271,4 +285,3 @@ npm run test:watch   # Tests in watch mode
 
 - [NewsAPI.ai Documentation](https://newsapi.ai/documentation)
 - [MCP Protocol Specification](https://modelcontextprotocol.io)
-- Detailed API docs are available in the `docs/` directory
