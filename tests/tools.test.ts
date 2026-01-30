@@ -368,7 +368,10 @@ describe("suggestTools", () => {
 
       await tool.handler({ prefix: "Test" });
 
-      expect(mockedApiPost).toHaveBeenCalledWith(path, { prefix: "Test" });
+      expect(mockedApiPost).toHaveBeenCalledWith(path, {
+        prefix: "Test",
+        lang: "eng",
+      });
     });
   }
 

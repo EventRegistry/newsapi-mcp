@@ -12,11 +12,19 @@ function suggestTool(name: string, description: string, path: string): ToolDef {
           type: "string",
           description: "Full or partial name to search for",
         },
+        lang: {
+          type: "string",
+          description:
+            'Language code for results (e.g. "eng", "deu", "fra"). Defaults to "eng".',
+        },
       },
       required: ["prefix"],
     },
     handler: async (params) => {
-      return apiPost(path, { prefix: params.prefix });
+      return apiPost(path, {
+        prefix: params.prefix,
+        lang: params.lang ?? "eng",
+      });
     },
   };
 }
