@@ -9,6 +9,7 @@
   },
   "scripts": {
     "build": "tsc",
+    "build:bundle": "esbuild src/index.ts --bundle --platform=node --target=node22 --format=esm --outfile=dist/index.js",
     "start": "node --env-file=.env dist/index.js",
     "dev": "tsx --env-file=.env src/index.ts",
     "test": "vitest run",
@@ -19,6 +20,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
+    "esbuild": "^0.27.2",
     "tsx": "^4.19.0",
     "typescript": "^5.7.0",
     "vitest": "^4.0.18"

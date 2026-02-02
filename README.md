@@ -76,6 +76,26 @@ Then point your config to the local build:
 }
 ```
 
+> **Note:** `npm run build` compiles TypeScript but the output still depends on `node_modules/`. The `dist/` folder alone is not portable.
+
+#### Standalone build (portable single file)
+
+To produce a self-contained bundle with all dependencies inlined:
+
+```bash
+npm run build:bundle
+```
+
+This creates a single `dist/index.js` that can be copied to any machine with Node.js 18+ — no `node_modules` needed:
+
+```bash
+# Copy just the bundled file to another machine
+scp dist/index.js server:/opt/newsapi-mcp/index.js
+
+# Run it directly
+NEWSAPI_KEY=your_key node /opt/newsapi-mcp/index.js
+```
+
 ---
 
 ## What You Can Do
