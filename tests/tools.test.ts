@@ -72,6 +72,18 @@ describe("searchArticles", () => {
     );
   });
 
+  it("passes includeFields as API include params", async () => {
+    await searchArticles.handler({
+      keyword: "Tesla",
+      includeFields: "concepts,sentiment",
+    });
+
+    const body = mockedApiPost.mock.calls[0][1];
+    expect(body.includeArticleConcepts).toBe(true);
+    expect(body.includeArticleSentiment).toBe(true);
+    expect(body.includeFields).toBeUndefined();
+  });
+
   it("expands dataType array field", async () => {
     await searchArticles.handler({ dataType: "news,pr" });
 
@@ -92,10 +104,13 @@ describe("getArticleDetails", () => {
   it("calls correct endpoint with parsed URIs", async () => {
     await getArticleDetails.handler({ articleUri: "uri1,uri2" });
 
-    expect(mockedApiPost).toHaveBeenCalledWith("/article/getArticle", {
-      articleUri: ["uri1", "uri2"],
-      articleBodyLen: -1,
-    });
+    expect(mockedApiPost).toHaveBeenCalledWith(
+      "/article/getArticle",
+      expect.objectContaining({
+        articleUri: ["uri1", "uri2"],
+        articleBodyLen: -1,
+      }),
+    );
   });
 });
 
@@ -116,7 +131,7 @@ describe("streamArticles", () => {
 // ---------- Events ----------
 
 describe("searchEvents", () => {
-  it("calls correct endpoint with resultType", async () => {
+  it("calls correct endpoint with resultType and includeEventSummary", async () => {
     await searchEvents.handler({ keyword: "earthquake" });
 
     expect(mockedApiPost).toHaveBeenCalledWith(
@@ -124,6 +139,7 @@ describe("searchEvents", () => {
       expect.objectContaining({
         resultType: "events",
         keyword: ["earthquake"],
+        includeEventSummary: true,
       }),
     );
   });
@@ -141,25 +157,34 @@ describe("searchEvents", () => {
 });
 
 describe("getEventDetails", () => {
-  it("calls correct endpoint with parsed URIs", async () => {
+  it("calls correct endpoint with parsed URIs and includeEventSummary", async () => {
     await getEventDetails.handler({ eventUri: "evt-123,evt-456" });
 
-    expect(mockedApiPost).toHaveBeenCalledWith("/event/getEvent", {
-      eventUri: ["evt-123", "evt-456"],
-    });
+    expect(mockedApiPost).toHaveBeenCalledWith(
+      "/event/getEvent",
+      expect.objectContaining({
+        eventUri: ["evt-123", "evt-456"],
+        includeEventSummary: true,
+      }),
+    );
   });
 });
 
 describe("getBreakingEvents", () => {
-  it("calls correct endpoint with empty body", async () => {
+  it("calls correct endpoint with includeEventSummary", async () => {
     await getBreakingEvents.handler({});
 
-    expect(mockedApiPost).toHaveBeenCalledWith("/event/getBreakingEvents", {});
+    expect(mockedApiPost).toHaveBeenCalledWith(
+      "/event/getBreakingEvents",
+      expect.objectContaining({
+        includeEventSummary: true,
+      }),
+    );
   });
 });
 
 describe("streamEvents", () => {
-  it("calls correct endpoint with resultType and params", async () => {
+  it("calls correct endpoint with resultType, params, and includeEventSummary", async () => {
     await streamEvents.handler({
       recentActivityEventsMaxEventCount: 25,
     });
@@ -169,21 +194,26 @@ describe("streamEvents", () => {
       expect.objectContaining({
         resultType: "recentActivityEvents",
         recentActivityEventsMaxEventCount: 25,
+        includeEventSummary: true,
       }),
     );
   });
 });
 
 describe("findEventForText", () => {
-  it("calls correct endpoint with text param", async () => {
+  it("calls correct endpoint with text param and includeEventSummary", async () => {
     await findEventForText.handler({ text: "A big earthquake hit Japan" });
 
-    expect(mockedApiPost).toHaveBeenCalledWith("/event/getEvents", {
-      keyword: "A big earthquake hit Japan",
-      resultType: "events",
-      eventsCount: 1,
-      eventsSortBy: "rel",
-    });
+    expect(mockedApiPost).toHaveBeenCalledWith(
+      "/event/getEvents",
+      expect.objectContaining({
+        keyword: "A big earthquake hit Japan",
+        resultType: "events",
+        eventsCount: 1,
+        eventsSortBy: "rel",
+        includeEventSummary: true,
+      }),
+    );
   });
 });
 
@@ -336,7 +366,7 @@ describe("getTopicPageArticles", () => {
 });
 
 describe("getTopicPageEvents", () => {
-  it("calls correct endpoint with uri and resultType", async () => {
+  it("calls correct endpoint with uri, resultType, and includeEventSummary", async () => {
     await getTopicPageEvents.handler({ uri: "topic-456" });
 
     expect(mockedApiPost).toHaveBeenCalledWith(
@@ -344,6 +374,7 @@ describe("getTopicPageEvents", () => {
       expect.objectContaining({
         uri: "topic-456",
         resultType: "events",
+        includeEventSummary: true,
       }),
     );
   });

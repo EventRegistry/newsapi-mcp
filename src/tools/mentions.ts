@@ -1,6 +1,15 @@
 import { apiPost, parseArray } from "../client.js";
-import { contentFilterProps, buildFilterBody } from "./articles.js";
+import {
+  contentFilterProps,
+  buildFilterBody,
+  includeFieldsProp,
+} from "./articles.js";
 import type { ToolDef } from "../types.js";
+import {
+  parseFieldGroups,
+  getMentionIncludeParams,
+  filterResponse,
+} from "../response-filter.js";
 
 export const searchMentions: ToolDef = {
   name: "search_mentions",
@@ -15,6 +24,7 @@ export const searchMentions: ToolDef = {
           "Event type URI(s) to filter by (comma-separated). Use suggest_event_types to look up URIs.",
       },
       ...contentFilterProps,
+      ...includeFieldsProp,
       industryUri: {
         type: "string",
         description:
@@ -64,6 +74,8 @@ export const searchMentions: ToolDef = {
     },
   },
   handler: async (params) => {
+    const groups = parseFieldGroups(params.includeFields as string | undefined);
+
     const body = buildFilterBody(params);
     body.resultType = "mentions";
     // Handle mention-specific array fields
@@ -79,7 +91,10 @@ export const searchMentions: ToolDef = {
         body[field] = parseArray(params[field]);
       }
     }
-    return apiPost("/article/getMentions", body);
+    Object.assign(body, getMentionIncludeParams(groups));
+
+    const result = await apiPost("/article/getMentions", body);
+    return filterResponse(result, { resultType: "mentions", groups });
   },
 };
 

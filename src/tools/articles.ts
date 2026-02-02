@@ -1,17 +1,22 @@
 import { apiPost, parseArray } from "../client.js";
 import type { ToolDef } from "../types.js";
+import {
+  parseFieldGroups,
+  getArticleIncludeParams,
+  filterResponse,
+} from "../response-filter.js";
 
 /** Shared content filter properties used by articles, events, and mentions. */
 export const contentFilterProps: Record<string, unknown> = {
   keyword: {
     type: "string",
     description:
-      "Keywords to search for. Multiple keywords can be comma-separated. Exact phrase match when quoted.",
+      "Secondary keyword filter. Use conceptUri as the primary search method. Keywords provide additional text matching within concept results. Multiple keywords can be comma-separated. Exact phrase match when quoted.",
   },
   conceptUri: {
     type: "string",
     description:
-      "Concept URI(s) to filter by (comma-separated). Use suggest_concepts to look up URIs first.",
+      "Primary search filter. Always use suggest_concepts first to resolve entity names to URIs, then pass them here. Prefer this over keyword search for reliable results. Comma-separated for multiple concepts.",
   },
   categoryUri: {
     type: "string",
@@ -82,6 +87,32 @@ export const contentFilterProps: Record<string, unknown> = {
   },
 };
 
+/** Response control properties for article-returning tools. */
+export const responseControlProps: Record<string, unknown> = {
+  includeFields: {
+    type: "string",
+    description:
+      "Comma-separated field groups to include beyond the minimal set (title, body, date, source). Options: sentiment, concepts, categories, images, authors, location, social, metadata, event, full. Default: minimal only.",
+  },
+  articleBodyLen: {
+    type: "integer",
+    description:
+      "Article body length in characters. Default: -1 (full text). Use 0 to exclude body, or a positive number to truncate.",
+  },
+};
+
+/** Response control for non-article tools (no articleBodyLen). */
+export const includeFieldsProp: Record<string, unknown> = {
+  includeFields: {
+    type: "string",
+    description:
+      "Comma-separated field groups to include beyond the minimal set. Options: sentiment, concepts, categories, images, authors, location, social, metadata, event, full. Default: minimal only.",
+  },
+};
+
+/** Params that are NOT API filter params and should be stripped before sending. */
+const LOCAL_PARAMS = new Set(["includeFields", "articleBodyLen"]);
+
 /** Build the request body from params, expanding array-typed fields. */
 export function buildFilterBody(
   params: Record<string, unknown>,
@@ -99,6 +130,7 @@ export function buildFilterBody(
   ];
   for (const [k, v] of Object.entries(params)) {
     if (v === undefined || v === null) continue;
+    if (LOCAL_PARAMS.has(k)) continue;
     if (k === "query") {
       // Pass through raw query object
       body[k] = typeof v === "string" ? JSON.parse(v as string) : v;
@@ -114,11 +146,12 @@ export function buildFilterBody(
 export const searchArticles: ToolDef = {
   name: "search_articles",
   description:
-    "Search news articles by keywords, concepts, sources, categories, dates, language, and sentiment. Returns up to 100 articles per call. Use suggest_* tools first to look up URIs for concepts, sources, categories, and locations.",
+    "Search news articles by concepts, sources, categories, dates, language, and sentiment. Returns up to 100 articles per call. IMPORTANT: Always use suggest_concepts first to resolve names to concept URIs, then search with conceptUri. Use keyword only as a secondary filter alongside conceptUri. Use suggest_* tools to look up URIs for concepts, sources, categories, and locations.",
   inputSchema: {
     type: "object",
     properties: {
       ...contentFilterProps,
+      ...responseControlProps,
       isDuplicateFilter: {
         type: "string",
         description:
@@ -165,13 +198,26 @@ export const searchArticles: ToolDef = {
     },
   },
   handler: async (params) => {
+    const groups = parseFieldGroups(params.includeFields as string | undefined);
+    const bodyLen =
+      params.articleBodyLen !== undefined
+        ? (params.articleBodyLen as number)
+        : -1;
+
     const body = buildFilterBody(params);
     body.resultType = "articles";
-    body.articleBodyLen = -1;
+    body.articleBodyLen = bodyLen;
     if (params.dataType) {
       body.dataType = parseArray(params.dataType);
     }
-    return apiPost("/article/getArticles", body);
+    Object.assign(body, getArticleIncludeParams(groups));
+
+    const result = await apiPost("/article/getArticles", body);
+    return filterResponse(result, {
+      resultType: "articles",
+      groups,
+      bodyLen,
+    });
   },
 };
 
@@ -185,14 +231,29 @@ export const getArticleDetails: ToolDef = {
         type: "string",
         description: "Article URI(s). Comma-separated for multiple.",
       },
+      ...responseControlProps,
     },
     required: ["articleUri"],
   },
   handler: async (params) => {
+    const groups = parseFieldGroups(params.includeFields as string | undefined);
+    const bodyLen =
+      params.articleBodyLen !== undefined
+        ? (params.articleBodyLen as number)
+        : -1;
+
     const uris = parseArray(params.articleUri);
-    return apiPost("/article/getArticle", {
+    const apiBody: Record<string, unknown> = {
       articleUri: uris,
-      articleBodyLen: -1,
+      articleBodyLen: bodyLen,
+      ...getArticleIncludeParams(groups),
+    };
+
+    const result = await apiPost("/article/getArticle", apiBody);
+    return filterResponse(result, {
+      resultType: "articles",
+      groups,
+      bodyLen,
     });
   },
 };
@@ -200,11 +261,12 @@ export const getArticleDetails: ToolDef = {
 export const streamArticles: ToolDef = {
   name: "stream_articles",
   description:
-    "Get recently published articles (real-time stream). Returns articles added in the last few minutes. Can return up to 2000 articles. Use recentActivityArticlesNewsUpdatesAfterUri for deduplication between calls.",
+    "Get recently published articles (real-time stream). Returns articles added in the last few minutes. Can return up to 2000 articles. IMPORTANT: Always use suggest_concepts first to resolve names to concept URIs, then filter with conceptUri. Use keyword only as a secondary filter. Use recentActivityArticlesNewsUpdatesAfterUri for deduplication between calls.",
   inputSchema: {
     type: "object",
     properties: {
       ...contentFilterProps,
+      ...responseControlProps,
       recentActivityArticlesMaxArticleCount: {
         type: "integer",
         description:
@@ -224,9 +286,22 @@ export const streamArticles: ToolDef = {
     },
   },
   handler: async (params) => {
+    const groups = parseFieldGroups(params.includeFields as string | undefined);
+    const bodyLen =
+      params.articleBodyLen !== undefined
+        ? (params.articleBodyLen as number)
+        : -1;
+
     const body = buildFilterBody(params);
     body.resultType = "recentActivityArticles";
-    return apiPost("/minuteStreamArticles", body);
+    Object.assign(body, getArticleIncludeParams(groups));
+
+    const result = await apiPost("/minuteStreamArticles", body);
+    return filterResponse(result, {
+      resultType: "articles",
+      groups,
+      bodyLen,
+    });
   },
 };
 

@@ -1,6 +1,15 @@
 import { apiPost, parseArray } from "../client.js";
-import { contentFilterProps, buildFilterBody } from "./articles.js";
+import {
+  contentFilterProps,
+  buildFilterBody,
+  includeFieldsProp,
+} from "./articles.js";
 import type { ToolDef } from "../types.js";
+import {
+  parseFieldGroups,
+  getEventIncludeParams,
+  filterResponse,
+} from "../response-filter.js";
 
 export const searchEvents: ToolDef = {
   name: "search_events",
@@ -10,6 +19,7 @@ export const searchEvents: ToolDef = {
     type: "object",
     properties: {
       ...contentFilterProps,
+      ...includeFieldsProp,
       minArticlesInEvent: {
         type: "integer",
         description: "Minimum number of articles in the event.",
@@ -56,9 +66,14 @@ export const searchEvents: ToolDef = {
     },
   },
   handler: async (params) => {
+    const groups = parseFieldGroups(params.includeFields as string | undefined);
+
     const body = buildFilterBody(params);
     body.resultType = "events";
-    return apiPost("/event/getEvents", body);
+    Object.assign(body, getEventIncludeParams(groups));
+
+    const result = await apiPost("/event/getEvents", body);
+    return filterResponse(result, { resultType: "events", groups });
   },
 };
 
@@ -72,12 +87,21 @@ export const getEventDetails: ToolDef = {
         type: "string",
         description: "Event URI(s). Comma-separated for multiple.",
       },
+      ...includeFieldsProp,
     },
     required: ["eventUri"],
   },
   handler: async (params) => {
+    const groups = parseFieldGroups(params.includeFields as string | undefined);
+
     const uris = parseArray(params.eventUri);
-    return apiPost("/event/getEvent", { eventUri: uris });
+    const apiBody: Record<string, unknown> = {
+      eventUri: uris,
+      ...getEventIncludeParams(groups),
+    };
+
+    const result = await apiPost("/event/getEvent", apiBody);
+    return filterResponse(result, { resultType: "events", groups });
   },
 };
 
@@ -87,10 +111,17 @@ export const getBreakingEvents: ToolDef = {
     "Get currently trending/breaking events. No required parameters.",
   inputSchema: {
     type: "object",
-    properties: {},
+    properties: {
+      ...includeFieldsProp,
+    },
   },
-  handler: async () => {
-    return apiPost("/event/getBreakingEvents", {});
+  handler: async (params) => {
+    const groups = parseFieldGroups(params.includeFields as string | undefined);
+
+    const result = await apiPost("/event/getBreakingEvents", {
+      ...getEventIncludeParams(groups),
+    });
+    return filterResponse(result, { resultType: "events", groups });
   },
 };
 
@@ -101,6 +132,7 @@ export const streamEvents: ToolDef = {
   inputSchema: {
     type: "object",
     properties: {
+      ...includeFieldsProp,
       recentActivityEventsMaxEventCount: {
         type: "integer",
         description: "Max events to return. Default: 50.",
@@ -118,13 +150,18 @@ export const streamEvents: ToolDef = {
     },
   },
   handler: async (params) => {
+    const groups = parseFieldGroups(params.includeFields as string | undefined);
+
     const body: Record<string, unknown> = {
       resultType: "recentActivityEvents",
+      ...getEventIncludeParams(groups),
     };
     for (const [k, v] of Object.entries(params)) {
-      if (v !== undefined) body[k] = v;
+      if (v !== undefined && k !== "includeFields") body[k] = v;
     }
-    return apiPost("/minuteStreamEvents", body);
+
+    const result = await apiPost("/minuteStreamEvents", body);
+    return filterResponse(result, { resultType: "events", groups });
   },
 };
 
@@ -139,16 +176,21 @@ export const findEventForText: ToolDef = {
         type: "string",
         description: "Text to match against known events.",
       },
+      ...includeFieldsProp,
     },
     required: ["text"],
   },
   handler: async (params) => {
-    return apiPost("/event/getEvents", {
+    const groups = parseFieldGroups(params.includeFields as string | undefined);
+
+    const result = await apiPost("/event/getEvents", {
       keyword: params.text,
       resultType: "events",
       eventsCount: 1,
       eventsSortBy: "rel",
+      ...getEventIncludeParams(groups),
     });
+    return filterResponse(result, { resultType: "events", groups });
   },
 };
 

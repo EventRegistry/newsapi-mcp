@@ -20,3 +20,7 @@ coverage/
 # Misc
 *.tgz
 .eslintcache
+.mcp.json
+
+.*-mcp
+docs/
