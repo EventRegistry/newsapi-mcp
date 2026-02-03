@@ -258,55 +258,7 @@ export const getArticleDetails: ToolDef = {
   },
 };
 
-export const streamArticles: ToolDef = {
-  name: "stream_articles",
-  description:
-    "Get recently published articles (real-time stream). Returns articles added in the last few minutes. Can return up to 2000 articles. IMPORTANT: Always use suggest_concepts first to resolve names to concept URIs, then filter with conceptUri. Use keyword only as a secondary filter. Use recentActivityArticlesNewsUpdatesAfterUri for deduplication between calls.",
-  inputSchema: {
-    type: "object",
-    properties: {
-      ...contentFilterProps,
-      ...responseControlProps,
-      recentActivityArticlesMaxArticleCount: {
-        type: "integer",
-        description:
-          "Max articles to return (up to 2000). Token cost scales proportionally. Default: 100.",
-        default: 100,
-        maximum: 2000,
-      },
-      recentActivityArticlesNewsUpdatesAfterUri: {
-        type: "string",
-        description:
-          "Only return articles added after this URI. Recommended for deduplication between calls.",
-      },
-      recentActivityArticlesUpdatesAfterMinsAgo: {
-        type: "integer",
-        description: "Return articles from the last N minutes (max 240).",
-      },
-    },
-  },
-  handler: async (params) => {
-    const groups = parseFieldGroups(params.includeFields as string | undefined);
-    const bodyLen =
-      params.articleBodyLen !== undefined
-        ? (params.articleBodyLen as number)
-        : -1;
-
-    const body = buildFilterBody(params);
-    body.resultType = "recentActivityArticles";
-    Object.assign(body, getArticleIncludeParams(groups));
-
-    const result = await apiPost("/minuteStreamArticles", body);
-    return filterResponse(result, {
-      resultType: "articles",
-      groups,
-      bodyLen,
-    });
-  },
-};
-
 export const articleTools: ToolDef[] = [
   searchArticles,
   getArticleDetails,
-  streamArticles,
 ];

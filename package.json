@@ -2,23 +2,44 @@
   "name": "newsapi-mcp",
   "version": "1.0.0",
   "description": "MCP server for NewsAPI.ai (Event Registry)",
+  "author": "Erik Novak",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
     "newsapi-mcp": "dist/index.js"
   },
+  "files": [
+    "dist/index.js"
+  ],
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "newsapi"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/EventRegistry/newsapi-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/EventRegistry/newsapi-mcp/issues"
+  },
+  "homepage": "https://github.com/EventRegistry/newsapi-mcp#readme",
   "scripts": {
     "build": "tsc",
-    "build:bundle": "esbuild src/index.ts --bundle --platform=node --target=node22 --format=esm --outfile=dist/index.js",
+    "build:bundle": "rm -rf dist && esbuild src/index.ts --bundle --platform=node --target=node22 --format=esm --outfile=dist/index.js",
     "start": "node --env-file=.env dist/index.js",
     "dev": "tsx --env-file=.env src/index.ts",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "prepublishOnly": "npm run build:bundle"
   },
-  "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.12.1"
+  "engines": {
+    "node": ">=18"
   },
+  "dependencies": {},
   "devDependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.1",
     "@types/node": "^22.0.0",
     "esbuild": "^0.27.2",
     "tsx": "^4.19.0",

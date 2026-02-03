@@ -105,66 +105,6 @@ export const getEventDetails: ToolDef = {
   },
 };
 
-export const getBreakingEvents: ToolDef = {
-  name: "get_breaking_events",
-  description:
-    "Get currently trending/breaking events. No required parameters.",
-  inputSchema: {
-    type: "object",
-    properties: {
-      ...includeFieldsProp,
-    },
-  },
-  handler: async (params) => {
-    const groups = parseFieldGroups(params.includeFields as string | undefined);
-
-    const result = await apiPost("/event/getBreakingEvents", {
-      ...getEventIncludeParams(groups),
-    });
-    return filterResponse(result, { resultType: "events", groups });
-  },
-};
-
-export const streamEvents: ToolDef = {
-  name: "stream_events",
-  description:
-    "Get recently added or updated events (real-time stream). Use recentActivityEventsUpdatesAfterUri for deduplication between calls.",
-  inputSchema: {
-    type: "object",
-    properties: {
-      ...includeFieldsProp,
-      recentActivityEventsMaxEventCount: {
-        type: "integer",
-        description: "Max events to return. Default: 50.",
-        default: 50,
-      },
-      recentActivityEventsUpdatesAfterUri: {
-        type: "string",
-        description:
-          "Only return events updated after this URI. Recommended for deduplication.",
-      },
-      recentActivityEventsUpdatesAfterMinsAgo: {
-        type: "integer",
-        description: "Return events from the last N minutes (max 240).",
-      },
-    },
-  },
-  handler: async (params) => {
-    const groups = parseFieldGroups(params.includeFields as string | undefined);
-
-    const body: Record<string, unknown> = {
-      resultType: "recentActivityEvents",
-      ...getEventIncludeParams(groups),
-    };
-    for (const [k, v] of Object.entries(params)) {
-      if (v !== undefined && k !== "includeFields") body[k] = v;
-    }
-
-    const result = await apiPost("/minuteStreamEvents", body);
-    return filterResponse(result, { resultType: "events", groups });
-  },
-};
-
 export const findEventForText: ToolDef = {
   name: "find_event_for_text",
   description:
@@ -197,7 +137,5 @@ export const findEventForText: ToolDef = {
 export const eventTools: ToolDef[] = [
   searchEvents,
   getEventDetails,
-  getBreakingEvents,
-  streamEvents,
   findEventForText,
 ];
