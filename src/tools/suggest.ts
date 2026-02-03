@@ -1,5 +1,7 @@
 import { apiPost } from "../client.js";
 import type { ToolDef } from "../types.js";
+import { formatSuggestResults } from "../formatters.js";
+import { formatControlProp } from "./articles.js";
 
 function suggestTool(name: string, description: string, path: string): ToolDef {
   return {
@@ -17,6 +19,7 @@ function suggestTool(name: string, description: string, path: string): ToolDef {
           description:
             'Language code for results (e.g. "eng", "deu", "fra"). Defaults to "eng".',
         },
+        ...formatControlProp,
       },
       required: ["prefix"],
     },
@@ -26,6 +29,7 @@ function suggestTool(name: string, description: string, path: string): ToolDef {
         lang: params.lang ?? "eng",
       });
     },
+    formatter: formatSuggestResults,
   };
 }
 

@@ -5,6 +5,7 @@ import {
   getArticleIncludeParams,
   filterResponse,
 } from "../response-filter.js";
+import { formatArticleResults } from "../formatters.js";
 
 /** Shared content filter properties used by articles, events, and mentions. */
 export const contentFilterProps: Record<string, unknown> = {
@@ -110,8 +111,18 @@ export const includeFieldsProp: Record<string, unknown> = {
   },
 };
 
+/** Format control property for tools supporting text output. */
+export const formatControlProp: Record<string, unknown> = {
+  format: {
+    type: "string",
+    description:
+      'Output format: "json" (default) or "text" for concise output.',
+    enum: ["json", "text"],
+  },
+};
+
 /** Params that are NOT API filter params and should be stripped before sending. */
-const LOCAL_PARAMS = new Set(["includeFields", "articleBodyLen"]);
+const LOCAL_PARAMS = new Set(["includeFields", "articleBodyLen", "format"]);
 
 /** Build the request body from params, expanding array-typed fields. */
 export function buildFilterBody(
@@ -152,6 +163,7 @@ export const searchArticles: ToolDef = {
     properties: {
       ...contentFilterProps,
       ...responseControlProps,
+      ...formatControlProp,
       isDuplicateFilter: {
         type: "string",
         description:
@@ -219,6 +231,7 @@ export const searchArticles: ToolDef = {
       bodyLen,
     });
   },
+  formatter: formatArticleResults,
 };
 
 export const getArticleDetails: ToolDef = {
@@ -258,7 +271,4 @@ export const getArticleDetails: ToolDef = {
   },
 };
 
-export const articleTools: ToolDef[] = [
-  searchArticles,
-  getArticleDetails,
-];
+export const articleTools: ToolDef[] = [searchArticles, getArticleDetails];

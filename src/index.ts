@@ -4,6 +4,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { z } from "zod";
 import { initClient } from "./client.js";
 import { allTools } from "./tools/index.js";
+import type { FormatType } from "./types.js";
 
 const apiKey = process.env.NEWSAPI_KEY;
 if (!apiKey) {
@@ -69,6 +70,7 @@ for (const tool of allTools) {
   }
 
   const handler = tool.handler;
+  const formatter = tool.formatter;
   server.tool(
     tool.name,
     tool.description,
@@ -78,13 +80,15 @@ for (const tool of allTools) {
         const result = await handler(
           params as unknown as Record<string, unknown>,
         );
+
+        const format = (params.format as FormatType) || "json";
+        const text =
+          format === "text" && formatter
+            ? formatter(result, params as Record<string, unknown>)
+            : JSON.stringify(result);
+
         return {
-          content: [
-            {
-              type: "text" as const,
-              text: JSON.stringify(result, null, 2),
-            },
-          ],
+          content: [{ type: "text" as const, text }],
         };
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
