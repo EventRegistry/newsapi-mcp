@@ -20,28 +20,13 @@ vi.mock("../src/client.js", () => ({
   initClient: vi.fn(),
 }));
 
-import { apiPost, analyticsPost, parseArray } from "../src/client.js";
-import {
-  searchArticles,
-  getArticleDetails,
-  streamArticles,
-} from "../src/tools/articles.js";
+import { apiPost, parseArray } from "../src/client.js";
+import { searchArticles, getArticleDetails } from "../src/tools/articles.js";
 import {
   searchEvents,
   getEventDetails,
-  getBreakingEvents,
-  streamEvents,
   findEventForText,
 } from "../src/tools/events.js";
-import { searchMentions } from "../src/tools/mentions.js";
-import {
-  annotateText,
-  categorizeText,
-  analyzeSentiment,
-  extractArticleInfo,
-  detectLanguage,
-  computeSemanticSimilarity,
-} from "../src/tools/analytics.js";
 import {
   getTopicPageArticles,
   getTopicPageEvents,
@@ -50,7 +35,6 @@ import { suggestTools } from "../src/tools/suggest.js";
 import { getApiUsage } from "../src/tools/usage.js";
 
 const mockedApiPost = vi.mocked(apiPost);
-const mockedAnalyticsPost = vi.mocked(analyticsPost);
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -114,20 +98,6 @@ describe("getArticleDetails", () => {
   });
 });
 
-describe("streamArticles", () => {
-  it("calls correct endpoint with recentActivityArticles resultType", async () => {
-    await streamArticles.handler({ keyword: "AI" });
-
-    expect(mockedApiPost).toHaveBeenCalledWith(
-      "/minuteStreamArticles",
-      expect.objectContaining({
-        resultType: "recentActivityArticles",
-        keyword: ["AI"],
-      }),
-    );
-  });
-});
-
 // ---------- Events ----------
 
 describe("searchEvents", () => {
@@ -170,36 +140,6 @@ describe("getEventDetails", () => {
   });
 });
 
-describe("getBreakingEvents", () => {
-  it("calls correct endpoint with includeEventSummary", async () => {
-    await getBreakingEvents.handler({});
-
-    expect(mockedApiPost).toHaveBeenCalledWith(
-      "/event/getBreakingEvents",
-      expect.objectContaining({
-        includeEventSummary: true,
-      }),
-    );
-  });
-});
-
-describe("streamEvents", () => {
-  it("calls correct endpoint with resultType, params, and includeEventSummary", async () => {
-    await streamEvents.handler({
-      recentActivityEventsMaxEventCount: 25,
-    });
-
-    expect(mockedApiPost).toHaveBeenCalledWith(
-      "/minuteStreamEvents",
-      expect.objectContaining({
-        resultType: "recentActivityEvents",
-        recentActivityEventsMaxEventCount: 25,
-        includeEventSummary: true,
-      }),
-    );
-  });
-});
-
 describe("findEventForText", () => {
   it("calls correct endpoint with text param and includeEventSummary", async () => {
     await findEventForText.handler({ text: "A big earthquake hit Japan" });
@@ -214,123 +154,6 @@ describe("findEventForText", () => {
         includeEventSummary: true,
       }),
     );
-  });
-});
-
-// ---------- Mentions ----------
-
-describe("searchMentions", () => {
-  it("calls correct endpoint with resultType", async () => {
-    await searchMentions.handler({ keyword: "layoff" });
-
-    expect(mockedApiPost).toHaveBeenCalledWith(
-      "/article/getMentions",
-      expect.objectContaining({
-        resultType: "mentions",
-        keyword: ["layoff"],
-      }),
-    );
-  });
-
-  it("expands mention-specific array fields", async () => {
-    await searchMentions.handler({
-      eventTypeUri: "type1,type2",
-      industryUri: "sectors/Tech",
-      sdgUri: "sdg/sdg5",
-      sasbUri: "sasb/env",
-      esgUri: "esg/social",
-      factLevel: "fact,opinion",
-    });
-
-    const body = mockedApiPost.mock.calls[0][1];
-    expect(body.eventTypeUri).toEqual(["type1", "type2"]);
-    expect(body.industryUri).toEqual(["sectors/Tech"]);
-    expect(body.sdgUri).toEqual(["sdg/sdg5"]);
-    expect(body.sasbUri).toEqual(["sasb/env"]);
-    expect(body.esgUri).toEqual(["esg/social"]);
-    expect(body.factLevel).toEqual(["fact", "opinion"]);
-  });
-});
-
-// ---------- Analytics ----------
-
-describe("annotateText", () => {
-  it("calls analyticsPost with /annotate", async () => {
-    await annotateText.handler({ text: "Apple released a new product" });
-
-    expect(mockedAnalyticsPost).toHaveBeenCalledWith("/annotate", {
-      text: "Apple released a new product",
-    });
-  });
-});
-
-describe("categorizeText", () => {
-  it("calls analyticsPost with /categorize", async () => {
-    await categorizeText.handler({ text: "Sports news", taxonomy: "news" });
-
-    expect(mockedAnalyticsPost).toHaveBeenCalledWith("/categorize", {
-      text: "Sports news",
-      taxonomy: "news",
-    });
-  });
-});
-
-describe("analyzeSentiment", () => {
-  it("calls analyticsPost with /sentiment", async () => {
-    await analyzeSentiment.handler({ text: "I love this" });
-
-    expect(mockedAnalyticsPost).toHaveBeenCalledWith("/sentiment", {
-      text: "I love this",
-    });
-  });
-});
-
-describe("extractArticleInfo", () => {
-  it("calls analyticsPost with /extractArticleInfo", async () => {
-    await extractArticleInfo.handler({ url: "https://example.com/article" });
-
-    expect(mockedAnalyticsPost).toHaveBeenCalledWith("/extractArticleInfo", {
-      url: "https://example.com/article",
-    });
-  });
-});
-
-describe("detectLanguage", () => {
-  it("calls analyticsPost with /detectLanguage", async () => {
-    await detectLanguage.handler({ text: "Bonjour le monde" });
-
-    expect(mockedAnalyticsPost).toHaveBeenCalledWith("/detectLanguage", {
-      text: "Bonjour le monde",
-    });
-  });
-});
-
-describe("computeSemanticSimilarity", () => {
-  it("calls analyticsPost with /semanticSimilarity and default distanceMeasure", async () => {
-    await computeSemanticSimilarity.handler({
-      text1: "Hello world",
-      text2: "Hi there",
-    });
-
-    expect(mockedAnalyticsPost).toHaveBeenCalledWith("/semanticSimilarity", {
-      text1: "Hello world",
-      text2: "Hi there",
-      distanceMeasure: "cosine",
-    });
-  });
-
-  it("passes custom distanceMeasure", async () => {
-    await computeSemanticSimilarity.handler({
-      text1: "Hello world",
-      text2: "Hi there",
-      distanceMeasure: "jaccard",
-    });
-
-    expect(mockedAnalyticsPost).toHaveBeenCalledWith("/semanticSimilarity", {
-      text1: "Hello world",
-      text2: "Hi there",
-      distanceMeasure: "jaccard",
-    });
   });
 });
 

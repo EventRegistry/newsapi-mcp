@@ -125,14 +125,13 @@ afterAll(async () => {
 });
 
 describe("MCP server E2E", () => {
-  it("lists all 23 tools", async () => {
+  it("lists all 13 tools", async () => {
     const result = await client.listTools();
-    expect(result.tools).toHaveLength(23);
+    expect(result.tools).toHaveLength(13);
 
     const names = result.tools.map((t) => t.name).sort();
     expect(names).toContain("search_articles");
     expect(names).toContain("suggest_concepts");
-    expect(names).toContain("annotate_text");
     expect(names).toContain("get_api_usage");
   });
 
@@ -200,18 +199,5 @@ describe("MCP server E2E", () => {
     const body = JSON.parse(lastCall[1].body);
     expect(body).toHaveProperty("lang", "eng");
     expect(body).toHaveProperty("prefix", "Berlin");
-  });
-
-  it("calls analytics tool via correct base URL", async () => {
-    mockFetchOk({ sentiment: 0.8 });
-
-    await client.callTool({
-      name: "analyze_sentiment",
-      arguments: { text: "Great news!" },
-    });
-
-    const url = fetchSpy.mock.calls[fetchSpy.mock.calls.length - 1][0];
-    expect(url).toContain("analytics.eventregistry.org");
-    expect(url).toContain("/sentiment");
   });
 });
