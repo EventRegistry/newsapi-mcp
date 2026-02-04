@@ -166,9 +166,10 @@ export const formatEventResults: ResponseFormatter = (data) => {
 /** Format API usage as key-value pairs. */
 export const formatUsageResults: ResponseFormatter = (data) => {
   const u = data as Record<string, unknown>;
+  const used = (u.usedTokens as number) || 0;
+  const available = (u.availableTokens as number) || 0;
   return [
-    `Plan: ${u.planName || "Unknown"}`,
-    `Daily: ${u.dailyUsed || 0} / ${u.dailyAvailable || 0}`,
-    `Monthly: ${u.monthlyUsed || 0} / ${u.monthlyAvailable || 0}`,
+    `Tokens used: ${used.toLocaleString()}`,
+    `Tokens available: ${available.toLocaleString()}`,
   ].join("\n");
 };
