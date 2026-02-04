@@ -1,51 +1,236 @@
 import { describe, it, expect } from "vitest";
 import {
-  formatSuggestResults,
+  formatSuggestLocations,
+  formatSuggestConcepts,
+  formatSuggestSources,
+  formatSuggestCategories,
+  formatSuggestAuthors,
   formatArticleResults,
   formatEventResults,
   formatUsageResults,
 } from "../src/formatters.js";
 
-describe("formatSuggestResults", () => {
-  it("formats suggest results as numbered list", () => {
+describe("formatSuggestLocations", () => {
+  it("formats location with country as JSONL", () => {
     const data = [
-      { label: "Apple Inc.", uri: "http://en.wikipedia.org/wiki/Apple_Inc." },
-      { label: "Apple", uri: "http://en.wikipedia.org/wiki/Apple" },
+      {
+        type: "place",
+        label: { eng: "Ljubljana" },
+        wikiUri: "http://en.wikipedia.org/wiki/Ljubljana",
+        score: 272220,
+        country: {
+          label: { eng: "Slovenia" },
+          wikiUri: "http://en.wikipedia.org/wiki/Slovenia",
+        },
+      },
     ];
 
-    const result = formatSuggestResults(data, {});
+    const result = formatSuggestLocations(data, {});
+    const parsed = JSON.parse(result);
 
-    expect(result).toBe(
-      "1. Apple Inc. -> http://en.wikipedia.org/wiki/Apple_Inc.\n" +
-        "2. Apple -> http://en.wikipedia.org/wiki/Apple",
-    );
+    expect(parsed).toEqual({
+      label: "Ljubljana",
+      type: "place",
+      uri: "http://en.wikipedia.org/wiki/Ljubljana",
+      country: "Slovenia",
+    });
   });
 
   it("returns no results message for empty array", () => {
-    expect(formatSuggestResults([], {})).toBe("No results found.");
+    expect(formatSuggestLocations([], {})).toBe("No results found.");
+    expect(formatSuggestLocations(null, {})).toBe("No results found.");
   });
 
-  it("returns no results message for non-array", () => {
-    expect(formatSuggestResults(null, {})).toBe("No results found.");
-    expect(formatSuggestResults(undefined, {})).toBe("No results found.");
-  });
-
-  it("handles items with title or name instead of label", () => {
+  it("handles location without country", () => {
     const data = [
-      { title: "New York Times", uri: "nytimes.com" },
-      { name: "BBC News", uri: "bbc.com" },
+      {
+        type: "country",
+        label: { eng: "Slovenia" },
+        wikiUri: "http://en.wikipedia.org/wiki/Slovenia",
+        score: 500000,
+      },
     ];
 
-    const result = formatSuggestResults(data, {});
+    const result = formatSuggestLocations(data, {});
+    const parsed = JSON.parse(result);
 
-    expect(result).toContain("New York Times");
-    expect(result).toContain("BBC News");
+    expect(parsed).toEqual({
+      label: "Slovenia",
+      type: "country",
+      uri: "http://en.wikipedia.org/wiki/Slovenia",
+    });
+    expect(parsed.country).toBeUndefined();
+  });
+});
+
+describe("formatSuggestConcepts", () => {
+  it("formats concept as JSONL", () => {
+    const data = [
+      {
+        label: "Donald Trump",
+        type: "person",
+        uri: "http://en.wikipedia.org/wiki/Donald_Trump",
+        score: 26939520,
+      },
+    ];
+
+    const result = formatSuggestConcepts(data, {});
+    const parsed = JSON.parse(result);
+
+    expect(parsed).toEqual({
+      label: "Donald Trump",
+      type: "person",
+      uri: "http://en.wikipedia.org/wiki/Donald_Trump",
+    });
   });
 
-  it("handles missing uri gracefully", () => {
-    const data = [{ label: "Test" }];
-    const result = formatSuggestResults(data, {});
-    expect(result).toBe("1. Test -> ");
+  it("returns no results message for empty array", () => {
+    expect(formatSuggestConcepts([], {})).toBe("No results found.");
+  });
+
+  it("formats multiple concepts as JSONL lines", () => {
+    const data = [
+      {
+        label: "Apple Inc.",
+        type: "org",
+        uri: "http://en.wikipedia.org/wiki/Apple_Inc.",
+        score: 1000000,
+      },
+      {
+        label: "Apple",
+        type: "wiki",
+        uri: "http://en.wikipedia.org/wiki/Apple",
+        score: 500000,
+      },
+    ];
+
+    const result = formatSuggestConcepts(data, {});
+    const lines = result.split("\n");
+
+    expect(lines).toHaveLength(2);
+    expect(JSON.parse(lines[0])).toEqual({
+      label: "Apple Inc.",
+      type: "org",
+      uri: "http://en.wikipedia.org/wiki/Apple_Inc.",
+    });
+    expect(JSON.parse(lines[1])).toEqual({
+      label: "Apple",
+      type: "wiki",
+      uri: "http://en.wikipedia.org/wiki/Apple",
+    });
+  });
+});
+
+describe("formatSuggestSources", () => {
+  it("formats source as JSONL", () => {
+    const data = [
+      {
+        title: "MMC RTV Slovenija",
+        uri: "rtvslo.si",
+        dataType: "news",
+        score: 226385,
+      },
+    ];
+
+    const result = formatSuggestSources(data, {});
+    const parsed = JSON.parse(result);
+
+    expect(parsed).toEqual({
+      label: "MMC RTV Slovenija",
+      type: "news",
+      uri: "rtvslo.si",
+    });
+  });
+
+  it("returns no results message for empty array", () => {
+    expect(formatSuggestSources([], {})).toBe("No results found.");
+  });
+
+  it("handles missing title gracefully", () => {
+    const data = [{ uri: "example.com", dataType: "blog", score: 100 }];
+
+    const result = formatSuggestSources(data, {});
+    const parsed = JSON.parse(result);
+
+    expect(parsed.label).toBe("Unknown");
+    expect(parsed.type).toBe("blog");
+  });
+});
+
+describe("formatSuggestCategories", () => {
+  it("formats category with parent as JSONL", () => {
+    const data = [
+      {
+        label: "news/Technology",
+        uri: "news/Technology",
+        parentUri: "news",
+      },
+    ];
+
+    const result = formatSuggestCategories(data, {});
+    const parsed = JSON.parse(result);
+
+    expect(parsed).toEqual({
+      label: "news/Technology",
+      uri: "news/Technology",
+      parent: "news",
+    });
+  });
+
+  it("returns no results message for empty array", () => {
+    expect(formatSuggestCategories([], {})).toBe("No results found.");
+  });
+
+  it("handles category without parent", () => {
+    const data = [
+      {
+        label: "news",
+        uri: "news",
+      },
+    ];
+
+    const result = formatSuggestCategories(data, {});
+    const parsed = JSON.parse(result);
+
+    expect(parsed).toEqual({
+      label: "news",
+      uri: "news",
+    });
+    expect(parsed.parent).toBeUndefined();
+  });
+});
+
+describe("formatSuggestAuthors", () => {
+  it("formats author as JSONL", () => {
+    const data = [
+      {
+        name: "John Smith",
+        type: "author",
+        uri: "john_smith@express.co.uk",
+      },
+    ];
+
+    const result = formatSuggestAuthors(data, {});
+    const parsed = JSON.parse(result);
+
+    expect(parsed).toEqual({
+      label: "John Smith",
+      type: "author",
+      uri: "john_smith@express.co.uk",
+    });
+  });
+
+  it("returns no results message for empty array", () => {
+    expect(formatSuggestAuthors([], {})).toBe("No results found.");
+  });
+
+  it("handles missing name gracefully", () => {
+    const data = [{ uri: "test@example.com", type: "author" }];
+
+    const result = formatSuggestAuthors(data, {});
+    const parsed = JSON.parse(result);
+
+    expect(parsed.label).toBe("Unknown");
   });
 });
 

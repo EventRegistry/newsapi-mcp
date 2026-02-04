@@ -1,12 +1,99 @@
 import type { ResponseFormatter } from "./types.js";
 
-/** Format suggest results as "label -> uri" list. */
-export const formatSuggestResults: ResponseFormatter = (data) => {
+/** Extract label string from item, handling both string and object forms. */
+function extractLabel(item: Record<string, unknown>): string {
+  const label = item.label;
+  // Handle label as object with language keys (e.g., {"eng": "Slovenia"})
+  if (label && typeof label === "object") {
+    const labelObj = label as Record<string, string>;
+    return labelObj.eng || Object.values(labelObj)[0] || "Unknown";
+  }
+  // Handle label as string or fallback to title/name
+  if (typeof label === "string") return label;
+  if (typeof item.title === "string") return item.title;
+  if (typeof item.name === "string") return item.name;
+  return "Unknown";
+}
+
+/** Format location suggest results as JSONL. */
+export const formatSuggestLocations: ResponseFormatter = (data) => {
   if (!Array.isArray(data) || data.length === 0) return "No results found.";
   return data
-    .map((item, i) => {
-      const label = item.label || item.title || item.name || "Unknown";
-      return `${i + 1}. ${label} -> ${item.uri || ""}`;
+    .map((item) => {
+      const rec = item as Record<string, unknown>;
+      const obj: Record<string, unknown> = {
+        label: extractLabel(rec),
+        type: rec.type || "location",
+        uri: rec.wikiUri || "",
+      };
+      const country = rec.country as Record<string, unknown> | undefined;
+      if (country) {
+        obj.country = extractLabel(country);
+      }
+      return JSON.stringify(obj);
+    })
+    .join("\n");
+};
+
+/** Format concept suggest results as JSONL. */
+export const formatSuggestConcepts: ResponseFormatter = (data) => {
+  if (!Array.isArray(data) || data.length === 0) return "No results found.";
+  return data
+    .map((item) => {
+      const rec = item as Record<string, unknown>;
+      return JSON.stringify({
+        label: extractLabel(rec),
+        type: rec.type || "concept",
+        uri: rec.uri || "",
+      });
+    })
+    .join("\n");
+};
+
+/** Format source suggest results as JSONL. */
+export const formatSuggestSources: ResponseFormatter = (data) => {
+  if (!Array.isArray(data) || data.length === 0) return "No results found.";
+  return data
+    .map((item) => {
+      const rec = item as Record<string, unknown>;
+      return JSON.stringify({
+        label: (rec.title as string) || "Unknown",
+        type: rec.dataType || "news",
+        uri: rec.uri || "",
+      });
+    })
+    .join("\n");
+};
+
+/** Format category suggest results as JSONL. */
+export const formatSuggestCategories: ResponseFormatter = (data) => {
+  if (!Array.isArray(data) || data.length === 0) return "No results found.";
+  return data
+    .map((item) => {
+      const rec = item as Record<string, unknown>;
+      const obj: Record<string, unknown> = {
+        label: extractLabel(rec),
+        uri: rec.uri || "",
+      };
+      if (rec.parentUri) {
+        obj.parent = rec.parentUri;
+      }
+      return JSON.stringify(obj);
+    })
+    .join("\n");
+};
+
+/** Format author suggest results as JSONL. */
+export const formatSuggestAuthors: ResponseFormatter = (data) => {
+  if (!Array.isArray(data) || data.length === 0) return "No results found.";
+  return data
+    .map((item) => {
+      const rec = item as Record<string, unknown>;
+      return JSON.stringify({
+        label: (rec.name as string) || "Unknown",
+        type: rec.type || "author",
+        uri: rec.uri || "",
+      });
     })
     .join("\n");
 };

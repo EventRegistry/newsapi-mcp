@@ -71,6 +71,7 @@ for (const tool of allTools) {
 
   const handler = tool.handler;
   const formatter = tool.formatter;
+  const hasFormatParam = "format" in props;
   server.tool(
     tool.name,
     tool.description,
@@ -82,10 +83,11 @@ for (const tool of allTools) {
         );
 
         const format = (params.format as FormatType) || "json";
-        const text =
-          format === "text" && formatter
-            ? formatter(result, params as Record<string, unknown>)
-            : JSON.stringify(result);
+        const useFormatter =
+          formatter && (!hasFormatParam || format === "text");
+        const text = useFormatter
+          ? formatter(result, params as Record<string, unknown>)
+          : JSON.stringify(result);
 
         return {
           content: [{ type: "text" as const, text }],
