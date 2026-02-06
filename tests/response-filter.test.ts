@@ -134,10 +134,21 @@ describe("filterArticle", () => {
     wgt: 100,
     sim: 0.95,
     sentiment: 0.5,
-    concepts: [{ uri: "concept-1" }],
-    categories: [{ uri: "cat-1" }],
+    concepts: [
+      {
+        uri: "concept-1",
+        label: { eng: "Tesla" },
+        type: "org",
+        score: 85,
+        wgt: 100,
+        wikiUri: "http://en.wikipedia.org/wiki/Tesla",
+      },
+    ],
+    categories: [{ uri: "cat-1", label: { eng: "Tech" }, wgt: 50 }],
     image: "https://example.com/img.jpg",
-    authors: [{ uri: "author-1" }],
+    authors: [
+      { uri: "author-1", name: "Jane Doe", type: "author", isAgency: false },
+    ],
     location: { country: "US" },
     shares: { facebook: 100 },
     eventUri: "evt-1",
@@ -177,7 +188,9 @@ describe("filterArticle", () => {
       new Set(["sentiment", "concepts", "event"]),
     );
     expect(result.sentiment).toBe(0.5);
-    expect(result.concepts).toEqual([{ uri: "concept-1" }]);
+    expect(result.concepts).toEqual([
+      { uri: "concept-1", label: "Tesla", type: "org" },
+    ]);
     expect(result.eventUri).toBe("evt-1");
     expect(result.storyUri).toBe("story-1");
   });
@@ -212,6 +225,31 @@ describe("filterArticle", () => {
     expect(result.body).toBe("Full body text here");
   });
 
+  it("strips concept sub-fields with concepts group", () => {
+    const result = filterArticle(fullArticle, new Set(["concepts"]));
+    expect(result.concepts).toEqual([
+      { uri: "concept-1", label: "Tesla", type: "org" },
+    ]);
+  });
+
+  it("strips category sub-fields with categories group", () => {
+    const result = filterArticle(fullArticle, new Set(["categories"]));
+    expect(result.categories).toEqual([{ uri: "cat-1", label: "Tech" }]);
+  });
+
+  it("strips author sub-fields with authors group", () => {
+    const result = filterArticle(fullArticle, new Set(["authors"]));
+    expect(result.authors).toEqual([{ uri: "author-1", name: "Jane Doe" }]);
+  });
+
+  it("does not filter sub-fields with full group", () => {
+    const result = filterArticle(fullArticle, new Set(["full"]));
+    // full group returns raw objects unfiltered
+    expect(result.concepts).toEqual(fullArticle.concepts);
+    expect(result.categories).toEqual(fullArticle.categories);
+    expect(result.authors).toEqual(fullArticle.authors);
+  });
+
   it("preserves full source with location group", () => {
     const result = filterArticle(fullArticle, new Set(["location"]));
     expect(result.source).toEqual(fullArticle.source);
@@ -229,8 +267,16 @@ describe("filterEvent", () => {
     summary: { eng: "Summary text" },
     articleCounts: { total: 100, eng: 80, deu: 20 },
     sentiment: 0.3,
-    concepts: [{ uri: "concept-1" }],
-    categories: [{ uri: "cat-1" }],
+    concepts: [
+      {
+        uri: "concept-1",
+        label: { eng: "Tesla" },
+        type: "org",
+        score: 85,
+        wgt: 100,
+      },
+    ],
+    categories: [{ uri: "cat-1", label: { eng: "Tech" }, wgt: 50 }],
     images: ["https://example.com/img.jpg"],
     location: { country: "US" },
     socialScore: 500,
@@ -241,9 +287,9 @@ describe("filterEvent", () => {
   it("keeps minimal fields by default", () => {
     const result = filterEvent(fullEvent, new Set());
     expect(result.uri).toBe("evt-1");
-    expect(result.title).toEqual({ eng: "Test Event" });
+    expect(result.title).toBe("Test Event");
     expect(result.eventDate).toBe("2024-01-01");
-    expect(result.summary).toEqual({ eng: "Summary text" });
+    expect(result.summary).toBe("Summary text");
     expect(result.articleCounts).toEqual({ total: 100 });
 
     expect(result.sentiment).toBeUndefined();
@@ -254,6 +300,18 @@ describe("filterEvent", () => {
   it("returns full event for full group", () => {
     const result = filterEvent(fullEvent, new Set(["full"]));
     expect(result).toEqual(fullEvent);
+  });
+
+  it("includes filtered concepts with concepts group", () => {
+    const result = filterEvent(fullEvent, new Set(["concepts"]));
+    expect(result.concepts).toEqual([
+      { uri: "concept-1", label: "Tesla", type: "org" },
+    ]);
+  });
+
+  it("includes filtered categories with categories group", () => {
+    const result = filterEvent(fullEvent, new Set(["categories"]));
+    expect(result.categories).toEqual([{ uri: "cat-1", label: "Tech" }]);
   });
 
   it("preserves full articleCounts with metadata group", () => {

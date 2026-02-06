@@ -102,6 +102,60 @@ export function getMentionIncludeParams(
   return params;
 }
 
+// --- Sub-field filtering for nested objects ---
+
+/** Flatten a multilingual object to a plain string (prefer English). */
+function flattenLang(val: unknown): unknown {
+  if (typeof val === "string") return val;
+  if (val && typeof val === "object" && !Array.isArray(val)) {
+    const obj = val as Record<string, unknown>;
+    if (typeof obj.eng === "string") return obj.eng;
+    const first = Object.values(obj)[0];
+    if (typeof first === "string") return first;
+  }
+  return val;
+}
+
+function filterConceptItem(
+  c: Record<string, unknown>,
+): Record<string, unknown> {
+  return { uri: c.uri, label: flattenLang(c.label), type: c.type };
+}
+
+function filterCategoryItem(
+  c: Record<string, unknown>,
+): Record<string, unknown> {
+  return { uri: c.uri, label: flattenLang(c.label) };
+}
+
+function filterAuthorItem(a: Record<string, unknown>): Record<string, unknown> {
+  return { uri: a.uri, name: a.name };
+}
+
+function filterSubFields(result: Record<string, unknown>): void {
+  if (Array.isArray(result.concepts)) {
+    result.concepts = result.concepts.map((c: unknown) =>
+      c && typeof c === "object"
+        ? filterConceptItem(c as Record<string, unknown>)
+        : c,
+    );
+  }
+  if (Array.isArray(result.categories)) {
+    result.categories = result.categories.map((c: unknown) =>
+      c && typeof c === "object"
+        ? filterCategoryItem(c as Record<string, unknown>)
+        : c,
+    );
+  }
+  if (Array.isArray(result.authors)) {
+    result.authors = result.authors.map((a: unknown) =>
+      a && typeof a === "object"
+        ? filterAuthorItem(a as Record<string, unknown>)
+        : a,
+    );
+  }
+}
+
 // --- Response-side filtering ---
 
 /** Fields to always keep on articles (minimal set). */
@@ -226,6 +280,7 @@ export function filterArticle(
   if (result.source && !groups.has("location")) {
     result.source = filterSource(result.source);
   }
+  filterSubFields(result);
   return applyBodyLen(result, bodyLen);
 }
 
@@ -252,6 +307,10 @@ export function filterEvent(
   if (groups.has("full")) return event;
   const allowed = buildAllowedFields(EVENT_MINIMAL, EVENT_GROUP_FIELDS, groups);
   const result = pickFields(event, allowed);
+  // Flatten multilingual title/summary to strings
+  if (result.title !== undefined) result.title = flattenLang(result.title);
+  if (result.summary !== undefined)
+    result.summary = flattenLang(result.summary);
   // Trim articleCounts to just total
   if (
     result.articleCounts &&
@@ -261,6 +320,7 @@ export function filterEvent(
     const counts = result.articleCounts as Record<string, unknown>;
     result.articleCounts = { total: counts.total };
   }
+  filterSubFields(result);
   return result;
 }
 

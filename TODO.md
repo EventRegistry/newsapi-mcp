@@ -27,10 +27,9 @@ Findings from analyzing the current implementation against MCP best practices (o
 - **Current**: `includeFields` parameter filters response fields (good), but full arrays still returned
 - **Best practice**: Blockscout truncates hex strings, removes UI-only fields, caps list results at 10 items. Brave Search returns concise snippets.
 - **Next steps**:
-  - [ ] Default `articlesCount` to lower values for MCP context (10-20 vs 100)
-  - [ ] Truncate article bodies by default (e.g., 500 chars) unless explicitly requested
-  - [ ] Strip fields that LLMs rarely need (internal IDs, raw URIs, duplicate metadata)
-  - [ ] Add a `detail_level` parameter (`minimal` | `standard` | `full`)
+  - [x] Default `articlesCount`/`eventsCount` to 10 for MCP context (was 100/50)
+  - [x] Strip fields that LLMs rarely need (internal IDs, raw URIs, duplicate metadata)
+  - [x] Add a `detail_level` parameter (`minimal` | `standard` | `full`) — controls count + body truncation
 
 ---
 

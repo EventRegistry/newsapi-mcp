@@ -21,7 +21,11 @@ vi.mock("../src/client.js", () => ({
 }));
 
 import { apiPost, parseArray } from "../src/client.js";
-import { searchArticles, getArticleDetails } from "../src/tools/articles.js";
+import {
+  searchArticles,
+  getArticleDetails,
+  applyDetailLevel,
+} from "../src/tools/articles.js";
 import {
   searchEvents,
   getEventDetails,
@@ -43,7 +47,7 @@ beforeEach(() => {
 // ---------- Articles ----------
 
 describe("searchArticles", () => {
-  it("calls correct endpoint with resultType and articleBodyLen", async () => {
+  it("calls correct endpoint with resultType, articleBodyLen, and default count", async () => {
     await searchArticles.handler({ keyword: "Tesla" });
 
     expect(mockedApiPost).toHaveBeenCalledWith(
@@ -51,6 +55,7 @@ describe("searchArticles", () => {
       expect.objectContaining({
         resultType: "articles",
         articleBodyLen: -1,
+        articlesCount: 10,
         keyword: ["Tesla"],
       }),
     );
@@ -101,13 +106,14 @@ describe("getArticleDetails", () => {
 // ---------- Events ----------
 
 describe("searchEvents", () => {
-  it("calls correct endpoint with resultType and includeEventSummary", async () => {
+  it("calls correct endpoint with resultType, includeEventSummary, and default count", async () => {
     await searchEvents.handler({ keyword: "earthquake" });
 
     expect(mockedApiPost).toHaveBeenCalledWith(
       "/event/getEvents",
       expect.objectContaining({
         resultType: "events",
+        eventsCount: 10,
         keyword: ["earthquake"],
         includeEventSummary: true,
       }),
@@ -160,7 +166,7 @@ describe("findEventForText", () => {
 // ---------- Topic Pages ----------
 
 describe("getTopicPageArticles", () => {
-  it("calls correct endpoint with uri and resultType", async () => {
+  it("calls correct endpoint with uri, resultType, and default count", async () => {
     await getTopicPageArticles.handler({ uri: "topic-123" });
 
     expect(mockedApiPost).toHaveBeenCalledWith(
@@ -169,6 +175,7 @@ describe("getTopicPageArticles", () => {
         uri: "topic-123",
         resultType: "articles",
         articleBodyLen: -1,
+        articlesCount: 10,
       }),
     );
   });
@@ -189,7 +196,7 @@ describe("getTopicPageArticles", () => {
 });
 
 describe("getTopicPageEvents", () => {
-  it("calls correct endpoint with uri, resultType, and includeEventSummary", async () => {
+  it("calls correct endpoint with uri, resultType, includeEventSummary, and default count", async () => {
     await getTopicPageEvents.handler({ uri: "topic-456" });
 
     expect(mockedApiPost).toHaveBeenCalledWith(
@@ -197,6 +204,7 @@ describe("getTopicPageEvents", () => {
       expect.objectContaining({
         uri: "topic-456",
         resultType: "events",
+        eventsCount: 10,
         includeEventSummary: true,
       }),
     );
@@ -214,6 +222,102 @@ describe("getTopicPageEvents", () => {
     expect(body.eventsPage).toBe(3);
     expect(body.eventsCount).toBe(25);
     expect(body.eventsSortBy).toBe("size");
+  });
+});
+
+// ---------- Detail Level ----------
+
+describe("applyDetailLevel", () => {
+  it("applies standard preset by default", () => {
+    const params: Record<string, unknown> = {};
+    applyDetailLevel(params);
+    expect(params.articlesCount).toBe(10);
+    expect(params.eventsCount).toBe(10);
+    expect(params.articleBodyLen).toBe(-1);
+  });
+
+  it("applies minimal preset", () => {
+    const params: Record<string, unknown> = { detail_level: "minimal" };
+    applyDetailLevel(params);
+    expect(params.articlesCount).toBe(5);
+    expect(params.eventsCount).toBe(5);
+    expect(params.articleBodyLen).toBe(200);
+  });
+
+  it("applies full preset", () => {
+    const params: Record<string, unknown> = { detail_level: "full" };
+    applyDetailLevel(params);
+    expect(params.articlesCount).toBe(100);
+    expect(params.eventsCount).toBe(50);
+    expect(params.articleBodyLen).toBe(-1);
+  });
+
+  it("does not override explicit params", () => {
+    const params: Record<string, unknown> = {
+      detail_level: "minimal",
+      articlesCount: 30,
+      articleBodyLen: 500,
+    };
+    applyDetailLevel(params);
+    expect(params.articlesCount).toBe(30);
+    expect(params.articleBodyLen).toBe(500);
+    expect(params.eventsCount).toBe(5); // not set explicitly, uses preset
+  });
+});
+
+describe("detail_level integration", () => {
+  it("searchArticles with minimal detail_level sends 5 articles and 200 bodyLen", async () => {
+    await searchArticles.handler({
+      keyword: "AI",
+      detail_level: "minimal",
+    });
+
+    const body = mockedApiPost.mock.calls[0][1];
+    expect(body.articlesCount).toBe(5);
+    expect(body.articleBodyLen).toBe(200);
+  });
+
+  it("searchArticles with full detail_level sends 100 articles", async () => {
+    await searchArticles.handler({
+      keyword: "AI",
+      detail_level: "full",
+    });
+
+    const body = mockedApiPost.mock.calls[0][1];
+    expect(body.articlesCount).toBe(100);
+    expect(body.articleBodyLen).toBe(-1);
+  });
+
+  it("searchEvents with minimal detail_level sends 5 events", async () => {
+    await searchEvents.handler({
+      keyword: "earthquake",
+      detail_level: "minimal",
+    });
+
+    const body = mockedApiPost.mock.calls[0][1];
+    expect(body.eventsCount).toBe(5);
+  });
+
+  it("explicit articlesCount overrides detail_level preset", async () => {
+    await searchArticles.handler({
+      keyword: "AI",
+      detail_level: "minimal",
+      articlesCount: 50,
+    });
+
+    const body = mockedApiPost.mock.calls[0][1];
+    expect(body.articlesCount).toBe(50);
+    expect(body.articleBodyLen).toBe(200); // still from preset
+  });
+
+  it("detail_level is stripped from API body", async () => {
+    await searchArticles.handler({
+      keyword: "AI",
+      detail_level: "minimal",
+    });
+
+    const body = mockedApiPost.mock.calls[0][1];
+    expect(body.detail_level).toBeUndefined();
   });
 });
 

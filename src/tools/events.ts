@@ -4,6 +4,8 @@ import {
   buildFilterBody,
   includeFieldsProp,
   formatControlProp,
+  detailLevelProp,
+  applyDetailLevel,
 } from "./articles.js";
 import type { ToolDef } from "../types.js";
 import {
@@ -24,6 +26,7 @@ export const searchEvents: ToolDef = {
       ...contentFilterProps,
       ...includeFieldsProp,
       ...formatControlProp,
+      ...detailLevelProp,
       minArticlesInEvent: {
         type: "integer",
         description: "Minimum number of articles in the event.",
@@ -48,8 +51,8 @@ export const searchEvents: ToolDef = {
       },
       eventsCount: {
         type: "integer",
-        description: "Events per page (max 50). Default: 50.",
-        default: 50,
+        description: "Events per page (max 50). Default: 10.",
+        default: 10,
         maximum: 50,
       },
       eventsSortBy: {
@@ -70,10 +73,12 @@ export const searchEvents: ToolDef = {
     },
   },
   handler: async (params) => {
+    applyDetailLevel(params);
     const groups = parseFieldGroups(params.includeFields as string | undefined);
 
     const body = buildFilterBody(params);
     body.resultType = "events";
+    body.eventsCount ??= 10;
     Object.assign(body, getEventIncludeParams(groups));
 
     const result = await apiPost("/event/getEvents", body);

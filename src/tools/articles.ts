@@ -121,8 +121,40 @@ export const formatControlProp: Record<string, unknown> = {
   },
 };
 
+/** Detail level presets for controlling response size. */
+export const detailLevelProp: Record<string, unknown> = {
+  detail_level: {
+    type: "string",
+    description:
+      'Controls result count and body length. "minimal": 5 results, 200-char bodies. "standard" (default): 10 results, full bodies. "full": original API maximums, full bodies. Explicit params (articlesCount, eventsCount, articleBodyLen) override presets.',
+    enum: ["minimal", "standard", "full"],
+  },
+};
+
+const DETAIL_PRESETS: Record<string, Record<string, number>> = {
+  minimal: { articlesCount: 5, eventsCount: 5, articleBodyLen: 200 },
+  standard: { articlesCount: 10, eventsCount: 10, articleBodyLen: -1 },
+  full: { articlesCount: 50, eventsCount: 20, articleBodyLen: -1 },
+};
+
+/** Apply detail_level preset values for any params not explicitly set. */
+export function applyDetailLevel(params: Record<string, unknown>): void {
+  const level = (params.detail_level as string) ?? "standard";
+  const preset = DETAIL_PRESETS[level] ?? DETAIL_PRESETS.standard;
+  for (const [k, v] of Object.entries(preset)) {
+    if (params[k] === undefined) {
+      params[k] = v;
+    }
+  }
+}
+
 /** Params that are NOT API filter params and should be stripped before sending. */
-const LOCAL_PARAMS = new Set(["includeFields", "articleBodyLen", "format"]);
+const LOCAL_PARAMS = new Set([
+  "includeFields",
+  "articleBodyLen",
+  "format",
+  "detail_level",
+]);
 
 /** Build the request body from params, expanding array-typed fields. */
 export function buildFilterBody(
@@ -165,6 +197,7 @@ export const searchArticles: ToolDef = {
       ...contentFilterProps,
       ...responseControlProps,
       ...formatControlProp,
+      ...detailLevelProp,
       isDuplicateFilter: {
         type: "string",
         description:
@@ -182,8 +215,8 @@ export const searchArticles: ToolDef = {
       },
       articlesCount: {
         type: "integer",
-        description: "Articles per page (max 100). Default: 100.",
-        default: 100,
+        description: "Articles per page (max 100). Default: 10.",
+        default: 10,
         maximum: 100,
       },
       articlesSortBy: {
@@ -211,15 +244,14 @@ export const searchArticles: ToolDef = {
     },
   },
   handler: async (params) => {
+    applyDetailLevel(params);
     const groups = parseFieldGroups(params.includeFields as string | undefined);
-    const bodyLen =
-      params.articleBodyLen !== undefined
-        ? (params.articleBodyLen as number)
-        : -1;
+    const bodyLen = (params.articleBodyLen as number) ?? -1;
 
     const body = buildFilterBody(params);
     body.resultType = "articles";
     body.articleBodyLen = bodyLen;
+    body.articlesCount ??= 10;
     if (params.dataType) {
       body.dataType = parseArray(params.dataType);
     }

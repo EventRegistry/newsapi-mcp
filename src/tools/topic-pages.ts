@@ -1,5 +1,10 @@
 import { apiPost } from "../client.js";
-import { responseControlProps, includeFieldsProp } from "./articles.js";
+import {
+  responseControlProps,
+  includeFieldsProp,
+  detailLevelProp,
+  applyDetailLevel,
+} from "./articles.js";
 import type { ToolDef } from "../types.js";
 import {
   parseFieldGroups,
@@ -21,14 +26,15 @@ export const getTopicPageArticles: ToolDef = {
         description: "Topic page URI.",
       },
       ...responseControlProps,
+      ...detailLevelProp,
       articlesPage: {
         type: "integer",
         description: "Page number (starting from 1). Default: 1.",
       },
       articlesCount: {
         type: "integer",
-        description: "Articles per page (max 100). Default: 100.",
-        default: 100,
+        description: "Articles per page (max 100). Default: 10.",
+        default: 10,
         maximum: 100,
       },
       articlesSortBy: {
@@ -41,11 +47,9 @@ export const getTopicPageArticles: ToolDef = {
     required: ["uri"],
   },
   handler: async (params) => {
+    applyDetailLevel(params);
     const groups = parseFieldGroups(params.includeFields as string | undefined);
-    const bodyLen =
-      params.articleBodyLen !== undefined
-        ? (params.articleBodyLen as number)
-        : -1;
+    const bodyLen = (params.articleBodyLen as number) ?? -1;
 
     const body: Record<string, unknown> = {
       uri: params.uri,
@@ -54,7 +58,7 @@ export const getTopicPageArticles: ToolDef = {
       ...getArticleIncludeParams(groups),
     };
     if (params.articlesPage) body.articlesPage = params.articlesPage;
-    if (params.articlesCount) body.articlesCount = params.articlesCount;
+    body.articlesCount = params.articlesCount ?? 10;
     if (params.articlesSortBy) body.articlesSortBy = params.articlesSortBy;
 
     const result = await apiPost("/article/getArticlesForTopicPage", body);
@@ -79,14 +83,15 @@ export const getTopicPageEvents: ToolDef = {
         description: "Topic page URI.",
       },
       ...includeFieldsProp,
+      ...detailLevelProp,
       eventsPage: {
         type: "integer",
         description: "Page number (starting from 1). Default: 1.",
       },
       eventsCount: {
         type: "integer",
-        description: "Events per page (max 50). Default: 50.",
-        default: 50,
+        description: "Events per page (max 50). Default: 10.",
+        default: 10,
         maximum: 50,
       },
       eventsSortBy: {
@@ -99,6 +104,7 @@ export const getTopicPageEvents: ToolDef = {
     required: ["uri"],
   },
   handler: async (params) => {
+    applyDetailLevel(params);
     const groups = parseFieldGroups(params.includeFields as string | undefined);
 
     const body: Record<string, unknown> = {
@@ -107,7 +113,7 @@ export const getTopicPageEvents: ToolDef = {
       ...getEventIncludeParams(groups),
     };
     if (params.eventsPage) body.eventsPage = params.eventsPage;
-    if (params.eventsCount) body.eventsCount = params.eventsCount;
+    body.eventsCount = params.eventsCount ?? 10;
     if (params.eventsSortBy) body.eventsSortBy = params.eventsSortBy;
 
     const result = await apiPost("/event/getEventsForTopicPage", body);
