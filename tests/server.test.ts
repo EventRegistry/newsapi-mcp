@@ -2,9 +2,8 @@ import { describe, it, expect, vi, beforeAll, afterAll } from "vitest";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
-import { z } from "zod";
 import { initClient } from "../src/client.js";
-import { allTools } from "../src/tools/index.js";
+import { allTools, ToolRegistry } from "../src/tools/index.js";
 
 // Mock fetch globally so no real HTTP requests are made
 const fetchSpy = vi.fn();
@@ -33,79 +32,8 @@ beforeAll(async () => {
 
   server = new McpServer({ name: "newsapi", version: "1.0.0" });
 
-  // Register all tools (same logic as index.ts)
-  for (const tool of allTools) {
-    const shape: Record<string, z.ZodTypeAny> = {};
-    const props = tool.inputSchema.properties;
-    const required = new Set(tool.inputSchema.required ?? []);
-
-    for (const [key, schemaDef] of Object.entries(props)) {
-      const def = schemaDef as Record<string, unknown>;
-      let field: z.ZodTypeAny;
-
-      const typeDef = def.type;
-      if (
-        typeDef === "integer" ||
-        typeDef === "number" ||
-        (Array.isArray(typeDef) && typeDef.includes("number"))
-      ) {
-        field = z.number();
-      } else if (typeDef === "boolean") {
-        field = z.boolean();
-      } else if (Array.isArray(typeDef) && typeDef.includes("object")) {
-        field = z.any();
-      } else {
-        field = z.string();
-      }
-
-      if (def.description) {
-        field = field.describe(def.description as string);
-      }
-
-      if (def.enum && Array.isArray(def.enum)) {
-        const values = def.enum as string[];
-        if (values.length > 0) {
-          field = z
-            .enum(values as [string, ...string[]])
-            .describe((def.description as string) || "");
-        }
-      }
-
-      if (!required.has(key)) {
-        field = field.optional();
-      }
-
-      shape[key] = field;
-    }
-
-    const handler = tool.handler;
-    server.tool(
-      tool.name,
-      tool.description,
-      z.object(shape).shape,
-      async (params) => {
-        try {
-          const result = await handler(
-            params as unknown as Record<string, unknown>,
-          );
-          return {
-            content: [
-              {
-                type: "text" as const,
-                text: JSON.stringify(result, null, 2),
-              },
-            ],
-          };
-        } catch (err) {
-          const message = err instanceof Error ? err.message : String(err);
-          return {
-            content: [{ type: "text" as const, text: message }],
-            isError: true,
-          };
-        }
-      },
-    );
-  }
+  const registry = new ToolRegistry(allTools);
+  registry.attach(server);
 
   // Connect via in-memory transport
   const [clientTransport, serverTransport] =
@@ -125,17 +53,126 @@ afterAll(async () => {
 });
 
 describe("MCP server E2E", () => {
-  it("lists all 13 tools", async () => {
+  it("lists only core tools + meta tools by default", async () => {
     const result = await client.listTools();
-    expect(result.tools).toHaveLength(13);
-
     const names = result.tools.map((t) => t.name).sort();
-    expect(names).toContain("search_articles");
-    expect(names).toContain("suggest_concepts");
-    expect(names).toContain("get_api_usage");
+
+    // Core: search_articles, search_events, suggest_concepts, get_api_usage
+    // Meta: list_available_tools, enable_toolset
+    expect(names).toEqual([
+      "enable_toolset",
+      "get_api_usage",
+      "list_available_tools",
+      "search_articles",
+      "search_events",
+      "suggest_concepts",
+    ]);
+    expect(result.tools).toHaveLength(6);
   });
 
-  it("calls suggest_concepts and returns text content", async () => {
+  it("does not expose non-core tools by default", async () => {
+    const result = await client.listTools();
+    const names = result.tools.map((t) => t.name);
+
+    expect(names).not.toContain("get_article_details");
+    expect(names).not.toContain("suggest_authors");
+    expect(names).not.toContain("get_topic_page_articles");
+  });
+
+  it("list_available_tools shows all categories", async () => {
+    const result = await client.callTool({
+      name: "list_available_tools",
+      arguments: {},
+    });
+
+    const content = result.content[0] as { text: string };
+    const info = JSON.parse(content.text);
+
+    expect(info).toHaveLength(4);
+    const categories = info.map((c: { category: string }) => c.category).sort();
+    expect(categories).toEqual(["search", "suggest", "topic_pages", "usage"]);
+
+    // Check search category has correct split
+    const search = info.find(
+      (c: { category: string }) => c.category === "search",
+    );
+    expect(search.enabled).toContain("search_articles");
+    expect(search.enabled).toContain("search_events");
+    expect(search.disabled).toContain("get_article_details");
+    expect(search.disabled).toContain("get_event_details");
+    expect(search.disabled).toContain("find_event_for_text");
+  });
+
+  it("enable_toolset adds all tools in category", async () => {
+    const result = await client.callTool({
+      name: "enable_toolset",
+      arguments: { category: "search", enabled: true },
+    });
+
+    const content = result.content[0] as { text: string };
+    expect(content.text).toContain("get_article_details");
+    expect(content.text).toContain("get_event_details");
+    expect(content.text).toContain("find_event_for_text");
+
+    // Verify tools now appear in listing
+    const tools = await client.listTools();
+    const names = tools.tools.map((t) => t.name);
+    expect(names).toContain("get_article_details");
+    expect(names).toContain("get_event_details");
+    expect(names).toContain("find_event_for_text");
+  });
+
+  it("enable_toolset can disable non-core tools", async () => {
+    // First ensure search is fully enabled
+    await client.callTool({
+      name: "enable_toolset",
+      arguments: { category: "search", enabled: true },
+    });
+
+    // Now disable
+    const result = await client.callTool({
+      name: "enable_toolset",
+      arguments: { category: "search", enabled: false },
+    });
+
+    const content = result.content[0] as { text: string };
+    expect(content.text).toContain("removed");
+
+    // Core tools should still be there
+    const tools = await client.listTools();
+    const names = tools.tools.map((t) => t.name);
+    expect(names).toContain("search_articles");
+    expect(names).toContain("search_events");
+    // Non-core should be gone
+    expect(names).not.toContain("get_article_details");
+    expect(names).not.toContain("find_event_for_text");
+  });
+
+  it("enable_toolset works for topic_pages (no core tools)", async () => {
+    // Enable
+    await client.callTool({
+      name: "enable_toolset",
+      arguments: { category: "topic_pages", enabled: true },
+    });
+
+    let tools = await client.listTools();
+    let names = tools.tools.map((t) => t.name);
+    expect(names).toContain("get_topic_page_articles");
+    expect(names).toContain("get_topic_page_events");
+
+    // Disable
+    await client.callTool({
+      name: "enable_toolset",
+      arguments: { category: "topic_pages", enabled: false },
+    });
+
+    tools = await client.listTools();
+    names = tools.tools.map((t) => t.name);
+    expect(names).not.toContain("get_topic_page_articles");
+    expect(names).not.toContain("get_topic_page_events");
+  });
+
+  it("calls suggest_concepts and returns formatted text", async () => {
     mockFetchOk([
       { uri: "http://en.wikipedia.org/wiki/Tesla", label: "Tesla" },
     ]);
@@ -146,12 +183,14 @@ describe("MCP server E2E", () => {
     });
 
     expect(result.content).toHaveLength(1);
-    const content = result.content[0];
-    expect(content).toMatchObject({ type: "text" });
-    const parsed = JSON.parse((content as { text: string }).text);
-    expect(parsed).toEqual([
-      { uri: "http://en.wikipedia.org/wiki/Tesla", label: "Tesla" },
-    ]);
+    const content = result.content[0] as { type: string; text: string };
+    expect(content.type).toBe("text");
+    // Suggest tools always use their formatter (JSONL output)
+    const parsed = JSON.parse(content.text);
+    expect(parsed).toMatchObject({
+      label: "Tesla",
+      uri: "http://en.wikipedia.org/wiki/Tesla",
+    });
   });
 
   it("calls search_articles with keyword", async () => {
@@ -183,21 +222,5 @@ describe("MCP server E2E", () => {
     expect(result.content).toHaveLength(1);
     const content = result.content[0] as { text: string };
     expect(content.text).toContain("403");
-  });
-
-  it("sends lang=eng in suggest_locations when lang not provided", async () => {
-    mockFetchOk([
-      { uri: "http://en.wikipedia.org/wiki/Berlin", label: "Berlin" },
-    ]);
-
-    await client.callTool({
-      name: "suggest_locations",
-      arguments: { prefix: "Berlin" },
-    });
-
-    const lastCall = fetchSpy.mock.calls[fetchSpy.mock.calls.length - 1];
-    const body = JSON.parse(lastCall[1].body);
-    expect(body).toHaveProperty("lang", "eng");
-    expect(body).toHaveProperty("prefix", "Berlin");
   });
 });

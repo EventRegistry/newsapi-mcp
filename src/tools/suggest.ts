@@ -17,6 +17,7 @@ function suggestTool(
   return {
     name,
     description,
+    category: "suggest",
     inputSchema: {
       type: "object",
       properties: {

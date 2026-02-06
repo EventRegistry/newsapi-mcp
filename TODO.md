@@ -16,13 +16,12 @@ Findings from analyzing the current implementation against MCP best practices (o
   - [ ] Once all tools have formatters, remove `format` parameter entirely — always use compact formatted output
 
 ### Dynamic toolsets / tool filtering
-- **Current**: 12 tools registered statically on every connection (reduced from 23 after removing streaming, analytics, and mentions tools)
-- **Best practice**: Dynamic toolsets reduce context by 96-160x. Servers like Brave Search expose only relevant tools based on session context.
-- **Next steps**:
-  - [ ] Group tools into categories (search, suggest, topic_pages)
-  - [ ] Add a meta-tool like `list_available_tools` that returns tool names + one-line descriptions
-  - [ ] Register only core tools (search_articles, suggest_concepts) by default
-  - [ ] Load additional tools on demand via `tools/list` with filtering or a `use_toolset` tool
+- **Current**: ToolRegistry groups tools into categories. Only core tools registered by default (6 tools: search_articles, search_events, suggest_concepts, get_api_usage + 2 meta-tools). LLM enables additional categories via `enable_toolset`.
+- **Completed**:
+  - [x] Group tools into categories (search, suggest, topic_pages, usage)
+  - [x] Add `list_available_tools` meta-tool showing categories + enabled/disabled status
+  - [x] Register only core tools by default (search_articles, search_events, suggest_concepts, get_api_usage)
+  - [x] Add `enable_toolset` meta-tool to toggle categories on/off with `tools/list_changed` notification
 
 ### Response truncation and summarization
 - **Current**: `includeFields` parameter filters response fields (good), but full arrays still returned
@@ -41,17 +40,17 @@ Findings from analyzing the current implementation against MCP best practices (o
 - **Current**: Raw API JSON passed through with optional field filtering
 - **Best practice**: Server should reshape responses for LLM consumption — flatten nested structures, use human-readable labels, add continuation hints
 - **Next steps**:
-  - [ ] For `search_articles`: return a numbered list with title, source, date, snippet instead of raw JSON
-  - [ ] For `suggest_*`: return a simple "name → URI" mapping, not full entity objects
-  - [ ] Include pagination hints: "Showing 1-10 of 342 results. Use `articlesPage: 2` for more."
+  - [x] For `search_articles`: return a numbered list with title, source, date, snippet instead of raw JSON
+  - [x] For `suggest_*`: return a simple "name → URI" mapping, not full entity objects
+  - [x] Include pagination hints: "Page X of Y. Use `articlesPage: N+1` for more."
   - [ ] Add result count to every paginated response
 
 ### Continuation patterns
 - **Current**: Pagination via `articlesPage` / `eventsPage` params, but no guidance in responses
 - **Best practice**: Responses should tell the LLM how to get more results
 - **Next steps**:
-  - [ ] Append pagination metadata to every list response (`hasMore`, `nextPage`, `totalResults`)
-  - [ ] Include example follow-up in response text when results are truncated
+  - [x] Append pagination metadata to every list response (page/pages + next page hint)
+  - [x] Include example follow-up in response text when results are truncated
 
 ---
 
@@ -124,7 +123,7 @@ Findings from analyzing the current implementation against MCP best practices (o
 ## Tool Design (P1)
 
 ### Tool consolidation
-- **Current**: 12 tools (reduced from 23 — removed streaming, analytics, and mentions tools)
+- **Current**: 13 tools (reduced from 23 — removed streaming, analytics, and mentions tools)
 - **Best practice**: Fewer focused tools reduce confusion. GitHub MCP uses ~10 tools. Brave Search uses 2.
 - **Completed**:
   - [x] Removed `stream_articles` and `stream_events` (streaming use cases handled via `search_*` with date filters)

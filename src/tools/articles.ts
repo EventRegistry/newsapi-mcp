@@ -156,6 +156,7 @@ export function buildFilterBody(
 
 export const searchArticles: ToolDef = {
   name: "search_articles",
+  category: "search",
   description:
     "Search news articles by concepts, sources, categories, dates, language, and sentiment. Returns up to 100 articles per call. IMPORTANT: Always use suggest_concepts first to resolve names to concept URIs, then search with conceptUri. Use keyword only as a secondary filter alongside conceptUri. Use suggest_* tools to look up URIs for concepts, sources, categories, and locations.",
   inputSchema: {
@@ -236,6 +237,7 @@ export const searchArticles: ToolDef = {
 
 export const getArticleDetails: ToolDef = {
   name: "get_article_details",
+  category: "search",
   description: "Get full details for one or more articles by their URI(s).",
   inputSchema: {
     type: "object",
