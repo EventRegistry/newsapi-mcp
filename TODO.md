@@ -142,6 +142,67 @@ Findings from analyzing the current implementation against MCP best practices (o
 
 ---
 
+## LLM Guidance & Workflow Documentation (P1)
+
+### Server-level instructions
+- **Current**: No `instructions` field set on `McpServer` constructor
+- **Best practice**: The MCP SDK supports an `instructions` string that provides server-level guidance to LLM clients — purpose, core workflows, tips. Some clients ignore it, so critical guidance must stay in tool descriptions too.
+- **Next steps**:
+  - [ ] Add `instructions` string to `McpServer` constructor options in `src/index.ts` (~300 words)
+  - [ ] Content should cover: server purpose, core suggest→search workflow, dynamic toolsets explanation, token optimization tips
+  - [ ] Include summaries of the 5 workflow patterns (basic search, filtered search, event tracking, source-specific, topic monitoring)
+  - [ ] Keep critical guidance duplicated in tool descriptions for clients that don't surface `instructions`
+
+### Enhanced tool descriptions with examples
+- **Current**: Good descriptions with parameter docs, but no example invocations or disambiguation guidance
+- **Best practice**: Tool descriptions should include terse example invocations and "use this when / not this" guidance to help LLMs pick the right tool
+- **Next steps**:
+  - [ ] Add 1-2 example invocations per tool (one line each, showing key params)
+  - [ ] Add "Use this when..." / "Not this..." disambiguation for similar tools:
+    - `search_articles` vs `search_events`
+    - `find_event_for_text` vs `search_events`
+    - `get_article_details` vs `search_articles`
+  - [ ] Follow structured template: `[What] / WORKFLOW / EXAMPLE / USE THIS WHEN / NOT THIS`
+  - [ ] Files: `src/tools/articles.ts`, `events.ts`, `suggest.ts`, `topic-pages.ts`, `usage.ts`
+
+### Enhanced `list_available_tools` output
+- **Current**: Returns JSON listing categories and tool status
+- **Best practice**: Meta-tool output should include workflow guidance and quick-start examples, not just a catalog
+- **Next steps**:
+  - [ ] Add workflow guidance section (suggest→search pattern) to output
+  - [ ] Add quick-start example showing a typical 2-step search
+  - [ ] Add token optimization tips (use `format: "text"`, `detail_level`, `articlesCount`)
+  - [ ] Switch from JSON to formatted text output
+  - [ ] File: `src/tools/registry.ts`
+
+### MCP Resources for static documentation
+- **Current**: Resources not implemented (tracked in MCP Features section above)
+- **Best practice**: Resources provide static/semi-static context that LLMs can read on demand without burning tool calls
+- **Next steps**:
+  - [ ] `newsapi://guide` — comprehensive usage guide with all 5 workflow patterns
+  - [ ] `newsapi://examples` — example queries for 7 common use cases (topic search, person tracking, event monitoring, source comparison, sentiment filtering, date-range search, multi-concept queries)
+  - [ ] `newsapi://fields` — field reference (includeFields groups, detail_level presets, lang codes)
+  - [ ] New file: `src/resources.ts`, registered from `src/index.ts`
+
+### MCP Prompts for common workflows
+- **Current**: Prompts not implemented (tracked in MCP Features section above)
+- **Best practice**: Prompts are server-defined workflow templates that guide LLMs through multi-step tasks with structured arguments
+- **Next steps**:
+  - [ ] `find-news` — suggest → search → summarize
+  - [ ] `track-event` — find_event_for_text → get_event_details → related articles
+  - [ ] `compare-coverage` — multi-source search + comparison
+  - [ ] New file: `src/prompts.ts`, registered from `src/index.ts`
+
+### Workflow patterns to document across all guidance surfaces
+Five canonical patterns to reference in instructions, tool descriptions, resources, and prompts:
+1. **Basic search**: `suggest_concepts("Tesla")` → `search_articles(conceptUri: "...")`
+2. **Filtered search**: `suggest_concepts` + `suggest_sources`/`suggest_categories` → `search_articles` with multiple filters
+3. **Event tracking**: `find_event_for_text("...")` → `get_event_details` → `search_articles` for related coverage
+4. **Source-specific**: `suggest_sources("Reuters")` → `search_articles(sourceUri: "...")`
+5. **Topic monitoring**: `enable_toolset("topic_pages")` → `get_topic_page_articles(uri: "...")`
+
+---
+
 ## API-Side Improvements (P2)
 
 These require changes to the NewsAPI.ai backend, not just the MCP server.
