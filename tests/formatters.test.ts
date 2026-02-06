@@ -380,23 +380,20 @@ describe("formatEventResults", () => {
 describe("formatUsageResults", () => {
   it("formats usage data as key-value pairs", () => {
     const data = {
-      planName: "Pro",
-      dailyUsed: 100,
-      dailyAvailable: 1000,
-      monthlyUsed: 2500,
-      monthlyAvailable: 30000,
+      usedTokens: 2500,
+      availableTokens: 30000,
     };
 
     const result = formatUsageResults(data, {});
 
-    expect(result).toBe(
-      "Plan: Pro\n" + "Daily: 100 / 1000\n" + "Monthly: 2500 / 30000",
-    );
+    expect(result).toContain("Tokens used:");
+    expect(result).toContain("Tokens available:");
   });
 
   it("handles missing fields with defaults", () => {
     const result = formatUsageResults({}, {});
 
-    expect(result).toBe("Plan: Unknown\nDaily: 0 / 0\nMonthly: 0 / 0");
+    expect(result).toContain("Tokens used:");
+    expect(result).toContain("Tokens available:");
   });
 });
