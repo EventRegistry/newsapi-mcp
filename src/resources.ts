@@ -270,19 +270,37 @@ Explicit params (articlesCount, articleBodyLen) override presets.
 
 ## Language Codes (ISO 639-2)
 
-Common codes:
-- eng: English
-- deu: German
-- fra: French
-- spa: Spanish
-- ita: Italian
-- por: Portuguese
-- rus: Russian
-- zho: Chinese
-- jpn: Japanese
-- ara: Arabic
-- hin: Hindi
-- slv: Slovenian
+56 supported languages:
+
+**Western European:**
+cat (Catalan), deu (German), eng (English), eus (Basque), fra (French),
+glg (Galician), gle (Irish), isl (Icelandic), ita (Italian), nld (Dutch),
+nor (Norwegian), por (Portuguese), spa (Spanish), swe (Swedish)
+
+**Central/Eastern European:**
+bul (Bulgarian), ces (Czech), est (Estonian), hrv (Croatian), hun (Hungarian),
+lav (Latvian), lit (Lithuanian), pol (Polish), ron (Romanian), rus (Russian),
+slk (Slovak), slv (Slovenian), sqi (Albanian), srp (Serbian), ukr (Ukrainian),
+hbs (Serbo-Croatian)
+
+**Nordic/Baltic:**
+dan (Danish), fin (Finnish)
+
+**Middle Eastern:**
+ara (Arabic), heb (Hebrew), tur (Turkish)
+
+**South Asian:**
+hin (Hindi), kan (Kannada), mal (Malayalam), mar (Marathi), pan (Punjabi),
+tam (Tamil), tel (Telugu), urd (Urdu)
+
+**East Asian:**
+jpn (Japanese), kor (Korean), zho (Chinese), zsm (Malay Standard)
+
+**Southeast Asian:**
+ind (Indonesian), msa (Malay), tgl (Tagalog), tha (Thai), vie (Vietnamese)
+
+**Other:**
+ell (Greek), kat (Georgian), swa (Swahili), zul (Zulu)
 
 Use comma-separated for multiple: lang: "eng,deu,fra"
 
