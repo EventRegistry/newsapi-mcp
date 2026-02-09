@@ -237,7 +237,7 @@ describe("applyDetailLevel", () => {
   });
 
   it("applies minimal preset", () => {
-    const params: Record<string, unknown> = { detail_level: "minimal" };
+    const params: Record<string, unknown> = { detailLevel: "minimal" };
     applyDetailLevel(params);
     expect(params.articlesCount).toBe(5);
     expect(params.eventsCount).toBe(5);
@@ -245,7 +245,7 @@ describe("applyDetailLevel", () => {
   });
 
   it("applies full preset", () => {
-    const params: Record<string, unknown> = { detail_level: "full" };
+    const params: Record<string, unknown> = { detailLevel: "full" };
     applyDetailLevel(params);
     expect(params.articlesCount).toBe(50);
     expect(params.eventsCount).toBe(20);
@@ -254,7 +254,7 @@ describe("applyDetailLevel", () => {
 
   it("does not override explicit params", () => {
     const params: Record<string, unknown> = {
-      detail_level: "minimal",
+      detailLevel: "minimal",
       articlesCount: 30,
       articleBodyLen: 500,
     };
@@ -265,11 +265,11 @@ describe("applyDetailLevel", () => {
   });
 });
 
-describe("detail_level integration", () => {
-  it("searchArticles with minimal detail_level sends 5 articles and 200 bodyLen", async () => {
+describe("detailLevel integration", () => {
+  it("searchArticles with minimal detailLevel sends 5 articles and 200 bodyLen", async () => {
     await searchArticles.handler({
       keyword: "AI",
-      detail_level: "minimal",
+      detailLevel: "minimal",
     });
 
     const body = mockedApiPost.mock.calls[0][1];
@@ -277,10 +277,10 @@ describe("detail_level integration", () => {
     expect(body.articleBodyLen).toBe(200);
   });
 
-  it("searchArticles with full detail_level sends 50 articles", async () => {
+  it("searchArticles with full detailLevel sends 50 articles", async () => {
     await searchArticles.handler({
       keyword: "AI",
-      detail_level: "full",
+      detailLevel: "full",
     });
 
     const body = mockedApiPost.mock.calls[0][1];
@@ -288,20 +288,20 @@ describe("detail_level integration", () => {
     expect(body.articleBodyLen).toBe(-1);
   });
 
-  it("searchEvents with minimal detail_level sends 5 events", async () => {
+  it("searchEvents with minimal detailLevel sends 5 events", async () => {
     await searchEvents.handler({
       keyword: "earthquake",
-      detail_level: "minimal",
+      detailLevel: "minimal",
     });
 
     const body = mockedApiPost.mock.calls[0][1];
     expect(body.eventsCount).toBe(5);
   });
 
-  it("explicit articlesCount overrides detail_level preset", async () => {
+  it("explicit articlesCount overrides detailLevel preset", async () => {
     await searchArticles.handler({
       keyword: "AI",
-      detail_level: "minimal",
+      detailLevel: "minimal",
       articlesCount: 50,
     });
 
@@ -310,14 +310,14 @@ describe("detail_level integration", () => {
     expect(body.articleBodyLen).toBe(200); // still from preset
   });
 
-  it("detail_level is stripped from API body", async () => {
+  it("detailLevel is stripped from API body", async () => {
     await searchArticles.handler({
       keyword: "AI",
-      detail_level: "minimal",
+      detailLevel: "minimal",
     });
 
     const body = mockedApiPost.mock.calls[0][1];
-    expect(body.detail_level).toBeUndefined();
+    expect(body.detailLevel).toBeUndefined();
   });
 });
 

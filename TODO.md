@@ -21,7 +21,7 @@ Findings from analyzing the current implementation against MCP best practices (o
 - **Next steps**:
   - [x] Default `articlesCount`/`eventsCount` to 10 for MCP context (was 100/50)
   - [x] Strip fields that LLMs rarely need (internal IDs, raw URIs, duplicate metadata)
-  - [x] Add a `detail_level` parameter (`minimal` | `standard` | `full`) — controls count + body truncation
+  - [x] Add a `detailLevel` parameter (`minimal` | `standard` | `full`) — controls count + body truncation
 
 ---
 
@@ -163,7 +163,7 @@ Findings from analyzing the current implementation against MCP best practices (o
 - **Next steps**:
   - [ ] `newsapi://guide` — comprehensive usage guide with all 5 workflow patterns
   - [ ] `newsapi://examples` — example queries for 7 common use cases (topic search, person tracking, event monitoring, source comparison, sentiment filtering, date-range search, multi-concept queries)
-  - [ ] `newsapi://fields` — field reference (includeFields groups, detail_level presets, lang codes)
+  - [ ] `newsapi://fields` — field reference (includeFields groups, detailLevel presets, lang codes)
   - [ ] New file: `src/resources.ts`, registered from `src/index.ts`
 
 ### MCP Prompts for common workflows

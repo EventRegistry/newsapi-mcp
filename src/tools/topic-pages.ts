@@ -12,6 +12,7 @@ import {
   getEventIncludeParams,
   filterResponse,
 } from "../response-filter.js";
+import { formatArticleResults, formatEventResults } from "../formatters.js";
 
 export const getTopicPageArticles: ToolDef = {
   name: "get_topic_page_articles",
@@ -67,6 +68,7 @@ export const getTopicPageArticles: ToolDef = {
       bodyLen,
     });
   },
+  formatter: formatArticleResults,
 };
 
 export const getTopicPageEvents: ToolDef = {
@@ -117,6 +119,7 @@ export const getTopicPageEvents: ToolDef = {
     const result = await apiPost("/event/getEventsForTopicPage", body);
     return filterResponse(result, { resultType: "events", groups });
   },
+  formatter: formatEventResults,
 };
 
 export const topicPageTools: ToolDef[] = [

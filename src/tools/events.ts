@@ -3,7 +3,6 @@ import {
   contentFilterProps,
   buildFilterBody,
   includeFieldsProp,
-  formatControlProp,
   detailLevelProp,
   applyDetailLevel,
 } from "./articles.js";
@@ -13,7 +12,7 @@ import {
   getEventIncludeParams,
   filterResponse,
 } from "../response-filter.js";
-import { formatEventResults } from "../formatters.js";
+import { formatEventResults, formatEventDetails } from "../formatters.js";
 
 export const searchEvents: ToolDef = {
   name: "search_events",
@@ -24,7 +23,6 @@ export const searchEvents: ToolDef = {
     properties: {
       ...contentFilterProps,
       ...includeFieldsProp,
-      ...formatControlProp,
       ...detailLevelProp,
       minArticlesInEvent: {
         type: "integer",
@@ -112,6 +110,7 @@ export const getEventDetails: ToolDef = {
     const result = await apiPost("/event/getEvent", apiBody);
     return filterResponse(result, { resultType: "events", groups });
   },
+  formatter: formatEventDetails,
 };
 
 export const findEventForText: ToolDef = {
@@ -141,6 +140,7 @@ export const findEventForText: ToolDef = {
     });
     return filterResponse(result, { resultType: "events", groups });
   },
+  formatter: formatEventResults,
 };
 
 export const eventTools: ToolDef[] = [

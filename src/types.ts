@@ -1,6 +1,3 @@
-/** Output format for tool responses. */
-export type FormatType = "json" | "text";
-
 /** Formatter function signature. */
 export type ResponseFormatter = (
   data: unknown,
@@ -17,7 +14,7 @@ export interface ToolDef {
     required?: string[];
   };
   handler: (params: Record<string, unknown>) => Promise<unknown>;
-  /** Optional text formatter. If provided, tool supports format: "text". */
+  /** Optional text formatter. If provided, output is always formatted text. */
   formatter?: ResponseFormatter;
 }
 

@@ -1,6 +1,6 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { ApiError } from "../types.js";
-import type { ToolDef, FormatType } from "../types.js";
+import type { ToolDef } from "../types.js";
 import { formatErrorResponse, formatUnknownError } from "../errors.js";
 import { validateFieldGroups } from "../response-filter.js";
 import { z } from "zod";
@@ -80,7 +80,6 @@ export class ToolRegistry {
     const shape = buildZodShape(tool);
     const handler = tool.handler;
     const formatter = tool.formatter;
-    const hasFormatParam = "format" in tool.inputSchema.properties;
     const hasIncludeFields = "includeFields" in tool.inputSchema.properties;
 
     this.server.tool(
@@ -98,10 +97,7 @@ export class ToolRegistry {
             params as unknown as Record<string, unknown>,
           );
 
-          const format = (params.format as FormatType) || "json";
-          const useFormatter =
-            formatter && (!hasFormatParam || format === "text");
-          let text = useFormatter
+          let text = formatter
             ? formatter(result, params as Record<string, unknown>)
             : JSON.stringify(result);
 

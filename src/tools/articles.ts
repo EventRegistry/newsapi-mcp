@@ -5,7 +5,7 @@ import {
   getArticleIncludeParams,
   filterResponse,
 } from "../response-filter.js";
-import { formatArticleResults } from "../formatters.js";
+import { formatArticleResults, formatArticleDetails } from "../formatters.js";
 
 /** Shared content filter properties used by articles, events, and mentions. */
 export const contentFilterProps: Record<string, unknown> = {
@@ -117,19 +117,9 @@ export const includeFieldsProp: Record<string, unknown> = {
   },
 };
 
-/** Format control property for tools supporting text output. */
-export const formatControlProp: Record<string, unknown> = {
-  format: {
-    type: "string",
-    description:
-      'Output format: "json" (default) or "text" for concise output.',
-    enum: ["json", "text"],
-  },
-};
-
 /** Detail level presets for controlling response size. */
 export const detailLevelProp: Record<string, unknown> = {
-  detail_level: {
+  detailLevel: {
     type: "string",
     description:
       'Controls result count and body length. "minimal": 5 results, 200-char bodies. "standard" (default): 10 results, full bodies. "full": original API maximums, full bodies. Explicit params (articlesCount, eventsCount, articleBodyLen) override presets.',
@@ -143,9 +133,9 @@ const DETAIL_PRESETS: Record<string, Record<string, number>> = {
   full: { articlesCount: 50, eventsCount: 20, articleBodyLen: -1 },
 };
 
-/** Apply detail_level preset values for any params not explicitly set. */
+/** Apply detailLevel preset values for any params not explicitly set. */
 export function applyDetailLevel(params: Record<string, unknown>): void {
-  const level = (params.detail_level as string) ?? "standard";
+  const level = (params.detailLevel as string) ?? "standard";
   const preset = DETAIL_PRESETS[level] ?? DETAIL_PRESETS.standard;
   for (const [k, v] of Object.entries(preset)) {
     if (params[k] === undefined) {
@@ -158,8 +148,7 @@ export function applyDetailLevel(params: Record<string, unknown>): void {
 const LOCAL_PARAMS = new Set([
   "includeFields",
   "articleBodyLen",
-  "format",
-  "detail_level",
+  "detailLevel",
 ]);
 
 /** Build the request body from params, expanding array-typed fields. */
@@ -201,7 +190,6 @@ export const searchArticles: ToolDef = {
     properties: {
       ...contentFilterProps,
       ...responseControlProps,
-      ...formatControlProp,
       ...detailLevelProp,
       isDuplicateFilter: {
         type: "string",
@@ -307,6 +295,7 @@ export const getArticleDetails: ToolDef = {
       bodyLen,
     });
   },
+  formatter: formatArticleDetails,
 };
 
 export const articleTools: ToolDef[] = [searchArticles, getArticleDetails];

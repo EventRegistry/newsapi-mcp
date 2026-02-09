@@ -41,7 +41,7 @@ MCP Client → McpServer (SDK) → ToolRegistry handler → apiPost()/analyticsP
 
 ### Detail Level Presets
 
-The `detail_level` param on search tools controls defaults:
+The `detailLevel` param on search tools controls defaults:
 - **minimal**: 5 results, 200-char bodies
 - **standard** (default): 10 results, full bodies
 - **full**: API maximums, full bodies

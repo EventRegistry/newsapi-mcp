@@ -173,6 +173,57 @@ export const formatEventResults: ResponseFormatter = (data) => {
   return lines.join("\n\n---\n\n");
 };
 
+/** Format article detail responses (filterTopLevel structure: { "<uri>": { info: {...} } }). */
+export const formatArticleDetails: ResponseFormatter = (data) => {
+  if (!data || typeof data !== "object") return "No article details found.";
+  const entries = Object.entries(data as Record<string, unknown>);
+  if (entries.length === 0) return "No article details found.";
+
+  const lines = entries.map(([, value], i) => {
+    const obj = value as Record<string, unknown> | undefined;
+    if (!obj || typeof obj !== "object") return `${i + 1}. (unavailable)`;
+    const art = (obj.info as Record<string, unknown>) ?? obj;
+    const date =
+      (art.dateTimePub as string | undefined)?.split("T")[0] || "Unknown";
+    const source =
+      (art.source as Record<string, unknown> | undefined)?.title || "Unknown";
+    const body = (art.body as string) || "";
+    const url = art.url ? `\n   URL: ${art.url}` : "";
+    return `${i + 1}. [${date}] ${art.title || "Untitled"} - ${source}${url}\n\n${body}`;
+  });
+
+  return lines.join("\n\n---\n\n");
+};
+
+/** Format event detail responses (filterTopLevel structure: { "<uri>": { info: {...} } }). */
+export const formatEventDetails: ResponseFormatter = (data) => {
+  if (!data || typeof data !== "object") return "No event details found.";
+  const entries = Object.entries(data as Record<string, unknown>);
+  if (entries.length === 0) return "No event details found.";
+
+  const lines = entries.map(([, value], i) => {
+    const obj = value as Record<string, unknown> | undefined;
+    if (!obj || typeof obj !== "object") return `${i + 1}. (unavailable)`;
+    const evt = (obj.info as Record<string, unknown>) ?? obj;
+    const titleField = evt.title;
+    const title =
+      typeof titleField === "string"
+        ? titleField
+        : (titleField as Record<string, unknown> | undefined)?.eng ||
+          "Untitled";
+    const summaryField = evt.summary;
+    const summary =
+      typeof summaryField === "string"
+        ? summaryField
+        : (summaryField as Record<string, unknown> | undefined)?.eng || "";
+    const count =
+      (evt.articleCounts as Record<string, unknown> | undefined)?.total || 0;
+    return `${i + 1}. [${evt.eventDate || "Unknown"}] ${title} (${count} articles)\n   URI: ${evt.uri || ""}\n\n${summary}`;
+  });
+
+  return lines.join("\n\n---\n\n");
+};
+
 /** Format API usage as key-value pairs. */
 export const formatUsageResults: ResponseFormatter = (data) => {
   const u = data as Record<string, unknown>;

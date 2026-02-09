@@ -3,8 +3,7 @@ import { ApiError } from "./types.js";
 /** Known param values for common fields, used in invalid_param suggestions. */
 const KNOWN_PARAM_VALUES: Record<string, string[]> = {
   lang: ["eng", "deu", "fra", "spa", "ita", "por", "rus", "zho", "jpn", "ara"],
-  format: ["json", "text"],
-  detail_level: ["minimal", "standard", "full"],
+  detailLevel: ["minimal", "standard", "full"],
   articlesSortBy: [
     "date",
     "rel",

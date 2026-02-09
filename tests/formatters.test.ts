@@ -6,7 +6,9 @@ import {
   formatSuggestCategories,
   formatSuggestAuthors,
   formatArticleResults,
+  formatArticleDetails,
   formatEventResults,
+  formatEventDetails,
   formatUsageResults,
 } from "../src/formatters.js";
 
@@ -418,6 +420,142 @@ describe("formatEventResults", () => {
     expect(result).toContain("2 results (2 total)");
     expect(result).not.toContain("Page ");
     expect(result).not.toContain("eventsPage:");
+  });
+});
+
+describe("formatArticleDetails", () => {
+  it("formats filterTopLevel structure with info wrapper", () => {
+    const data = {
+      "123456": {
+        info: {
+          title: "Detail Article",
+          dateTimePub: "2024-03-10T08:00:00Z",
+          source: { title: "Detail Source" },
+          body: "Detailed body content.",
+          url: "https://example.com/detail",
+        },
+      },
+    };
+
+    const result = formatArticleDetails(data, {});
+
+    expect(result).toContain("[2024-03-10]");
+    expect(result).toContain("Detail Article");
+    expect(result).toContain("Detail Source");
+    expect(result).toContain("Detailed body content.");
+    expect(result).toContain("URL: https://example.com/detail");
+  });
+
+  it("handles multiple articles", () => {
+    const data = {
+      uri1: {
+        info: {
+          title: "First",
+          dateTimePub: "2024-01-01T00:00:00Z",
+          source: { title: "Src1" },
+          body: "Body 1",
+        },
+      },
+      uri2: {
+        info: {
+          title: "Second",
+          dateTimePub: "2024-01-02T00:00:00Z",
+          source: { title: "Src2" },
+          body: "Body 2",
+        },
+      },
+    };
+
+    const result = formatArticleDetails(data, {});
+
+    expect(result).toContain("1. [2024-01-01] First");
+    expect(result).toContain("2. [2024-01-02] Second");
+    expect(result).toContain("---");
+  });
+
+  it("falls back when no info wrapper", () => {
+    const data = {
+      "123": {
+        title: "No Info Wrapper",
+        dateTimePub: "2024-05-01T00:00:00Z",
+        source: { title: "Direct Source" },
+        body: "Direct body.",
+      },
+    };
+
+    const result = formatArticleDetails(data, {});
+
+    expect(result).toContain("No Info Wrapper");
+    expect(result).toContain("Direct body.");
+  });
+
+  it("returns empty message for empty/null data", () => {
+    expect(formatArticleDetails({}, {})).toBe("No article details found.");
+    expect(formatArticleDetails(null, {})).toBe("No article details found.");
+  });
+});
+
+describe("formatEventDetails", () => {
+  it("formats filterTopLevel structure with info wrapper", () => {
+    const data = {
+      "evt-789": {
+        info: {
+          title: { eng: "Major Event Detail" },
+          eventDate: "2024-06-15",
+          summary: { eng: "Event summary here." },
+          articleCounts: { total: 42 },
+          uri: "evt-789",
+        },
+      },
+    };
+
+    const result = formatEventDetails(data, {});
+
+    expect(result).toContain("[2024-06-15]");
+    expect(result).toContain("Major Event Detail");
+    expect(result).toContain("42 articles");
+    expect(result).toContain("Event summary here.");
+    expect(result).toContain("URI: evt-789");
+  });
+
+  it("handles string title and summary", () => {
+    const data = {
+      "evt-1": {
+        info: {
+          title: "String Title Event",
+          eventDate: "2024-07-01",
+          summary: "String summary.",
+          uri: "evt-1",
+        },
+      },
+    };
+
+    const result = formatEventDetails(data, {});
+
+    expect(result).toContain("String Title Event");
+    expect(result).toContain("String summary.");
+  });
+
+  it("falls back when no info wrapper", () => {
+    const data = {
+      "evt-2": {
+        title: "Direct Event",
+        eventDate: "2024-08-01",
+        summary: "Direct summary.",
+        articleCounts: { total: 10 },
+        uri: "evt-2",
+      },
+    };
+
+    const result = formatEventDetails(data, {});
+
+    expect(result).toContain("Direct Event");
+    expect(result).toContain("Direct summary.");
+  });
+
+  it("returns empty message for empty/null data", () => {
+    expect(formatEventDetails({}, {})).toBe("No event details found.");
+    expect(formatEventDetails(null, {})).toBe("No event details found.");
   });
 });
 

@@ -97,8 +97,10 @@ describe("MCP server E2E", () => {
     });
 
     expect(result.content).toHaveLength(1);
-    const content = result.content[0];
+    const content = result.content[0] as { type: string; text: string };
     expect(content).toMatchObject({ type: "text" });
+    // Formatter always runs now — empty results return text message
+    expect(content.text).toBe("No articles found.");
 
     // Verify fetch was called with the right endpoint
     const url = fetchSpy.mock.calls[fetchSpy.mock.calls.length - 1][0];
