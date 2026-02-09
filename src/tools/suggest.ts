@@ -71,7 +71,10 @@ TIPS:
 - For non-English entities, search in English first. Only try the native language if English returns no results.
   Example: For Slovenian company "Krka", first search with lang="eng", then try lang="slv" if needed.
 - For locations, ALWAYS use English names regardless of target language.
-  Good: "Germany", "Slovenia" | Bad: "Deutschland", "Slovenija"`,
+  Good: "Germany", "Slovenia" | Bad: "Deutschland", "Slovenija"
+- Prefer WELL-ESTABLISHED concepts over year-specific or recent event editions.
+  Good: "Winter Olympic Games", "FIFA World Cup" | Bad: "2026 Winter Olympics", "2026 FIFA World Cup"
+  If a specific concept returns no results, try a broader parent concept or use keyword search instead.`,
   inputSchema: {
     type: "object",
     properties: {

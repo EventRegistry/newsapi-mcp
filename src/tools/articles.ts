@@ -12,12 +12,12 @@ export const contentFilterProps: Record<string, unknown> = {
   keyword: {
     type: "string",
     description:
-      "Secondary keyword filter. Use conceptUri as the primary search method. Keywords provide additional text matching within concept results. Multiple keywords can be comma-separated. Exact phrase match when quoted.",
+      'Secondary keyword filter. Use conceptUri as the primary search method. Keywords narrow concept results — especially useful with broad concepts (e.g., keyword: "2026" with Olympic Games concept). Also effective as a fallback when a specific concept returns no results. Multiple keywords can be comma-separated. Exact phrase match when quoted.',
   },
   conceptUri: {
     type: "string",
     description:
-      'Primary search filter. Always use suggest(type: "concepts") first to resolve entity names to URIs, then pass them here. Prefer this over keyword search for reliable results. Comma-separated for multiple concepts.',
+      'Primary search filter. Always use suggest(type: "concepts") first to resolve entity names to URIs, then pass them here. Prefer this over keyword search for reliable results. Comma-separated for multiple concepts. Prefer well-established concepts over year-specific ones (e.g., "Olympic Games" not "2026 Olympics"). Combine broad concept + keyword for precision.',
   },
   categoryUri: {
     type: "string",

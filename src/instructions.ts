@@ -35,6 +35,13 @@ Results must fit in the model's context window. Start with what you need, then p
 4. **Country sources**: suggest(locations, "Slovenia") → search_articles(sourceLocationUri) for news from sources in that country
 5. **Topic monitoring**: get_topic_page_articles(uri) for pre-configured searches
 
+## Concept Selection
+Concepts map to Wikipedia pages. Well-established pages have far better article coverage than recent or year-specific ones.
+
+- **Prefer broad concepts**: "Winter Olympic Games" not "2026 Winter Olympics", "FIFA World Cup" not "2026 FIFA World Cup"
+- **If a concept returns 0 or few results**, try a broader parent concept, or switch to keyword search
+- **Combine broad concept + keyword for precision**: conceptUri: "Olympic Games" + keyword: "2026"
+
 ## Suggest Type Selection
 - **concepts** (default): people, orgs, locations, products, general entities
 - **categories**: news topics like "business", "technology", "sports"

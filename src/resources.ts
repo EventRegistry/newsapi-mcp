@@ -135,7 +135,11 @@ Check parameter names and values. Use suggest to get valid URIs.
 Daily quota exceeded. Wait until next day or reduce query frequency.
 
 ### No results
-Try broader date ranges, different languages, or verify URIs are correct.`;
+- Try a broader concept (e.g., "Olympic Games" instead of "2026 Winter Olympics")
+- Combine broad concept + keyword for precision
+- Use keyword search as fallback for recent/niche events
+- Try broader date ranges or different languages
+- Verify URIs are correct via suggest`;
 
 // ============================================================================
 // Examples Resource (~400 words)
