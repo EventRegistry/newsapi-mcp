@@ -57,6 +57,12 @@ export const contentFilterProps: Record<string, unknown> = {
     type: "string",
     description: "End date inclusive (YYYY-MM-DD).",
   },
+  forceMaxDataTimeWindow: {
+    type: "integer",
+    description:
+      "Limit results to recent data: 7 (last week) or 31 (last month). Use this instead of dateStart/dateEnd for recent news queries to minimize token usage. Omit to search all available data.",
+    enum: [7, 31],
+  },
   keywordLoc: {
     type: "string",
     description:

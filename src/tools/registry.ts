@@ -48,11 +48,23 @@ function buildZodShape(tool: ToolDef): Record<string, z.ZodTypeAny> {
     }
 
     if (def.enum && Array.isArray(def.enum)) {
-      const values = def.enum as string[];
+      const values = def.enum as unknown[];
       if (values.length > 0) {
-        field = z
-          .enum(values as [string, ...string[]])
-          .describe((def.description as string) || "");
+        const desc = (def.description as string) || "";
+        if (values.every((v) => typeof v === "string")) {
+          field = z.enum(values as [string, ...string[]]).describe(desc);
+        } else {
+          const literals = values.map((v) => z.literal(v as number));
+          field = z
+            .union(
+              literals as [
+                z.ZodLiteral<number>,
+                z.ZodLiteral<number>,
+                ...z.ZodLiteral<number>[],
+              ],
+            )
+            .describe(desc);
+        }
       }
     }
 

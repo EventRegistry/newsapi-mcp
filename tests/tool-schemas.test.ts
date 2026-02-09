@@ -130,11 +130,15 @@ describe("tool schema structure", () => {
               enumArr.length,
               `property "${key}" enum is empty`,
             ).toBeGreaterThan(0);
+            const allowedType =
+              def.type === "integer" || def.type === "number"
+                ? "number"
+                : "string";
             for (const val of enumArr) {
               expect(
                 typeof val,
-                `property "${key}" enum contains non-string`,
-              ).toBe("string");
+                `property "${key}" enum contains unexpected type`,
+              ).toBe(allowedType);
             }
           }
         }
