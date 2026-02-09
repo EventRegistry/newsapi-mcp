@@ -37,6 +37,21 @@ export function parseFieldGroups(includeFields?: string): Set<string> {
   return groups;
 }
 
+/** Validate includeFields and return warnings for unknown group names. */
+export function validateFieldGroups(includeFields?: string): string[] {
+  if (!includeFields) return [];
+  const warnings: string[] = [];
+  for (const raw of includeFields.split(",")) {
+    const g = raw.trim().toLowerCase();
+    if (g && !VALID_GROUPS.has(g)) {
+      warnings.push(
+        `Unknown includeFields group "${g}" (ignored). Valid: ${[...VALID_GROUPS].join(", ")}`,
+      );
+    }
+  }
+  return warnings;
+}
+
 /**
  * Get API include* params based on field groups.
  * Returns params to send to the API to request additional data.

@@ -1,5 +1,8 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { ApiError } from "../types.js";
 import type { ToolDef, FormatType } from "../types.js";
+import { formatErrorResponse, formatUnknownError } from "../errors.js";
+import { validateFieldGroups } from "../response-filter.js";
 import { z } from "zod";
 
 /** Build a zod shape from a ToolDef's JSON schema properties. */
@@ -78,6 +81,7 @@ export class ToolRegistry {
     const handler = tool.handler;
     const formatter = tool.formatter;
     const hasFormatParam = "format" in tool.inputSchema.properties;
+    const hasIncludeFields = "includeFields" in tool.inputSchema.properties;
 
     this.server.tool(
       tool.name,
@@ -85,6 +89,11 @@ export class ToolRegistry {
       z.object(shape).shape,
       async (params) => {
         try {
+          // Validate includeFields before calling handler
+          const fieldWarnings = hasIncludeFields
+            ? validateFieldGroups(params.includeFields as string | undefined)
+            : [];
+
           const result = await handler(
             params as unknown as Record<string, unknown>,
           );
@@ -92,15 +101,22 @@ export class ToolRegistry {
           const format = (params.format as FormatType) || "json";
           const useFormatter =
             formatter && (!hasFormatParam || format === "text");
-          const text = useFormatter
+          let text = useFormatter
             ? formatter(result, params as Record<string, unknown>)
             : JSON.stringify(result);
+
+          if (fieldWarnings.length > 0) {
+            text += "\n\n⚠ " + fieldWarnings.join("\n⚠ ");
+          }
 
           return {
             content: [{ type: "text" as const, text }],
           };
         } catch (err) {
-          const message = err instanceof Error ? err.message : String(err);
+          const message =
+            err instanceof ApiError
+              ? formatErrorResponse(err)
+              : formatUnknownError(err);
           return {
             content: [{ type: "text" as const, text: message }],
             isError: true,

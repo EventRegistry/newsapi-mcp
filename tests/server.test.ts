@@ -105,7 +105,7 @@ describe("MCP server E2E", () => {
     expect(url).toContain("/article/getArticles");
   });
 
-  it("wraps errors with isError flag", async () => {
+  it("wraps errors with isError flag and recovery guidance", async () => {
     mockFetchError(403, '{"error":"forbidden"}');
 
     const result = await client.callTool({
@@ -116,6 +116,63 @@ describe("MCP server E2E", () => {
     expect(result.isError).toBe(true);
     expect(result.content).toHaveLength(1);
     const content = result.content[0] as { text: string };
-    expect(content.text).toContain("403");
+    expect(content.text).toContain("Authentication failed");
+    expect(content.text).toContain("NEWSAPI_KEY");
+  });
+
+  it("returns rate limit guidance for 429", async () => {
+    mockFetchError(429, '"quota exceeded"');
+
+    const result = await client.callTool({
+      name: "search_articles",
+      arguments: { keyword: "test" },
+    });
+
+    expect(result.isError).toBe(true);
+    const content = result.content[0] as { text: string };
+    expect(content.text).toContain("Rate limited");
+    expect(content.text).toContain("next day");
+  });
+
+  it("returns param suggestions for 400 with known param", async () => {
+    mockFetchError(400, '{"error":"invalid lang value"}');
+
+    const result = await client.callTool({
+      name: "search_articles",
+      arguments: { keyword: "test" },
+    });
+
+    expect(result.isError).toBe(true);
+    const content = result.content[0] as { text: string };
+    expect(content.text).toContain("Invalid request");
+    expect(content.text).toContain('Valid values for "lang"');
+  });
+
+  it("appends warnings for invalid includeFields", async () => {
+    mockFetchOk({ articles: { results: [] } });
+
+    const result = await client.callTool({
+      name: "search_articles",
+      arguments: { keyword: "AI", includeFields: "sentiment,bogus" },
+    });
+
+    expect(result.isError).toBeUndefined();
+    const content = result.content[0] as { text: string };
+    expect(content.text).toContain("bogus");
+    expect(content.text).toContain("ignored");
+  });
+
+  it("handles network errors gracefully", async () => {
+    fetchSpy.mockRejectedValue(new Error("fetch failed"));
+
+    const result = await client.callTool({
+      name: "get_api_usage",
+      arguments: {},
+    });
+
+    expect(result.isError).toBe(true);
+    const content = result.content[0] as { text: string };
+    expect(content.text).toContain("Network/unexpected error");
+    expect(content.text).toContain("fetch failed");
   });
 });

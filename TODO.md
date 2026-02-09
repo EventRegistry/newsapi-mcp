@@ -76,20 +76,20 @@ Findings from analyzing the current implementation against MCP best practices (o
 ## Error Handling (P1)
 
 ### Structured error responses
-- **Current**: Basic try/catch with `error.message` extraction
+- **Current**: `ApiError` has `category` and `isRetryable` fields, registry uses `formatErrorResponse()` for LLM-friendly messages
 - **Best practice**: Categorized errors with recovery guidance, retry hints, and alternative suggestions
 - **Next steps**:
-  - [ ] Categorize errors: `auth_error`, `rate_limit`, `invalid_param`, `not_found`, `api_error`
-  - [ ] Include recovery guidance: "Rate limited. Retry after 60s." or "No results. Try broader search terms."
-  - [ ] For `invalid_param` errors, suggest valid values (e.g., "Unknown lang code 'english'. Use 'eng'.")
-  - [ ] Add `isRetryable` flag to error responses
+  - [x] Categorize errors: `auth_error`, `rate_limit`, `invalid_param`, `not_found`, `api_error`
+  - [x] Include recovery guidance: "Rate limited (daily quota). Tokens refresh the next day." etc.
+  - [x] For `invalid_param` errors, suggest valid values (e.g., lang codes, sort options)
+  - [x] Add `isRetryable` flag to error responses
 
 ### Graceful degradation
-- **Current**: Errors stop the tool execution
+- **Current**: Invalid `includeFields` ignored with warnings; errors still stop execution for multi-concept failures
 - **Best practice**: Partial results with warnings are better than full failures
 - **Next steps**:
   - [ ] If one concept in a multi-concept search fails, return results for successful concepts with a warning
-  - [ ] If `includeFields` contains an invalid field, ignore it and note in response
+  - [x] If `includeFields` contains an invalid field, ignore it and note in response
 
 ---
 
