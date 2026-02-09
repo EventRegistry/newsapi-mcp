@@ -66,61 +66,53 @@ function buildZodShape(tool: ToolDef): Record<string, z.ZodTypeAny> {
   return shape;
 }
 
-/** Manages dynamic tool registration on an McpServer. */
+/** Manages tool registration on an McpServer. All tools are registered at
+ *  startup; enable/disable is enforced at the handler level. */
 export class ToolRegistry {
   private allTools: ToolDef[] = [];
-  private enabledCategories = new Set<ToolCategory>();
-  /** Tracks McpServer RegisteredTool handles keyed by tool name. */
-  private registered = new Map<
-    string,
-    { remove: () => void; update: (updates: object) => void }
-  >();
+  /** Categories whose non-core tools are active. */
+  private fullyEnabled = new Set<ToolCategory>();
   private server: McpServer | null = null;
 
   constructor(tools: ToolDef[]) {
     this.allTools = tools;
-
-    // Determine default enabled set
-    for (const tool of tools) {
-      const core = CORE_TOOLS[tool.category];
-      if (core === "all" || core.includes(tool.name)) {
-        this.enabledCategories.add(tool.category);
-      }
-    }
   }
 
-  /** Tools that should be registered given current enabled categories. */
-  private getActiveTools(): ToolDef[] {
-    return this.allTools.filter((tool) => {
-      const core = CORE_TOOLS[tool.category];
-      if (!this.enabledCategories.has(tool.category)) return false;
-      if (core === "all") return true;
-      // If category is enabled, check if it was fully enabled or just core
-      return this.isFullyEnabled(tool.category) || core.includes(tool.name);
-    });
+  /** Whether a specific tool is currently enabled. */
+  private isToolEnabled(tool: ToolDef): boolean {
+    const core = CORE_TOOLS[tool.category];
+    if (core === "all") return true;
+    if (core.includes(tool.name)) return true;
+    return this.fullyEnabled.has(tool.category);
   }
 
-  /** Track which categories have been fully enabled (all tools). */
-  private fullyEnabled = new Set<ToolCategory>();
-
-  private isFullyEnabled(category: ToolCategory): boolean {
-    return this.fullyEnabled.has(category);
-  }
-
-  /** Register a single ToolDef on the McpServer. */
+  /** Register a single ToolDef on the McpServer with handler-level gating. */
   private registerTool(tool: ToolDef): void {
-    if (!this.server || this.registered.has(tool.name)) return;
+    if (!this.server) return;
 
     const shape = buildZodShape(tool);
     const handler = tool.handler;
     const formatter = tool.formatter;
     const hasFormatParam = "format" in tool.inputSchema.properties;
 
-    const handle = this.server.tool(
+    this.server.tool(
       tool.name,
       tool.description,
       z.object(shape).shape,
       async (params) => {
+        // Gate: reject calls to disabled tools
+        if (!this.isToolEnabled(tool)) {
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: `Tool ${tool.name} is not enabled. Use enable_toolset(category='${tool.category}', enabled=true) to enable it.`,
+              },
+            ],
+            isError: true,
+          };
+        }
+
         try {
           const result = await handler(
             params as unknown as Record<string, unknown>,
@@ -145,68 +137,44 @@ export class ToolRegistry {
         }
       },
     );
-
-    this.registered.set(tool.name, handle);
   }
 
-  /** Unregister a tool by name. */
-  private unregisterTool(name: string): void {
-    const handle = this.registered.get(name);
-    if (handle) {
-      handle.remove();
-      this.registered.delete(name);
-    }
-  }
-
-  /** Register meta-tools and initial tool set on the server. */
+  /** Register meta-tools and ALL tools on the server. */
   attach(server: McpServer): void {
     this.server = server;
     this.registerMetaTools();
 
-    // Register default active tools
-    for (const tool of this.getActiveTools()) {
+    for (const tool of this.allTools) {
       this.registerTool(tool);
     }
   }
 
-  /** Enable a category (all tools in it). Returns list of newly added tool names. */
+  /** Enable a category (all tools in it). Returns list of newly enabled tool names. */
   enableCategory(category: ToolCategory): string[] {
-    this.enabledCategories.add(category);
+    if (this.fullyEnabled.has(category)) return [];
     this.fullyEnabled.add(category);
 
-    const added: string[] = [];
-    for (const tool of this.allTools) {
-      if (tool.category === category && !this.registered.has(tool.name)) {
-        this.registerTool(tool);
-        added.push(tool.name);
-      }
-    }
-    return added;
+    const core = CORE_TOOLS[category];
+    return this.allTools
+      .filter(
+        (t) =>
+          t.category === category && core !== "all" && !core.includes(t.name),
+      )
+      .map((t) => t.name);
   }
 
-  /** Disable a category. Returns list of removed tool names. */
+  /** Disable a category (non-core tools). Returns list of disabled tool names. */
   disableCategory(category: ToolCategory): string[] {
+    if (!this.fullyEnabled.has(category)) return [];
     this.fullyEnabled.delete(category);
 
     const core = CORE_TOOLS[category];
-    const removed: string[] = [];
-
-    for (const tool of this.allTools) {
-      if (tool.category !== category) continue;
-      // Keep core tools registered
-      if (core === "all" || core.includes(tool.name)) continue;
-      if (this.registered.has(tool.name)) {
-        this.unregisterTool(tool.name);
-        removed.push(tool.name);
-      }
-    }
-
-    // If no core tools exist for this category, fully remove it
-    if (core !== "all" && core.length === 0) {
-      this.enabledCategories.delete(category);
-    }
-
-    return removed;
+    return this.allTools
+      .filter(
+        (t) =>
+          t.category === category && core !== "all" && !core.includes(t.name),
+      )
+      .map((t) => t.name);
   }
 
   /** Get category info for list_available_tools output. */
@@ -226,7 +194,7 @@ export class ToolRegistry {
         categories.set(tool.category, { enabled: [], disabled: [] });
       }
       const entry = categories.get(tool.category)!;
-      if (this.registered.has(tool.name)) {
+      if (this.isToolEnabled(tool)) {
         entry.enabled.push(tool.name);
       } else {
         entry.disabled.push(tool.name);
@@ -298,7 +266,7 @@ export class ToolRegistry {
                 type: "text" as const,
                 text:
                   changed.length > 0
-                    ? `Enabled ${category}: added ${changed.join(", ")}`
+                    ? `Enabled ${category}: ${changed.join(", ")}`
                     : `Category ${category} already fully enabled`,
               },
             ],
@@ -311,7 +279,7 @@ export class ToolRegistry {
                 type: "text" as const,
                 text:
                   changed.length > 0
-                    ? `Disabled ${category}: removed ${changed.join(", ")}`
+                    ? `Disabled ${category}: ${changed.join(", ")}`
                     : `Category ${category} has no non-core tools to disable`,
               },
             ],

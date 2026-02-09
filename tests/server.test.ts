@@ -53,30 +53,34 @@ afterAll(async () => {
 });
 
 describe("MCP server E2E", () => {
-  it("lists only core tools + meta tools by default", async () => {
+  it("lists all tools including non-core at startup", async () => {
     const result = await client.listTools();
     const names = result.tools.map((t) => t.name).sort();
 
-    // Core: search_articles, search_events, suggest_concepts, get_api_usage
-    // Meta: list_available_tools, enable_toolset
-    expect(names).toEqual([
-      "enable_toolset",
-      "get_api_usage",
-      "list_available_tools",
-      "search_articles",
-      "search_events",
-      "suggest_concepts",
-    ]);
-    expect(result.tools).toHaveLength(6);
+    // All tools registered at startup for client visibility
+    expect(names).toContain("search_articles");
+    expect(names).toContain("search_events");
+    expect(names).toContain("suggest_concepts");
+    expect(names).toContain("get_api_usage");
+    expect(names).toContain("list_available_tools");
+    expect(names).toContain("enable_toolset");
+    // Non-core tools also listed
+    expect(names).toContain("get_article_details");
+    expect(names).toContain("suggest_authors");
+    expect(names).toContain("get_topic_page_articles");
   });
 
-  it("does not expose non-core tools by default", async () => {
-    const result = await client.listTools();
-    const names = result.tools.map((t) => t.name);
+  it("returns error when calling disabled non-core tool", async () => {
+    // suggest_authors is non-core and not enabled by default
+    const result = await client.callTool({
+      name: "suggest_authors",
+      arguments: { prefix: "Test" },
+    });
 
-    expect(names).not.toContain("get_article_details");
-    expect(names).not.toContain("suggest_authors");
-    expect(names).not.toContain("get_topic_page_articles");
+    expect(result.isError).toBe(true);
+    const content = result.content[0] as { text: string };
+    expect(content.text).toContain("not enabled");
+    expect(content.text).toContain("enable_toolset");
   });
 
   it("list_available_tools shows all categories", async () => {
@@ -103,7 +107,7 @@ describe("MCP server E2E", () => {
     expect(search.disabled).toContain("find_event_for_text");
   });
 
-  it("enable_toolset adds all tools in category", async () => {
+  it("enable_toolset enables non-core tools in category", async () => {
     const result = await client.callTool({
       name: "enable_toolset",
       arguments: { category: "search", enabled: true },
@@ -114,12 +118,13 @@ describe("MCP server E2E", () => {
     expect(content.text).toContain("get_event_details");
     expect(content.text).toContain("find_event_for_text");
 
-    // Verify tools now appear in listing
-    const tools = await client.listTools();
-    const names = tools.tools.map((t) => t.name);
-    expect(names).toContain("get_article_details");
-    expect(names).toContain("get_event_details");
-    expect(names).toContain("find_event_for_text");
+    // Non-core tool should now work (mock the API call)
+    mockFetchOk({ uri: "test", info: {} });
+    const detailResult = await client.callTool({
+      name: "get_article_details",
+      arguments: { articleUri: "12345" },
+    });
+    expect(detailResult.isError).toBeFalsy();
   });
 
   it("enable_toolset can disable non-core tools", async () => {
@@ -136,29 +141,47 @@ describe("MCP server E2E", () => {
     });
 
     const content = result.content[0] as { text: string };
-    expect(content.text).toContain("removed");
+    expect(content.text).toContain("Disabled");
 
-    // Core tools should still be there
-    const tools = await client.listTools();
-    const names = tools.tools.map((t) => t.name);
-    expect(names).toContain("search_articles");
-    expect(names).toContain("search_events");
-    // Non-core should be gone
-    expect(names).not.toContain("get_article_details");
-    expect(names).not.toContain("find_event_for_text");
+    // Non-core tools should return error when called
+    const detailResult = await client.callTool({
+      name: "get_article_details",
+      arguments: { articleUri: "12345" },
+    });
+    expect(detailResult.isError).toBe(true);
+    const detailContent = detailResult.content[0] as { text: string };
+    expect(detailContent.text).toContain("not enabled");
+
+    // Core tools should still work
+    mockFetchOk({ articles: { results: [] } });
+    const searchResult = await client.callTool({
+      name: "search_articles",
+      arguments: { keyword: "test" },
+    });
+    expect(searchResult.isError).toBeFalsy();
   });
 
   it("enable_toolset works for topic_pages (no core tools)", async () => {
+    // Before enabling, calling should return error
+    const beforeResult = await client.callTool({
+      name: "get_topic_page_articles",
+      arguments: { uri: "test-uri" },
+    });
+    expect(beforeResult.isError).toBe(true);
+
     // Enable
     await client.callTool({
       name: "enable_toolset",
       arguments: { category: "topic_pages", enabled: true },
     });
 
-    let tools = await client.listTools();
-    let names = tools.tools.map((t) => t.name);
-    expect(names).toContain("get_topic_page_articles");
-    expect(names).toContain("get_topic_page_events");
+    // After enabling, tool should work
+    mockFetchOk({ articles: { results: [] } });
+    const afterResult = await client.callTool({
+      name: "get_topic_page_articles",
+      arguments: { uri: "test-uri" },
+    });
+    expect(afterResult.isError).toBeFalsy();
 
     // Disable
     await client.callTool({
@@ -166,10 +189,12 @@ describe("MCP server E2E", () => {
       arguments: { category: "topic_pages", enabled: false },
     });
 
-    tools = await client.listTools();
-    names = tools.tools.map((t) => t.name);
-    expect(names).not.toContain("get_topic_page_articles");
-    expect(names).not.toContain("get_topic_page_events");
+    // After disabling, should return error again
+    const disabledResult = await client.callTool({
+      name: "get_topic_page_articles",
+      arguments: { uri: "test-uri" },
+    });
+    expect(disabledResult.isError).toBe(true);
   });
 
   it("calls suggest_concepts and returns formatted text", async () => {

@@ -247,8 +247,8 @@ describe("applyDetailLevel", () => {
   it("applies full preset", () => {
     const params: Record<string, unknown> = { detail_level: "full" };
     applyDetailLevel(params);
-    expect(params.articlesCount).toBe(100);
-    expect(params.eventsCount).toBe(50);
+    expect(params.articlesCount).toBe(50);
+    expect(params.eventsCount).toBe(20);
     expect(params.articleBodyLen).toBe(-1);
   });
 
@@ -277,14 +277,14 @@ describe("detail_level integration", () => {
     expect(body.articleBodyLen).toBe(200);
   });
 
-  it("searchArticles with full detail_level sends 100 articles", async () => {
+  it("searchArticles with full detail_level sends 50 articles", async () => {
     await searchArticles.handler({
       keyword: "AI",
       detail_level: "full",
     });
 
     const body = mockedApiPost.mock.calls[0][1];
-    expect(body.articlesCount).toBe(100);
+    expect(body.articlesCount).toBe(50);
     expect(body.articleBodyLen).toBe(-1);
   });
 
