@@ -224,6 +224,7 @@ describe("formatArticleResults", () => {
             source: { title: "Test Source" },
             body: "Article body content here.",
             url: "https://example.com/article",
+            uri: "12345-test-article",
           },
         ],
         page: 1,
@@ -238,6 +239,7 @@ describe("formatArticleResults", () => {
     expect(result).toContain("Test Source");
     expect(result).toContain("Article body content here.");
     expect(result).toContain("URL: https://example.com/article");
+    expect(result).toContain("URI: 12345-test-article");
   });
 
   it("returns no articles message for empty results", () => {
@@ -304,6 +306,7 @@ describe("formatArticleResults", () => {
     expect(result).toContain("Unknown");
     expect(result).toContain("Just body");
     expect(result).not.toContain("URL:");
+    expect(result).not.toContain("URI:");
   });
 
   it("renders includeFields extras when present", () => {
@@ -577,6 +580,7 @@ describe("formatArticleDetails", () => {
           source: { title: "Detail Source" },
           body: "Detailed body content.",
           url: "https://example.com/detail",
+          uri: "123456",
         },
       },
     };
@@ -588,6 +592,7 @@ describe("formatArticleDetails", () => {
     expect(result).toContain("Detail Source");
     expect(result).toContain("Detailed body content.");
     expect(result).toContain("URL: https://example.com/detail");
+    expect(result).toContain("URI: 123456");
   });
 
   it("handles multiple articles", () => {
@@ -598,6 +603,7 @@ describe("formatArticleDetails", () => {
           dateTimePub: "2024-01-01T00:00:00Z",
           source: { title: "Src1" },
           body: "Body 1",
+          uri: "uri1",
         },
       },
       uri2: {
@@ -606,6 +612,7 @@ describe("formatArticleDetails", () => {
           dateTimePub: "2024-01-02T00:00:00Z",
           source: { title: "Src2" },
           body: "Body 2",
+          uri: "uri2",
         },
       },
     };
@@ -613,7 +620,9 @@ describe("formatArticleDetails", () => {
     const result = formatArticleDetails(data, {});
 
     expect(result).toContain("1. [2024-01-01] First");
+    expect(result).toContain("URI: uri1");
     expect(result).toContain("2. [2024-01-02] Second");
+    expect(result).toContain("URI: uri2");
     expect(result).toContain("---");
   });
 

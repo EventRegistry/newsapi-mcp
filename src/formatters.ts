@@ -189,7 +189,8 @@ export const formatArticleResults: ResponseFormatter = (data) => {
       (art.source as Record<string, unknown> | undefined)?.title || "Unknown";
     const body = (art.body as string) || "";
     const url = art.url ? `\n   URL: ${art.url}` : "";
-    return `${i + 1}. [${date}] ${art.title || "Untitled"} - ${source}${url}${formatArticleExtras(art)}\n\n${body}`;
+    const uri = art.uri ? `\n   URI: ${art.uri}` : "";
+    return `${i + 1}. [${date}] ${art.title || "Untitled"} - ${source}${url}${uri}${formatArticleExtras(art)}\n\n${body}`;
   });
 
   // Pagination footer
@@ -265,7 +266,8 @@ export const formatArticleDetails: ResponseFormatter = (data) => {
       (art.source as Record<string, unknown> | undefined)?.title || "Unknown";
     const body = (art.body as string) || "";
     const url = art.url ? `\n   URL: ${art.url}` : "";
-    return `${i + 1}. [${date}] ${art.title || "Untitled"} - ${source}${url}${formatArticleExtras(art)}\n\n${body}`;
+    const uri = art.uri ? `\n   URI: ${art.uri}` : "";
+    return `${i + 1}. [${date}] ${art.title || "Untitled"} - ${source}${url}${uri}${formatArticleExtras(art)}\n\n${body}`;
   });
 
   return lines.join("\n\n---\n\n");
