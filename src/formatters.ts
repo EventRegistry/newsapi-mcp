@@ -15,87 +15,76 @@ function extractLabel(item: Record<string, unknown>): string {
   return "Unknown";
 }
 
-/** Format location suggest results as JSONL. */
+/** Format location suggest results as numbered text. */
 export const formatSuggestLocations: ResponseFormatter = (data) => {
   if (!Array.isArray(data) || data.length === 0) return "No results found.";
   return data
-    .map((item) => {
+    .map((item, i) => {
       const rec = item as Record<string, unknown>;
-      const obj: Record<string, unknown> = {
-        label: extractLabel(rec),
-        type: rec.type || "location",
-        uri: rec.wikiUri || "",
-      };
+      const label = extractLabel(rec);
+      const type = rec.type || "location";
+      const uri = rec.wikiUri || "";
       const country = rec.country as Record<string, unknown> | undefined;
-      if (country) {
-        obj.country = extractLabel(country);
-      }
-      return JSON.stringify(obj);
+      const countryStr = country ? ` - ${extractLabel(country)}` : "";
+      return `${i + 1}. ${label} [${type}]${countryStr}\n   ${uri}`;
     })
-    .join("\n");
+    .join("\n\n");
 };
 
-/** Format concept suggest results as JSONL. */
+/** Format concept suggest results as numbered text. */
 export const formatSuggestConcepts: ResponseFormatter = (data) => {
   if (!Array.isArray(data) || data.length === 0) return "No results found.";
   return data
-    .map((item) => {
+    .map((item, i) => {
       const rec = item as Record<string, unknown>;
-      return JSON.stringify({
-        label: extractLabel(rec),
-        type: rec.type || "concept",
-        uri: rec.uri || "",
-      });
+      const label = extractLabel(rec);
+      const type = rec.type || "concept";
+      const uri = rec.uri || "";
+      return `${i + 1}. ${label} [${type}]\n   ${uri}`;
     })
-    .join("\n");
+    .join("\n\n");
 };
 
-/** Format source suggest results as JSONL. */
+/** Format source suggest results as numbered text. */
 export const formatSuggestSources: ResponseFormatter = (data) => {
   if (!Array.isArray(data) || data.length === 0) return "No results found.";
   return data
-    .map((item) => {
+    .map((item, i) => {
       const rec = item as Record<string, unknown>;
-      return JSON.stringify({
-        label: (rec.title as string) || "Unknown",
-        type: rec.dataType || "news",
-        uri: rec.uri || "",
-      });
+      const label = (rec.title as string) || "Unknown";
+      const dataType = rec.dataType || "news";
+      const uri = rec.uri || "";
+      return `${i + 1}. ${label} [${dataType}]\n   ${uri}`;
     })
-    .join("\n");
+    .join("\n\n");
 };
 
-/** Format category suggest results as JSONL. */
+/** Format category suggest results as numbered text. */
 export const formatSuggestCategories: ResponseFormatter = (data) => {
   if (!Array.isArray(data) || data.length === 0) return "No results found.";
   return data
-    .map((item) => {
+    .map((item, i) => {
       const rec = item as Record<string, unknown>;
-      const obj: Record<string, unknown> = {
-        label: extractLabel(rec),
-        uri: rec.uri || "",
-      };
-      if (rec.parentUri) {
-        obj.parent = rec.parentUri;
-      }
-      return JSON.stringify(obj);
+      const label = extractLabel(rec);
+      const uri = rec.uri || "";
+      return `${i + 1}. ${label}\n   ${uri}`;
     })
-    .join("\n");
+    .join("\n\n");
 };
 
-/** Format author suggest results as JSONL. */
+/** Format author suggest results as numbered text. */
 export const formatSuggestAuthors: ResponseFormatter = (data) => {
   if (!Array.isArray(data) || data.length === 0) return "No results found.";
   return data
-    .map((item) => {
+    .map((item, i) => {
       const rec = item as Record<string, unknown>;
-      return JSON.stringify({
-        label: (rec.name as string) || "Unknown",
-        type: rec.type || "author",
-        uri: rec.uri || "",
-      });
+      const name = (rec.name as string) || "Unknown";
+      const uri = rec.uri || "";
+      const source = rec.source as Record<string, unknown> | undefined;
+      const sourceStr = source?.title ? ` (${source.title})` : "";
+      return `${i + 1}. ${name}${sourceStr}\n   ${uri}`;
     })
-    .join("\n");
+    .join("\n\n");
 };
 
 /** Format article search results as numbered list with full body. */

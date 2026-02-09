@@ -75,7 +75,11 @@ describe("MCP server E2E", () => {
 
   it("calls suggest and returns formatted text", async () => {
     mockFetchOk([
-      { uri: "http://en.wikipedia.org/wiki/Tesla", label: "Tesla" },
+      {
+        uri: "http://en.wikipedia.org/wiki/Tesla",
+        label: "Tesla",
+        type: "org",
+      },
     ]);
 
     const result = await client.callTool({
@@ -86,12 +90,9 @@ describe("MCP server E2E", () => {
     expect(result.content).toHaveLength(1);
     const content = result.content[0] as { type: string; text: string };
     expect(content.type).toBe("text");
-    // Suggest tools always use their formatter (JSONL output)
-    const parsed = JSON.parse(content.text);
-    expect(parsed).toMatchObject({
-      label: "Tesla",
-      uri: "http://en.wikipedia.org/wiki/Tesla",
-    });
+    // Suggest tools use numbered text format
+    expect(content.text).toContain("1. Tesla [org]");
+    expect(content.text).toContain("http://en.wikipedia.org/wiki/Tesla");
   });
 
   it("calls search_articles with keyword", async () => {

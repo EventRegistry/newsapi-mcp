@@ -13,7 +13,7 @@ import {
 } from "../src/formatters.js";
 
 describe("formatSuggestLocations", () => {
-  it("formats location with country as JSONL", () => {
+  it("formats location with country as numbered text", () => {
     const data = [
       {
         type: "place",
@@ -28,14 +28,9 @@ describe("formatSuggestLocations", () => {
     ];
 
     const result = formatSuggestLocations(data, {});
-    const parsed = JSON.parse(result);
 
-    expect(parsed).toEqual({
-      label: "Ljubljana",
-      type: "place",
-      uri: "http://en.wikipedia.org/wiki/Ljubljana",
-      country: "Slovenia",
-    });
+    expect(result).toContain("1. Ljubljana [place] - Slovenia");
+    expect(result).toContain("http://en.wikipedia.org/wiki/Ljubljana");
   });
 
   it("returns no results message for empty array", () => {
@@ -54,19 +49,15 @@ describe("formatSuggestLocations", () => {
     ];
 
     const result = formatSuggestLocations(data, {});
-    const parsed = JSON.parse(result);
 
-    expect(parsed).toEqual({
-      label: "Slovenia",
-      type: "country",
-      uri: "http://en.wikipedia.org/wiki/Slovenia",
-    });
-    expect(parsed.country).toBeUndefined();
+    expect(result).toContain("1. Slovenia [country]");
+    expect(result).toContain("http://en.wikipedia.org/wiki/Slovenia");
+    expect(result).not.toContain(" - ");
   });
 });
 
 describe("formatSuggestConcepts", () => {
-  it("formats concept as JSONL", () => {
+  it("formats concept as numbered text", () => {
     const data = [
       {
         label: "Donald Trump",
@@ -77,20 +68,16 @@ describe("formatSuggestConcepts", () => {
     ];
 
     const result = formatSuggestConcepts(data, {});
-    const parsed = JSON.parse(result);
 
-    expect(parsed).toEqual({
-      label: "Donald Trump",
-      type: "person",
-      uri: "http://en.wikipedia.org/wiki/Donald_Trump",
-    });
+    expect(result).toContain("1. Donald Trump [person]");
+    expect(result).toContain("http://en.wikipedia.org/wiki/Donald_Trump");
   });
 
   it("returns no results message for empty array", () => {
     expect(formatSuggestConcepts([], {})).toBe("No results found.");
   });
 
-  it("formats multiple concepts as JSONL lines", () => {
+  it("formats multiple concepts as numbered entries", () => {
     const data = [
       {
         label: "Apple Inc.",
@@ -107,24 +94,16 @@ describe("formatSuggestConcepts", () => {
     ];
 
     const result = formatSuggestConcepts(data, {});
-    const lines = result.split("\n");
 
-    expect(lines).toHaveLength(2);
-    expect(JSON.parse(lines[0])).toEqual({
-      label: "Apple Inc.",
-      type: "org",
-      uri: "http://en.wikipedia.org/wiki/Apple_Inc.",
-    });
-    expect(JSON.parse(lines[1])).toEqual({
-      label: "Apple",
-      type: "wiki",
-      uri: "http://en.wikipedia.org/wiki/Apple",
-    });
+    expect(result).toContain("1. Apple Inc. [org]");
+    expect(result).toContain("http://en.wikipedia.org/wiki/Apple_Inc.");
+    expect(result).toContain("2. Apple [wiki]");
+    expect(result).toContain("http://en.wikipedia.org/wiki/Apple");
   });
 });
 
 describe("formatSuggestSources", () => {
-  it("formats source as JSONL", () => {
+  it("formats source as numbered text", () => {
     const data = [
       {
         title: "MMC RTV Slovenija",
@@ -135,13 +114,9 @@ describe("formatSuggestSources", () => {
     ];
 
     const result = formatSuggestSources(data, {});
-    const parsed = JSON.parse(result);
 
-    expect(parsed).toEqual({
-      label: "MMC RTV Slovenija",
-      type: "news",
-      uri: "rtvslo.si",
-    });
+    expect(result).toContain("1. MMC RTV Slovenija [news]");
+    expect(result).toContain("rtvslo.si");
   });
 
   it("returns no results message for empty array", () => {
@@ -152,15 +127,14 @@ describe("formatSuggestSources", () => {
     const data = [{ uri: "example.com", dataType: "blog", score: 100 }];
 
     const result = formatSuggestSources(data, {});
-    const parsed = JSON.parse(result);
 
-    expect(parsed.label).toBe("Unknown");
-    expect(parsed.type).toBe("blog");
+    expect(result).toContain("1. Unknown [blog]");
+    expect(result).toContain("example.com");
   });
 });
 
 describe("formatSuggestCategories", () => {
-  it("formats category with parent as JSONL", () => {
+  it("formats category as numbered text", () => {
     const data = [
       {
         label: "news/Technology",
@@ -170,13 +144,9 @@ describe("formatSuggestCategories", () => {
     ];
 
     const result = formatSuggestCategories(data, {});
-    const parsed = JSON.parse(result);
 
-    expect(parsed).toEqual({
-      label: "news/Technology",
-      uri: "news/Technology",
-      parent: "news",
-    });
+    expect(result).toContain("1. news/Technology");
+    expect(result).toContain("news/Technology");
   });
 
   it("returns no results message for empty array", () => {
@@ -192,18 +162,14 @@ describe("formatSuggestCategories", () => {
     ];
 
     const result = formatSuggestCategories(data, {});
-    const parsed = JSON.parse(result);
 
-    expect(parsed).toEqual({
-      label: "news",
-      uri: "news",
-    });
-    expect(parsed.parent).toBeUndefined();
+    expect(result).toContain("1. news");
+    expect(result).toContain("   news");
   });
 });
 
 describe("formatSuggestAuthors", () => {
-  it("formats author as JSONL", () => {
+  it("formats author as numbered text", () => {
     const data = [
       {
         name: "John Smith",
@@ -213,13 +179,9 @@ describe("formatSuggestAuthors", () => {
     ];
 
     const result = formatSuggestAuthors(data, {});
-    const parsed = JSON.parse(result);
 
-    expect(parsed).toEqual({
-      label: "John Smith",
-      type: "author",
-      uri: "john_smith@express.co.uk",
-    });
+    expect(result).toContain("1. John Smith");
+    expect(result).toContain("john_smith@express.co.uk");
   });
 
   it("returns no results message for empty array", () => {
@@ -230,9 +192,24 @@ describe("formatSuggestAuthors", () => {
     const data = [{ uri: "test@example.com", type: "author" }];
 
     const result = formatSuggestAuthors(data, {});
-    const parsed = JSON.parse(result);
 
-    expect(parsed.label).toBe("Unknown");
+    expect(result).toContain("1. Unknown");
+    expect(result).toContain("test@example.com");
+  });
+
+  it("includes source when present", () => {
+    const data = [
+      {
+        name: "Jane Doe",
+        uri: "jane_doe@nytimes.com",
+        source: { title: "New York Times" },
+      },
+    ];
+
+    const result = formatSuggestAuthors(data, {});
+
+    expect(result).toContain("1. Jane Doe (New York Times)");
+    expect(result).toContain("jane_doe@nytimes.com");
   });
 });
 

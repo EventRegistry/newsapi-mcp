@@ -36,7 +36,7 @@ MCP Client → McpServer (SDK) → ToolRegistry handler → apiPost()/analyticsP
 - **`src/client.ts`** — HTTP client. `apiPost()` for main API, `analyticsPost()` for analytics. Auto-injects API key.
 - **`src/tools/registry.ts`** — `ToolRegistry` class. Registers all tools at startup. `buildZodShape()` converts JSON Schema → Zod for MCP SDK registration.
 - **`src/response-filter.ts`** — Token optimization. `includeFields` param maps to API include params + post-response field stripping. `filterResponse()` preserves pagination metadata.
-- **`src/formatters.ts`** — Converts JSON responses to compact text. Suggest tools always format (JSONL output). Search tools use optional `format` param.
+- **`src/formatters.ts`** — Converts JSON responses to compact text. All tools with formatters output human-readable numbered text.
 - **`src/tools/*.ts`** — Tool definitions as `ToolDef` objects with `name`, `description`, `schema` (JSON Schema), `handler`, and optional `formatter`.
 
 ### Detail Level Presets
@@ -55,7 +55,7 @@ Tests mock `fetch` globally via `vi.stubGlobal("fetch", fetchSpy)`. Server integ
 ## Codebase Conventions
 
 - `ToolDef` is the canonical tool definition type — tools export arrays of `ToolDef` objects
-- Suggest tool formatters always apply (no `format` param in schema) — output is JSONL, not JSON arrays
+- All tools with formatters output human-readable text (numbered lists with URIs)
 - `contentFilterProps` in articles.ts is shared across article and event search tools
 - The linter auto-formats on save (may adjust ternary formatting etc.)
 - Single-file distribution via esbuild — `prepublishOnly` runs `build:bundle`
