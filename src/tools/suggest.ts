@@ -63,7 +63,13 @@ TYPES:
 WORKFLOW: suggest(type, prefix) → get URI → pass to search_articles or search_events.
 EXAMPLE: suggest({type: "concepts", prefix: "Tesla"}) → search_articles({conceptUri: "<uri>"})
 
-Prefer "concepts" as the default type. Use specific types when entity type is unambiguous (e.g., journalist name → "authors").`,
+Prefer "concepts" as the default type. Use specific types when entity type is unambiguous (e.g., journalist name → "authors").
+
+TIPS:
+- Keep prefix SHORT (1-3 words). The API does prefix matching, not full-text search.
+  Good: "Tesla", "Angela Merkel" | Bad: "Tesla electric vehicle company"
+- For non-English entities, search in BOTH English AND the native language.
+  Example: For Slovenian company "Krka", search with lang="eng" AND lang="slv"`,
   inputSchema: {
     type: "object",
     properties: {
@@ -75,12 +81,13 @@ Prefer "concepts" as the default type. Use specific types when entity type is un
       },
       prefix: {
         type: "string",
-        description: "Full or partial name to search for",
+        description:
+          "Short name or prefix to search for (1-3 words). Shorter prefixes work better than long descriptions.",
       },
       lang: {
         type: "string",
         description:
-          'Language code for results (e.g. "eng", "deu", "fra"). Defaults to "eng".',
+          'Language code for results (e.g. "eng", "deu", "fra", "slv"). Defaults to "eng". For non-English entities, try BOTH English and the native language.',
       },
     },
     required: ["type", "prefix"],
