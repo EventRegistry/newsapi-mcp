@@ -20,7 +20,7 @@ vi.mock("../src/client.js", () => ({
   initClient: vi.fn(),
 }));
 
-import { apiPost, parseArray } from "../src/client.js";
+import { apiPost } from "../src/client.js";
 import {
   searchArticles,
   getArticleDetails,

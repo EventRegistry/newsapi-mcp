@@ -32,18 +32,21 @@
     "dev": "tsx --env-file=.env src/index.ts",
     "test": "vitest run",
     "test:watch": "vitest",
+    "lint": "eslint src tests",
     "prepublishOnly": "npm run build:bundle"
   },
   "engines": {
     "node": ">=18"
   },
-  "dependencies": {},
   "devDependencies": {
+    "@eslint/js": "^9.39.2",
     "@modelcontextprotocol/sdk": "^1.26.0",
     "@types/node": "^22.0.0",
     "esbuild": "^0.27.2",
+    "eslint": "^9.39.2",
     "tsx": "^4.19.0",
     "typescript": "^5.7.0",
+    "typescript-eslint": "^8.54.0",
     "vitest": "^4.0.18"
   }
 }

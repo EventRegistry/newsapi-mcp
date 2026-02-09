@@ -136,8 +136,8 @@ const DETAIL_PRESETS: Record<string, Record<string, number>> = {
 /** Apply detailLevel preset values for any params not explicitly set. */
 export function applyDetailLevel(params: Record<string, unknown>): void {
   const level = (params.detailLevel as string) ?? "standard";
-  const preset = DETAIL_PRESETS[level] ?? DETAIL_PRESETS.standard;
-  for (const [k, v] of Object.entries(preset)) {
+  const preset = DETAIL_PRESETS[level] ?? DETAIL_PRESETS["standard"]!;
+  for (const [k, v] of Object.entries(preset!)) {
     if (params[k] === undefined) {
       params[k] = v;
     }

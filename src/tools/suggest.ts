@@ -97,13 +97,14 @@ Prefer "concepts" as the default type. Use specific types when entity type is un
       return cached;
     }
 
-    const result = await apiPost(path, { prefix, lang });
+    const result = await apiPost(path!, { prefix, lang });
     suggestCache.set(key, result);
     return result;
   },
   formatter: (data, params) => {
     const type = params.type as string;
-    return SUGGEST_FORMATTERS[type](data, params);
+    const formatter = SUGGEST_FORMATTERS[type];
+    return formatter!(data, params);
   },
 };
 

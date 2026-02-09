@@ -86,7 +86,7 @@ export class ToolRegistry {
       tool.name,
       {
         description: tool.description,
-        inputSchema: z.object(shape).shape,
+        inputSchema: z.object(shape),
       },
       async (params) => {
         try {
