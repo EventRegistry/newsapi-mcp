@@ -71,10 +71,10 @@ describe("MCP server E2E", () => {
   });
 
   it("returns error when calling disabled non-core tool", async () => {
-    // suggest_authors is non-core and not enabled by default
+    // get_article_details is non-core and not enabled by default
     const result = await client.callTool({
-      name: "suggest_authors",
-      arguments: { prefix: "Test" },
+      name: "get_article_details",
+      arguments: { articleUri: "12345" },
     });
 
     expect(result.isError).toBe(true);

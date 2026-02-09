@@ -5,7 +5,7 @@ import { z } from "zod";
 /** Which tools are core (on by default) within each category. */
 const CORE_TOOLS: Record<ToolCategory, string[] | "all"> = {
   search: ["search_articles", "search_events"],
-  suggest: ["suggest_concepts"],
+  suggest: "all",
   topic_pages: [],
   usage: "all",
 };
