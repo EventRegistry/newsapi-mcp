@@ -39,7 +39,7 @@
   },
   "dependencies": {},
   "devDependencies": {
-    "@modelcontextprotocol/sdk": "^1.12.1",
+    "@modelcontextprotocol/sdk": "^1.26.0",
     "@types/node": "^22.0.0",
     "esbuild": "^0.27.2",
     "tsx": "^4.19.0",

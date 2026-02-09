@@ -74,7 +74,7 @@ export class ToolRegistry {
   }
 
   /** Register a single ToolDef on the McpServer. */
-  private registerTool(tool: ToolDef): void {
+  private registerOne(tool: ToolDef): void {
     if (!this.server) return;
 
     const shape = buildZodShape(tool);
@@ -82,10 +82,12 @@ export class ToolRegistry {
     const formatter = tool.formatter;
     const hasIncludeFields = "includeFields" in tool.inputSchema.properties;
 
-    this.server.tool(
+    this.server.registerTool(
       tool.name,
-      tool.description,
-      z.object(shape).shape,
+      {
+        description: tool.description,
+        inputSchema: z.object(shape).shape,
+      },
       async (params) => {
         try {
           // Validate includeFields before calling handler
@@ -129,7 +131,7 @@ export class ToolRegistry {
     this.server = server;
 
     for (const tool of this.allTools) {
-      this.registerTool(tool);
+      this.registerOne(tool);
     }
   }
 }
