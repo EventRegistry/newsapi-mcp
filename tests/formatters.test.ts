@@ -274,13 +274,35 @@ describe("formatArticleResults", () => {
         results: [{ title: "Test", body: "Body" }],
         page: 1,
         pages: 5,
+        totalResults: 50,
       },
     };
 
     const result = formatArticleResults(data, {});
 
+    expect(result).toContain("1 results (50 total)");
     expect(result).toContain("Page 1 of 5");
     expect(result).toContain("articlesPage: 2");
+  });
+
+  it("shows result count on single-page response", () => {
+    const data = {
+      articles: {
+        results: [
+          { title: "A", body: "Body A" },
+          { title: "B", body: "Body B" },
+        ],
+        page: 1,
+        pages: 1,
+        totalResults: 2,
+      },
+    };
+
+    const result = formatArticleResults(data, {});
+
+    expect(result).toContain("2 results (2 total)");
+    expect(result).not.toContain("Page ");
+    expect(result).not.toContain("articlesPage:");
   });
 
   it("handles missing fields gracefully", () => {
@@ -367,13 +389,35 @@ describe("formatEventResults", () => {
         results: [{ title: "Test", uri: "evt-1" }],
         page: 2,
         pages: 10,
+        totalResults: 100,
       },
     };
 
     const result = formatEventResults(data, {});
 
+    expect(result).toContain("1 results (100 total)");
     expect(result).toContain("Page 2 of 10");
     expect(result).toContain("eventsPage: 3");
+  });
+
+  it("shows result count on single-page response", () => {
+    const data = {
+      events: {
+        results: [
+          { title: "Event A", uri: "evt-1" },
+          { title: "Event B", uri: "evt-2" },
+        ],
+        page: 1,
+        pages: 1,
+        totalResults: 2,
+      },
+    };
+
+    const result = formatEventResults(data, {});
+
+    expect(result).toContain("2 results (2 total)");
+    expect(result).not.toContain("Page ");
+    expect(result).not.toContain("eventsPage:");
   });
 });
 

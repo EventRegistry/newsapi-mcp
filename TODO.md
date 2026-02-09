@@ -42,7 +42,7 @@ Findings from analyzing the current implementation against MCP best practices (o
   - [x] For `search_articles`: return a numbered list with title, source, date, snippet instead of raw JSON
   - [x] For `suggest_*`: return a simple "name → URI" mapping, not full entity objects
   - [x] Include pagination hints: "Page X of Y. Use `articlesPage: N+1` for more."
-  - [ ] Add result count to every paginated response
+  - [x] Add result count to every paginated response
 
 ### Continuation patterns
 - **Current**: Pagination via `articlesPage` / `eventsPage` params, but no guidance in responses
@@ -200,6 +200,27 @@ Five canonical patterns to reference in instructions, tool descriptions, resourc
 3. **Event tracking**: `find_event_for_text("...")` → `get_event_details` → `search_articles` for related coverage
 4. **Source-specific**: `suggest_sources("Reuters")` → `search_articles(sourceUri: "...")`
 5. **Topic monitoring**: `enable_toolset("topic_pages")` → `get_topic_page_articles(uri: "...")`
+
+### Suggest tool selection guidance
+LLMs see a generic "use suggest_* tools to look up URIs" instruction but need disambiguation between the 5 suggest tools. Add selection rules to all guidance surfaces (instructions, tool descriptions, `list_available_tools`, resources):
+
+| Suggest tool | When to use | Example prompt trigger |
+|---|---|---|
+| `suggest_authors` | Explicit author/journalist name in prompt | "articles by John Smith" |
+| `suggest_locations` | Filtering by event location (country, city, region) | "news from Germany", "events in Tokyo" |
+| `suggest_sources` | Specific news source/outlet targeted | "what does Reuters say about...", "BBC coverage of..." |
+| `suggest_categories` | Topic or news category mentioned | "business news about...", "sports coverage" |
+| `suggest_concepts` | Catch-all for entities: people, orgs, locations, things | "news about Tesla", "Elon Musk", "climate change" |
+
+Key rules:
+- **Prefer specific tools** over `suggest_concepts` when the entity type is unambiguous (e.g., author names → `suggest_authors`)
+- **`suggest_concepts` overlaps** with locations and people — use it when the entity could be multiple types or when building `conceptUri` filters
+- **Multiple suggest calls** are normal for filtered searches (e.g., `suggest_concepts` + `suggest_sources` for "Reuters articles about Tesla")
+
+- [ ] Surface in `instructions` string (server-level)
+- [ ] Surface in enhanced tool descriptions
+- [ ] Surface in `list_available_tools` output
+- [ ] Surface in MCP Resources
 
 ---
 

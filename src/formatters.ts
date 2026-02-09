@@ -119,11 +119,16 @@ export const formatArticleResults: ResponseFormatter = (data) => {
   // Pagination footer
   const pages = articles?.pages as number | undefined;
   const page = articles?.page as number | undefined;
+  const totalResults = articles?.totalResults as number | undefined;
+  const countParts: string[] = [];
+  countParts.push(`${results.length} results`);
+  if (totalResults != null) countParts.push(`(${totalResults} total)`);
   if (pages && pages > 1 && page) {
-    lines.push(
-      `---\nPage ${page} of ${pages}. Use articlesPage: ${page + 1} for more.`,
+    countParts.push(
+      `Page ${page} of ${pages}. Use articlesPage: ${page + 1} for more.`,
     );
   }
+  lines.push(`---\n${countParts.join(" ")}`);
   return lines.join("\n\n---\n\n");
 };
 
@@ -155,11 +160,16 @@ export const formatEventResults: ResponseFormatter = (data) => {
   // Pagination footer
   const pages = events?.pages as number | undefined;
   const page = events?.page as number | undefined;
+  const totalResults = events?.totalResults as number | undefined;
+  const countParts: string[] = [];
+  countParts.push(`${results.length} results`);
+  if (totalResults != null) countParts.push(`(${totalResults} total)`);
   if (pages && pages > 1 && page) {
-    lines.push(
-      `---\nPage ${page} of ${pages}. Use eventsPage: ${page + 1} for more.`,
+    countParts.push(
+      `Page ${page} of ${pages}. Use eventsPage: ${page + 1} for more.`,
     );
   }
+  lines.push(`---\n${countParts.join(" ")}`);
   return lines.join("\n\n---\n\n");
 };
 
