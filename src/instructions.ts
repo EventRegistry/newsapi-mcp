@@ -42,4 +42,9 @@ Results must fit in the model's context window. Start with what you need, then p
 - **locations**: for locationUri or sourceLocationUri filters
 - **authors**: journalist names for authorUri filter
 
+**Language tips:**
+- Always search in English first — it has the best coverage
+- For non-English entities, only try the native language if English returns no results
+- For locations, always use English names (e.g., "Germany" not "Deutschland")
+
 For detailed documentation, read the newsapi://guide resource.`;

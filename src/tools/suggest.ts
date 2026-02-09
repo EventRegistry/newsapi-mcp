@@ -68,8 +68,10 @@ Prefer "concepts" as the default type. Use specific types when entity type is un
 TIPS:
 - Keep prefix SHORT (1-3 words). The API does prefix matching, not full-text search.
   Good: "Tesla", "Angela Merkel" | Bad: "Tesla electric vehicle company"
-- For non-English entities, search in BOTH English AND the native language.
-  Example: For Slovenian company "Krka", search with lang="eng" AND lang="slv"`,
+- For non-English entities, search in English first. Only try the native language if English returns no results.
+  Example: For Slovenian company "Krka", first search with lang="eng", then try lang="slv" if needed.
+- For locations, ALWAYS use English names regardless of target language.
+  Good: "Germany", "Slovenia" | Bad: "Deutschland", "Slovenija"`,
   inputSchema: {
     type: "object",
     properties: {
@@ -87,7 +89,7 @@ TIPS:
       lang: {
         type: "string",
         description:
-          'Language code for results (e.g. "eng", "deu", "fra", "slv"). Defaults to "eng". For non-English entities, try BOTH English and the native language.',
+          'Language code for results (e.g. "eng", "deu", "fra", "slv"). Defaults to "eng". For non-English entities, try English first, then native language if needed. For locations, always use English names.',
       },
     },
     required: ["type", "prefix"],
