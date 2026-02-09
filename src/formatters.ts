@@ -87,6 +87,93 @@ export const formatSuggestAuthors: ResponseFormatter = (data) => {
     .join("\n\n");
 };
 
+/** Render optional includeFields data as indented metadata lines for articles. */
+function formatArticleExtras(art: Record<string, unknown>): string {
+  const lines: string[] = [];
+  if (art.sentiment != null) lines.push(`   Sentiment: ${art.sentiment}`);
+  if (Array.isArray(art.concepts) && art.concepts.length > 0) {
+    const items = (art.concepts as Record<string, unknown>[]).map((c) => {
+      const label = c.label || c.uri || "?";
+      return c.type ? `${label} [${c.type}]` : String(label);
+    });
+    lines.push(`   Concepts: ${items.join(", ")}`);
+  }
+  if (Array.isArray(art.categories) && art.categories.length > 0) {
+    const items = (art.categories as Record<string, unknown>[]).map((c) =>
+      String(c.label || c.uri || "?"),
+    );
+    lines.push(`   Categories: ${items.join(", ")}`);
+  }
+  if (Array.isArray(art.authors) && art.authors.length > 0) {
+    const items = (art.authors as Record<string, unknown>[]).map((a) =>
+      String(a.name || a.uri || "?"),
+    );
+    lines.push(`   Authors: ${items.join(", ")}`);
+  }
+  if (typeof art.image === "string") lines.push(`   Image: ${art.image}`);
+  if (art.location && typeof art.location === "object") {
+    const loc = art.location as Record<string, unknown>;
+    const label = typeof loc.label === "object" ? extractLabel(loc) : loc.label;
+    if (label) lines.push(`   Location: ${label}`);
+  }
+  if (art.shares && typeof art.shares === "object") {
+    const items = Object.entries(art.shares as Record<string, unknown>).map(
+      ([k, v]) => `${k}: ${v}`,
+    );
+    if (items.length > 0) lines.push(`   Shares: ${items.join(", ")}`);
+  }
+  if (art.eventUri) lines.push(`   Event: ${art.eventUri}`);
+  if (art.storyUri) lines.push(`   Story: ${art.storyUri}`);
+  const metaKeys = [
+    "lang",
+    "relevance",
+    "wgt",
+    "sim",
+    "isDuplicate",
+    "dataType",
+  ];
+  const metaParts = metaKeys
+    .filter((k) => art[k] != null)
+    .map((k) => `${k}: ${art[k]}`);
+  if (metaParts.length > 0) lines.push(`   ${metaParts.join(" | ")}`);
+  return lines.length > 0 ? "\n" + lines.join("\n") : "";
+}
+
+/** Render optional includeFields data as indented metadata lines for events. */
+function formatEventExtras(evt: Record<string, unknown>): string {
+  const lines: string[] = [];
+  if (evt.sentiment != null) lines.push(`   Sentiment: ${evt.sentiment}`);
+  if (Array.isArray(evt.concepts) && evt.concepts.length > 0) {
+    const items = (evt.concepts as Record<string, unknown>[]).map((c) => {
+      const label = c.label || c.uri || "?";
+      return c.type ? `${label} [${c.type}]` : String(label);
+    });
+    lines.push(`   Concepts: ${items.join(", ")}`);
+  }
+  if (Array.isArray(evt.categories) && evt.categories.length > 0) {
+    const items = (evt.categories as Record<string, unknown>[]).map((c) =>
+      String(c.label || c.uri || "?"),
+    );
+    lines.push(`   Categories: ${items.join(", ")}`);
+  }
+  if (Array.isArray(evt.images) && evt.images.length > 0) {
+    lines.push(`   Images: ${(evt.images as string[]).join(", ")}`);
+  }
+  if (evt.location && typeof evt.location === "object") {
+    const loc = evt.location as Record<string, unknown>;
+    const label = typeof loc.label === "object" ? extractLabel(loc) : loc.label;
+    if (label) lines.push(`   Location: ${label}`);
+  }
+  if (evt.socialScore != null)
+    lines.push(`   Social score: ${evt.socialScore}`);
+  const metaKeys = ["wgt", "relevance"];
+  const metaParts = metaKeys
+    .filter((k) => evt[k] != null)
+    .map((k) => `${k}: ${evt[k]}`);
+  if (metaParts.length > 0) lines.push(`   ${metaParts.join(" | ")}`);
+  return lines.length > 0 ? "\n" + lines.join("\n") : "";
+}
+
 /** Format article search results as numbered list with full body. */
 export const formatArticleResults: ResponseFormatter = (data) => {
   const articles = (data as Record<string, unknown>)?.articles as
@@ -102,7 +189,7 @@ export const formatArticleResults: ResponseFormatter = (data) => {
       (art.source as Record<string, unknown> | undefined)?.title || "Unknown";
     const body = (art.body as string) || "";
     const url = art.url ? `\n   URL: ${art.url}` : "";
-    return `${i + 1}. [${date}] ${art.title || "Untitled"} - ${source}${url}\n\n${body}`;
+    return `${i + 1}. [${date}] ${art.title || "Untitled"} - ${source}${url}${formatArticleExtras(art)}\n\n${body}`;
   });
 
   // Pagination footer
@@ -143,7 +230,7 @@ export const formatEventResults: ResponseFormatter = (data) => {
         : (summaryField as Record<string, unknown> | undefined)?.eng || "";
     const count =
       (evt.articleCounts as Record<string, unknown> | undefined)?.total || 0;
-    return `${i + 1}. [${evt.eventDate || "Unknown"}] ${title} (${count} articles)\n   URI: ${evt.uri || ""}\n\n${summary}`;
+    return `${i + 1}. [${evt.eventDate || "Unknown"}] ${title} (${count} articles)\n   URI: ${evt.uri || ""}${formatEventExtras(evt)}\n\n${summary}`;
   });
 
   // Pagination footer
@@ -178,7 +265,7 @@ export const formatArticleDetails: ResponseFormatter = (data) => {
       (art.source as Record<string, unknown> | undefined)?.title || "Unknown";
     const body = (art.body as string) || "";
     const url = art.url ? `\n   URL: ${art.url}` : "";
-    return `${i + 1}. [${date}] ${art.title || "Untitled"} - ${source}${url}\n\n${body}`;
+    return `${i + 1}. [${date}] ${art.title || "Untitled"} - ${source}${url}${formatArticleExtras(art)}\n\n${body}`;
   });
 
   return lines.join("\n\n---\n\n");
@@ -207,7 +294,7 @@ export const formatEventDetails: ResponseFormatter = (data) => {
         : (summaryField as Record<string, unknown> | undefined)?.eng || "";
     const count =
       (evt.articleCounts as Record<string, unknown> | undefined)?.total || 0;
-    return `${i + 1}. [${evt.eventDate || "Unknown"}] ${title} (${count} articles)\n   URI: ${evt.uri || ""}\n\n${summary}`;
+    return `${i + 1}. [${evt.eventDate || "Unknown"}] ${title} (${count} articles)\n   URI: ${evt.uri || ""}${formatEventExtras(evt)}\n\n${summary}`;
   });
 
   return lines.join("\n\n---\n\n");

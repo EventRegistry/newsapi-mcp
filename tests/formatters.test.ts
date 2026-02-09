@@ -305,6 +305,105 @@ describe("formatArticleResults", () => {
     expect(result).toContain("Just body");
     expect(result).not.toContain("URL:");
   });
+
+  it("renders includeFields extras when present", () => {
+    const data = {
+      articles: {
+        results: [
+          {
+            title: "Test",
+            dateTimePub: "2024-01-15T10:00:00Z",
+            source: { title: "Src" },
+            body: "Body text.",
+            sentiment: 0.52,
+            concepts: [
+              {
+                label: "Tesla",
+                type: "org",
+                uri: "http://en.wikipedia.org/wiki/Tesla,_Inc.",
+              },
+              { label: "Artificial intelligence", type: "concept" },
+            ],
+            categories: [
+              { label: "news/Technology", uri: "news/Technology" },
+              { label: "news/Business", uri: "news/Business" },
+            ],
+            authors: [{ name: "John Smith", uri: "john_smith@example.com" }],
+            image: "https://example.com/img.jpg",
+            shares: { facebook: 120, twitter: 45 },
+            eventUri: "eng-123",
+            storyUri: "story-456",
+            lang: "eng",
+            isDuplicate: false,
+          },
+        ],
+        page: 1,
+        pages: 1,
+      },
+    };
+
+    const result = formatArticleResults(data, {});
+
+    expect(result).toContain("Sentiment: 0.52");
+    expect(result).toContain(
+      "Concepts: Tesla [org], Artificial intelligence [concept]",
+    );
+    expect(result).toContain("Categories: news/Technology, news/Business");
+    expect(result).toContain("Authors: John Smith");
+    expect(result).toContain("Image: https://example.com/img.jpg");
+    expect(result).toContain("Shares: facebook: 120, twitter: 45");
+    expect(result).toContain("Event: eng-123");
+    expect(result).toContain("Story: story-456");
+    expect(result).toContain("lang: eng");
+    expect(result).toContain("isDuplicate: false");
+  });
+
+  it("renders location with object label", () => {
+    const data = {
+      articles: {
+        results: [
+          {
+            title: "Test",
+            body: "",
+            location: { label: { eng: "Ljubljana" }, type: "place" },
+          },
+        ],
+        page: 1,
+        pages: 1,
+      },
+    };
+
+    const result = formatArticleResults(data, {});
+    expect(result).toContain("Location: Ljubljana");
+  });
+
+  it("does not render extras when fields are absent", () => {
+    const data = {
+      articles: {
+        results: [
+          {
+            title: "Plain",
+            dateTimePub: "2024-01-01T00:00:00Z",
+            source: { title: "Src" },
+            body: "Body",
+          },
+        ],
+        page: 1,
+        pages: 1,
+      },
+    };
+
+    const result = formatArticleResults(data, {});
+
+    expect(result).not.toContain("Sentiment:");
+    expect(result).not.toContain("Concepts:");
+    expect(result).not.toContain("Categories:");
+    expect(result).not.toContain("Authors:");
+    expect(result).not.toContain("Image:");
+    expect(result).not.toContain("Shares:");
+    expect(result).not.toContain("Event:");
+    expect(result).not.toContain("Location:");
+  });
 });
 
 describe("formatEventResults", () => {
@@ -398,6 +497,74 @@ describe("formatEventResults", () => {
     expect(result).not.toContain("Page ");
     expect(result).not.toContain("eventsPage:");
   });
+
+  it("renders includeFields extras when present", () => {
+    const data = {
+      events: {
+        results: [
+          {
+            title: { eng: "Climate Summit" },
+            eventDate: "2024-06-01",
+            summary: { eng: "Summary text." },
+            articleCounts: { total: 50 },
+            uri: "evt-100",
+            sentiment: -0.3,
+            concepts: [
+              { label: "Climate change", type: "concept" },
+              { label: "United Nations", type: "org" },
+            ],
+            categories: [{ label: "news/Environment" }],
+            images: [
+              "https://example.com/img1.jpg",
+              "https://example.com/img2.jpg",
+            ],
+            location: { label: "Geneva", type: "place" },
+            socialScore: 8500,
+            wgt: 75,
+          },
+        ],
+        page: 1,
+        pages: 1,
+      },
+    };
+
+    const result = formatEventResults(data, {});
+
+    expect(result).toContain("Sentiment: -0.3");
+    expect(result).toContain(
+      "Concepts: Climate change [concept], United Nations [org]",
+    );
+    expect(result).toContain("Categories: news/Environment");
+    expect(result).toContain(
+      "Images: https://example.com/img1.jpg, https://example.com/img2.jpg",
+    );
+    expect(result).toContain("Location: Geneva");
+    expect(result).toContain("Social score: 8500");
+    expect(result).toContain("wgt: 75");
+  });
+
+  it("does not render extras when fields are absent", () => {
+    const data = {
+      events: {
+        results: [
+          {
+            title: "Plain Event",
+            eventDate: "2024-01-01",
+            uri: "evt-plain",
+          },
+        ],
+        page: 1,
+        pages: 1,
+      },
+    };
+
+    const result = formatEventResults(data, {});
+
+    expect(result).not.toContain("Sentiment:");
+    expect(result).not.toContain("Concepts:");
+    expect(result).not.toContain("Images:");
+    expect(result).not.toContain("Social score:");
+  });
 });
 
 describe("formatArticleDetails", () => {
@@ -470,6 +637,28 @@ describe("formatArticleDetails", () => {
     expect(formatArticleDetails({}, {})).toBe("No article details found.");
     expect(formatArticleDetails(null, {})).toBe("No article details found.");
   });
+
+  it("renders includeFields extras in detail view", () => {
+    const data = {
+      "art-1": {
+        info: {
+          title: "Detail with Extras",
+          dateTimePub: "2024-03-10T08:00:00Z",
+          source: { title: "Src" },
+          body: "Body.",
+          sentiment: 0.8,
+          concepts: [{ label: "AI", type: "concept" }],
+          categories: [{ label: "news/Tech" }],
+        },
+      },
+    };
+
+    const result = formatArticleDetails(data, {});
+
+    expect(result).toContain("Sentiment: 0.8");
+    expect(result).toContain("Concepts: AI [concept]");
+    expect(result).toContain("Categories: news/Tech");
+  });
 });
 
 describe("formatEventDetails", () => {
@@ -533,6 +722,31 @@ describe("formatEventDetails", () => {
   it("returns empty message for empty/null data", () => {
     expect(formatEventDetails({}, {})).toBe("No event details found.");
     expect(formatEventDetails(null, {})).toBe("No event details found.");
+  });
+
+  it("renders includeFields extras in detail view", () => {
+    const data = {
+      "evt-1": {
+        info: {
+          title: { eng: "Event with Extras" },
+          eventDate: "2024-06-15",
+          summary: { eng: "Summary." },
+          articleCounts: { total: 10 },
+          uri: "evt-1",
+          sentiment: 0.1,
+          concepts: [{ label: "Economy", type: "concept" }],
+          images: ["https://example.com/photo.jpg"],
+          socialScore: 3200,
+        },
+      },
+    };
+
+    const result = formatEventDetails(data, {});
+
+    expect(result).toContain("Sentiment: 0.1");
+    expect(result).toContain("Concepts: Economy [concept]");
+    expect(result).toContain("Images: https://example.com/photo.jpg");
+    expect(result).toContain("Social score: 3200");
   });
 });
 
