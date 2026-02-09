@@ -121,16 +121,16 @@ Findings from analyzing the current implementation against MCP best practices (o
   - [x] Removed analytics tools (`annotate_text`, `categorize_text`, `analyze_sentiment`, `detect_language`, `compute_semantic_similarity`, `extract_article_info`)
   - [x] Removed `search_mentions` and `get_breaking_events`
 - **Next steps**:
-  - [ ] Evaluate merging all `suggest_*` tools (5 tools) into one `suggest` tool with a `type` parameter
+  - [x] Evaluate merging all `suggest_*` tools (5 tools) into one `suggest` tool with a `type` parameter
   - [ ] Consider a unified `search` tool that auto-detects intent (articles vs events)
 
 ### Tool descriptions
 - **Current**: Good descriptions with parameter docs
 - **Best practice**: Include example invocations in descriptions, common parameter combinations, and "when to use this vs that" guidance
 - **Next steps**:
-  - [ ] Add 1-2 example invocations to each tool description
-  - [ ] Add "Use this tool when..." guidance to disambiguate similar tools
-  - [ ] Document common workflows in tool descriptions (e.g., "First use suggest_concepts, then search_articles")
+  - [x] Add 1-2 example invocations to each tool description
+  - [x] Add "Use this tool when..." guidance to disambiguate similar tools
+  - [x] Document common workflows in tool descriptions (e.g., "First use suggest, then search_articles")
 
 ---
 
@@ -149,13 +149,13 @@ Findings from analyzing the current implementation against MCP best practices (o
 - **Current**: Good descriptions with parameter docs, but no example invocations or disambiguation guidance
 - **Best practice**: Tool descriptions should include terse example invocations and "use this when / not this" guidance to help LLMs pick the right tool
 - **Next steps**:
-  - [ ] Add 1-2 example invocations per tool (one line each, showing key params)
-  - [ ] Add "Use this when..." / "Not this..." disambiguation for similar tools:
+  - [x] Add 1-2 example invocations per tool (one line each, showing key params)
+  - [x] Add "Use this when..." / "Not this..." disambiguation for similar tools:
     - `search_articles` vs `search_events`
     - `find_event_for_text` vs `search_events`
     - `get_article_details` vs `search_articles`
-  - [ ] Follow structured template: `[What] / WORKFLOW / EXAMPLE / USE THIS WHEN / NOT THIS`
-  - [ ] Files: `src/tools/articles.ts`, `events.ts`, `suggest.ts`, `topic-pages.ts`, `usage.ts`
+  - [x] Follow structured template: `[What] / WORKFLOW / EXAMPLE / USE THIS WHEN / NOT THIS`
+  - [x] Files: `src/tools/articles.ts`, `events.ts`, `suggest.ts`, `topic-pages.ts`, `usage.ts`
 
 ### MCP Resources for static documentation
 - **Current**: Resources not implemented (tracked in MCP Features section above)
@@ -177,27 +177,27 @@ Findings from analyzing the current implementation against MCP best practices (o
 
 ### Workflow patterns to document across all guidance surfaces
 Five canonical patterns to reference in instructions, tool descriptions, resources, and prompts:
-1. **Basic search**: `suggest_concepts("Tesla")` → `search_articles(conceptUri: "...")`
-2. **Filtered search**: `suggest_concepts` + `suggest_sources`/`suggest_categories` → `search_articles` with multiple filters
+1. **Basic search**: `suggest({type: "concepts", prefix: "Tesla"})` → `search_articles(conceptUri: "...")`
+2. **Filtered search**: `suggest(type: "concepts")` + `suggest(type: "sources")`/`suggest(type: "categories")` → `search_articles` with multiple filters
 3. **Event tracking**: `find_event_for_text("...")` → `get_event_details` → `search_articles` for related coverage
-4. **Source-specific**: `suggest_sources("Reuters")` → `search_articles(sourceUri: "...")`
+4. **Source-specific**: `suggest({type: "sources", prefix: "Reuters"})` → `search_articles(sourceUri: "...")`
 5. **Topic monitoring**: `get_topic_page_articles(uri: "...")`
 
 ### Suggest tool selection guidance
 LLMs see a generic "use suggest_* tools to look up URIs" instruction but need disambiguation between the 5 suggest tools. Add selection rules to all guidance surfaces (instructions, tool descriptions, resources):
 
-| Suggest tool | When to use | Example prompt trigger |
+| Suggest type | When to use | Example prompt trigger |
 |---|---|---|
-| `suggest_authors` | Explicit author/journalist name in prompt | "articles by John Smith" |
-| `suggest_locations` | Filtering by event location (country, city, region) | "news from Germany", "events in Tokyo" |
-| `suggest_sources` | Specific news source/outlet targeted | "what does Reuters say about...", "BBC coverage of..." |
-| `suggest_categories` | Topic or news category mentioned | "business news about...", "sports coverage" |
-| `suggest_concepts` | Catch-all for entities: people, orgs, locations, things | "news about Tesla", "Elon Musk", "climate change" |
+| `suggest({type: "authors"})` | Explicit author/journalist name in prompt | "articles by John Smith" |
+| `suggest({type: "locations"})` | Filtering by event location (country, city, region) | "news from Germany", "events in Tokyo" |
+| `suggest({type: "sources"})` | Specific news source/outlet targeted | "what does Reuters say about...", "BBC coverage of..." |
+| `suggest({type: "categories"})` | Topic or news category mentioned | "business news about...", "sports coverage" |
+| `suggest({type: "concepts"})` | Catch-all for entities: people, orgs, locations, things | "news about Tesla", "Elon Musk", "climate change" |
 
 Key rules:
-- **Prefer specific tools** over `suggest_concepts` when the entity type is unambiguous (e.g., author names → `suggest_authors`)
-- **`suggest_concepts` overlaps** with locations and people — use it when the entity could be multiple types or when building `conceptUri` filters
-- **Multiple suggest calls** are normal for filtered searches (e.g., `suggest_concepts` + `suggest_sources` for "Reuters articles about Tesla")
+- **Prefer specific types** over `"concepts"` when the entity type is unambiguous (e.g., author names → `suggest({type: "authors"})`)
+- **`"concepts"` overlaps** with locations and people — use it when the entity could be multiple types or when building `conceptUri` filters
+- **Multiple suggest calls** are normal for filtered searches (e.g., `suggest({type: "concepts"})` + `suggest({type: "sources"})` for "Reuters articles about Tesla")
 
 - [ ] Surface in `instructions` string (server-level)
 - [ ] Surface in enhanced tool descriptions

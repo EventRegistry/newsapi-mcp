@@ -35,7 +35,7 @@ import {
   getTopicPageArticles,
   getTopicPageEvents,
 } from "../src/tools/topic-pages.js";
-import { suggestTools } from "../src/tools/suggest.js";
+import { suggest } from "../src/tools/suggest.js";
 import { getApiUsage } from "../src/tools/usage.js";
 
 const mockedApiPost = vi.mocked(apiPost);
@@ -323,25 +323,22 @@ describe("detailLevel integration", () => {
 
 // ---------- Suggest ----------
 
-describe("suggestTools", () => {
+describe("suggest", () => {
   const expectedPaths: Record<string, string> = {
-    suggest_concepts: "/suggestConceptsFast",
-    suggest_categories: "/suggestCategoriesFast",
-    suggest_sources: "/suggestSourcesFast",
-    suggest_locations: "/suggestLocationsFast",
-    suggest_authors: "/suggestAuthorsFast",
+    concepts: "/suggestConceptsFast",
+    categories: "/suggestCategoriesFast",
+    sources: "/suggestSourcesFast",
+    locations: "/suggestLocationsFast",
+    authors: "/suggestAuthorsFast",
   };
 
-  it("has 5 suggest tools", () => {
-    expect(suggestTools).toHaveLength(5);
+  it("requires type and prefix params", () => {
+    expect(suggest.inputSchema.required).toEqual(["type", "prefix"]);
   });
 
-  for (const [name, path] of Object.entries(expectedPaths)) {
-    it(`${name} calls apiPost with ${path}`, async () => {
-      const tool = suggestTools.find((t) => t.name === name)!;
-      expect(tool).toBeDefined();
-
-      await tool.handler({ prefix: "Test" });
+  for (const [type, path] of Object.entries(expectedPaths)) {
+    it(`type="${type}" calls apiPost with ${path}`, async () => {
+      await suggest.handler({ type, prefix: "Test" });
 
       expect(mockedApiPost).toHaveBeenCalledWith(path, {
         prefix: "Test",
@@ -350,10 +347,13 @@ describe("suggestTools", () => {
     });
   }
 
-  it("all suggest tools require prefix param", () => {
-    for (const tool of suggestTools) {
-      expect(tool.inputSchema.required).toEqual(["prefix"]);
-    }
+  it("passes custom lang parameter", async () => {
+    await suggest.handler({ type: "concepts", prefix: "Test", lang: "deu" });
+
+    expect(mockedApiPost).toHaveBeenCalledWith("/suggestConceptsFast", {
+      prefix: "Test",
+      lang: "deu",
+    });
   });
 });
 

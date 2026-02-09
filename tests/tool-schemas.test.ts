@@ -43,8 +43,8 @@ beforeEach(() => {
 // ---------- Schema structure ----------
 
 describe("tool schema structure", () => {
-  it("has at least 13 tools", () => {
-    expect(allTools.length).toBeGreaterThanOrEqual(13);
+  it("has at least 9 tools", () => {
+    expect(allTools.length).toBeGreaterThanOrEqual(9);
   });
 
   for (const tool of allTools) {

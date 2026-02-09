@@ -57,24 +57,24 @@ describe("MCP server E2E", () => {
     const result = await client.listTools();
     const names = result.tools.map((t) => t.name).sort();
 
-    expect(names).toHaveLength(13);
+    expect(names).toHaveLength(9);
     expect(names).toContain("search_articles");
     expect(names).toContain("search_events");
-    expect(names).toContain("suggest_concepts");
+    expect(names).toContain("suggest");
     expect(names).toContain("get_api_usage");
     expect(names).toContain("get_article_details");
-    expect(names).toContain("suggest_authors");
+    expect(names).toContain("get_event_details");
     expect(names).toContain("get_topic_page_articles");
   });
 
-  it("calls suggest_concepts and returns formatted text", async () => {
+  it("calls suggest and returns formatted text", async () => {
     mockFetchOk([
       { uri: "http://en.wikipedia.org/wiki/Tesla", label: "Tesla" },
     ]);
 
     const result = await client.callTool({
-      name: "suggest_concepts",
-      arguments: { prefix: "Tesla" },
+      name: "suggest",
+      arguments: { type: "concepts", prefix: "Tesla" },
     });
 
     expect(result.content).toHaveLength(1);

@@ -16,8 +16,14 @@ import { formatEventResults, formatEventDetails } from "../formatters.js";
 
 export const searchEvents: ToolDef = {
   name: "search_events",
-  description:
-    "Search events (clusters of related articles about the same real-world happening). Returns up to 50 events per call. Use suggest_* tools first to look up URIs.",
+  description: `Search events (clusters of related articles about the same real-world happening). Returns up to 50 events per call.
+
+WORKFLOW: Use suggest tool first to resolve names to URIs, then search with conceptUri.
+EXAMPLE: search_events({conceptUri: "<uri>", dateStart: "2025-01-01"})
+
+USE THIS WHEN you need a high-level overview of what happened (event summaries, article counts).
+NOT THIS when you need full article text — use search_articles instead.
+NOT THIS when you have a text passage to match — use find_event_for_text instead.`,
   inputSchema: {
     type: "object",
     properties: {
@@ -86,7 +92,12 @@ export const searchEvents: ToolDef = {
 
 export const getEventDetails: ToolDef = {
   name: "get_event_details",
-  description: "Get full details for one or more events by their URI(s).",
+  description: `Get full details for one or more events by their URI(s).
+
+EXAMPLE: get_event_details({eventUri: "eng-4567890", includeFields: "concepts,categories"})
+
+USE THIS WHEN you have event URIs from search results and need full details.
+NOT THIS for searching — use search_events with filters instead.`,
   inputSchema: {
     type: "object",
     properties: {
@@ -115,8 +126,13 @@ export const getEventDetails: ToolDef = {
 
 export const findEventForText: ToolDef = {
   name: "find_event_for_text",
-  description:
-    "Match a text passage to a known event in Event Registry. Returns the most relevant matching event.",
+  description: `Match a text passage to a known event in Event Registry. Returns the single most relevant matching event.
+
+EXAMPLE: find_event_for_text({text: "A major earthquake struck central Japan on Monday"})
+
+USE THIS WHEN you have a news snippet or headline and want the corresponding event cluster.
+NOT THIS when you have a topic name — use search_events with conceptUri instead.
+WORKFLOW: find_event_for_text → get_event_details → search_articles for related coverage.`,
   inputSchema: {
     type: "object",
     properties: {

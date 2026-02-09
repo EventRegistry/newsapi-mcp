@@ -17,32 +17,32 @@ export const contentFilterProps: Record<string, unknown> = {
   conceptUri: {
     type: "string",
     description:
-      "Primary search filter. Always use suggest_concepts first to resolve entity names to URIs, then pass them here. Prefer this over keyword search for reliable results. Comma-separated for multiple concepts.",
+      'Primary search filter. Always use suggest(type: "concepts") first to resolve entity names to URIs, then pass them here. Prefer this over keyword search for reliable results. Comma-separated for multiple concepts.',
   },
   categoryUri: {
     type: "string",
     description:
-      "Category URI(s) to filter by (comma-separated). Use suggest_categories to look up URIs.",
+      'Category URI(s) to filter by (comma-separated). Use suggest(type: "categories") to look up URIs.',
   },
   sourceUri: {
     type: "string",
     description:
-      "News source URI(s) to filter by (comma-separated). Use suggest_sources to look up URIs.",
+      'News source URI(s) to filter by (comma-separated). Use suggest(type: "sources") to look up URIs.',
   },
   sourceLocationUri: {
     type: "string",
     description:
-      "Source location URI(s) to filter by (comma-separated). Use suggest_locations to look up URIs.",
+      'Source location URI(s) to filter by (comma-separated). Use suggest(type: "locations") to look up URIs.',
   },
   authorUri: {
     type: "string",
     description:
-      "Author URI(s) to filter by (comma-separated). Use suggest_authors to look up URIs.",
+      'Author URI(s) to filter by (comma-separated). Use suggest(type: "authors") to look up URIs.',
   },
   locationUri: {
     type: "string",
     description:
-      "Location URI(s) mentioned in content (comma-separated). Use suggest_locations to look up URIs.",
+      'Location URI(s) mentioned in content (comma-separated). Use suggest(type: "locations") to look up URIs.',
   },
   lang: {
     type: "string",
@@ -183,8 +183,13 @@ export function buildFilterBody(
 
 export const searchArticles: ToolDef = {
   name: "search_articles",
-  description:
-    "Search news articles by concepts, sources, categories, dates, language, and sentiment. Returns up to 100 articles per call. IMPORTANT: Always use suggest_concepts first to resolve names to concept URIs, then search with conceptUri. Use keyword only as a secondary filter alongside conceptUri. Use suggest_* tools to look up URIs for concepts, sources, categories, and locations.",
+  description: `Search news articles by concepts, sources, categories, dates, language, and sentiment. Returns up to 100 articles per call.
+
+WORKFLOW: Use suggest tool first to resolve names to URIs, then search with conceptUri. Use keyword only as a secondary text filter.
+EXAMPLE: search_articles({conceptUri: "<uri>", dateStart: "2025-01-01", lang: "eng"})
+
+USE THIS WHEN you need individual articles with full text, dates, and sources.
+NOT THIS when you need high-level event summaries — use search_events instead.`,
   inputSchema: {
     type: "object",
     properties: {
@@ -262,7 +267,12 @@ export const searchArticles: ToolDef = {
 
 export const getArticleDetails: ToolDef = {
   name: "get_article_details",
-  description: "Get full details for one or more articles by their URI(s).",
+  description: `Get full details for one or more articles by their URI(s).
+
+EXAMPLE: get_article_details({articleUri: "123456789", includeFields: "concepts,sentiment"})
+
+USE THIS WHEN you already have article URIs from search results and need more details.
+NOT THIS for searching — use search_articles with filters instead.`,
   inputSchema: {
     type: "object",
     properties: {

@@ -16,8 +16,11 @@ import { formatArticleResults, formatEventResults } from "../formatters.js";
 
 export const getTopicPageArticles: ToolDef = {
   name: "get_topic_page_articles",
-  description:
-    "Get articles matching a user-created topic page. Topic pages are pre-configured search profiles created on newsapi.ai.",
+  description: `Get articles matching a user-created topic page. Topic pages are pre-configured search profiles on newsapi.ai.
+
+EXAMPLE: get_topic_page_articles({uri: "<topic-page-uri>", detailLevel: "minimal"})
+
+USE THIS WHEN monitoring a pre-configured topic. NOT THIS for ad-hoc searches — use search_articles.`,
   inputSchema: {
     type: "object",
     properties: {
@@ -73,8 +76,11 @@ export const getTopicPageArticles: ToolDef = {
 
 export const getTopicPageEvents: ToolDef = {
   name: "get_topic_page_events",
-  description:
-    "Get events matching a user-created topic page. Topic pages are pre-configured search profiles created on newsapi.ai.",
+  description: `Get events matching a user-created topic page. Topic pages are pre-configured search profiles on newsapi.ai.
+
+EXAMPLE: get_topic_page_events({uri: "<topic-page-uri>", eventsSortBy: "size"})
+
+USE THIS WHEN monitoring a pre-configured topic for events. NOT THIS for ad-hoc searches — use search_events.`,
   inputSchema: {
     type: "object",
     properties: {
