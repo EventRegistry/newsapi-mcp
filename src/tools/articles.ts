@@ -27,12 +27,12 @@ export const contentFilterProps: Record<string, unknown> = {
   sourceUri: {
     type: "string",
     description:
-      'News source URI(s) to filter by (comma-separated). Use suggest(type: "sources") to look up URIs.',
+      'Specific news source URI(s) to filter by (e.g., Reuters, BBC). Use suggest(type: "sources") to look up URIs. For sources from a country/region, use sourceLocationUri instead.',
   },
   sourceLocationUri: {
     type: "string",
     description:
-      'Source location URI(s) to filter by (comma-separated). Use suggest(type: "locations") to look up URIs.',
+      'Filter by where news sources are based (e.g., sources from Slovenia, UK). Use suggest(type: "locations") to look up country/region URIs. Prefer this over sourceUri when filtering by country.',
   },
   authorUri: {
     type: "string",

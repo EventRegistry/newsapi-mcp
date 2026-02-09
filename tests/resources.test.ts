@@ -135,8 +135,8 @@ describe("Server Instructions", () => {
     expect(serverInstructions).toContain("conceptUri");
   });
 
-  it("instructions contain coverage strategy", () => {
-    expect(serverInstructions).toContain("Coverage Strategy");
+  it("instructions contain retrieval strategy", () => {
+    expect(serverInstructions).toContain("Retrieval Strategy");
     expect(serverInstructions).toContain("detailLevel");
     expect(serverInstructions).toContain("articlesPage");
   });
