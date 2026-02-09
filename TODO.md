@@ -15,14 +15,6 @@ Findings from analyzing the current implementation against MCP best practices (o
   - [x] Consider a `format` parameter (`json` | `text`) so the LLM can choose
   - [ ] Once all tools have formatters, remove `format` parameter entirely — always use compact formatted output
 
-### Dynamic toolsets / tool filtering
-- **Current**: ToolRegistry groups tools into categories. Only core tools registered by default (6 tools: search_articles, search_events, suggest_concepts, get_api_usage + 2 meta-tools). LLM enables additional categories via `enable_toolset`.
-- **Completed**:
-  - [x] Group tools into categories (search, suggest, topic_pages, usage)
-  - [x] Add `list_available_tools` meta-tool showing categories + enabled/disabled status
-  - [x] Register only core tools by default (search_articles, search_events, suggest_concepts, get_api_usage)
-  - [x] Add `enable_toolset` meta-tool to toggle categories on/off with `tools/list_changed` notification
-
 ### Response truncation and summarization
 - **Current**: `includeFields` parameter filters response fields (good), but full arrays still returned
 - **Best practice**: Blockscout truncates hex strings, removes UI-only fields, caps list results at 10 items. Brave Search returns concise snippets.
@@ -149,7 +141,7 @@ Findings from analyzing the current implementation against MCP best practices (o
 - **Best practice**: The MCP SDK supports an `instructions` string that provides server-level guidance to LLM clients — purpose, core workflows, tips. Some clients ignore it, so critical guidance must stay in tool descriptions too.
 - **Next steps**:
   - [ ] Add `instructions` string to `McpServer` constructor options in `src/index.ts` (~300 words)
-  - [ ] Content should cover: server purpose, core suggest→search workflow, dynamic toolsets explanation, token optimization tips
+  - [ ] Content should cover: server purpose, core suggest→search workflow, token optimization tips
   - [ ] Include summaries of the 5 workflow patterns (basic search, filtered search, event tracking, source-specific, topic monitoring)
   - [ ] Keep critical guidance duplicated in tool descriptions for clients that don't surface `instructions`
 
@@ -164,16 +156,6 @@ Findings from analyzing the current implementation against MCP best practices (o
     - `get_article_details` vs `search_articles`
   - [ ] Follow structured template: `[What] / WORKFLOW / EXAMPLE / USE THIS WHEN / NOT THIS`
   - [ ] Files: `src/tools/articles.ts`, `events.ts`, `suggest.ts`, `topic-pages.ts`, `usage.ts`
-
-### Enhanced `list_available_tools` output
-- **Current**: Returns JSON listing categories and tool status
-- **Best practice**: Meta-tool output should include workflow guidance and quick-start examples, not just a catalog
-- **Next steps**:
-  - [ ] Add workflow guidance section (suggest→search pattern) to output
-  - [ ] Add quick-start example showing a typical 2-step search
-  - [ ] Add token optimization tips (use `format: "text"`, `detail_level`, `articlesCount`)
-  - [ ] Switch from JSON to formatted text output
-  - [ ] File: `src/tools/registry.ts`
 
 ### MCP Resources for static documentation
 - **Current**: Resources not implemented (tracked in MCP Features section above)
@@ -199,10 +181,10 @@ Five canonical patterns to reference in instructions, tool descriptions, resourc
 2. **Filtered search**: `suggest_concepts` + `suggest_sources`/`suggest_categories` → `search_articles` with multiple filters
 3. **Event tracking**: `find_event_for_text("...")` → `get_event_details` → `search_articles` for related coverage
 4. **Source-specific**: `suggest_sources("Reuters")` → `search_articles(sourceUri: "...")`
-5. **Topic monitoring**: `enable_toolset("topic_pages")` → `get_topic_page_articles(uri: "...")`
+5. **Topic monitoring**: `get_topic_page_articles(uri: "...")`
 
 ### Suggest tool selection guidance
-LLMs see a generic "use suggest_* tools to look up URIs" instruction but need disambiguation between the 5 suggest tools. Add selection rules to all guidance surfaces (instructions, tool descriptions, `list_available_tools`, resources):
+LLMs see a generic "use suggest_* tools to look up URIs" instruction but need disambiguation between the 5 suggest tools. Add selection rules to all guidance surfaces (instructions, tool descriptions, resources):
 
 | Suggest tool | When to use | Example prompt trigger |
 |---|---|---|
@@ -219,7 +201,6 @@ Key rules:
 
 - [ ] Surface in `instructions` string (server-level)
 - [ ] Surface in enhanced tool descriptions
-- [ ] Surface in `list_available_tools` output
 - [ ] Surface in MCP Resources
 
 ---

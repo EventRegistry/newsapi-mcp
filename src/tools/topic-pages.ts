@@ -15,7 +15,6 @@ import {
 
 export const getTopicPageArticles: ToolDef = {
   name: "get_topic_page_articles",
-  category: "topic_pages",
   description:
     "Get articles matching a user-created topic page. Topic pages are pre-configured search profiles created on newsapi.ai.",
   inputSchema: {
@@ -72,7 +71,6 @@ export const getTopicPageArticles: ToolDef = {
 
 export const getTopicPageEvents: ToolDef = {
   name: "get_topic_page_events",
-  category: "topic_pages",
   description:
     "Get events matching a user-created topic page. Topic pages are pre-configured search profiles created on newsapi.ai.",
   inputSchema: {

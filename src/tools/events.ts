@@ -17,7 +17,6 @@ import { formatEventResults } from "../formatters.js";
 
 export const searchEvents: ToolDef = {
   name: "search_events",
-  category: "search",
   description:
     "Search events (clusters of related articles about the same real-world happening). Returns up to 50 events per call. Use suggest_* tools first to look up URIs.",
   inputSchema: {
@@ -89,7 +88,6 @@ export const searchEvents: ToolDef = {
 
 export const getEventDetails: ToolDef = {
   name: "get_event_details",
-  category: "search",
   description: "Get full details for one or more events by their URI(s).",
   inputSchema: {
     type: "object",
@@ -118,7 +116,6 @@ export const getEventDetails: ToolDef = {
 
 export const findEventForText: ToolDef = {
   name: "find_event_for_text",
-  category: "search",
   description:
     "Match a text passage to a known event in Event Registry. Returns the most relevant matching event.",
   inputSchema: {

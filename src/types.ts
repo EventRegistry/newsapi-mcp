@@ -7,14 +7,10 @@ export type ResponseFormatter = (
   params: Record<string, unknown>,
 ) => string;
 
-/** Tool category for grouping and dynamic registration. */
-export type ToolCategory = "search" | "suggest" | "topic_pages" | "usage";
-
 /** Tool definition for MCP registration. */
 export interface ToolDef {
   name: string;
   description: string;
-  category: ToolCategory;
   inputSchema: {
     type: "object";
     properties: Record<string, unknown>;
