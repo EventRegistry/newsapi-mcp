@@ -93,14 +93,14 @@ function formatArticleExtras(art: Record<string, unknown>): string {
   if (art.sentiment != null) lines.push(`   Sentiment: ${art.sentiment}`);
   if (Array.isArray(art.concepts) && art.concepts.length > 0) {
     const items = (art.concepts as Record<string, unknown>[]).map((c) => {
-      const label = c.label || c.uri || "?";
+      const label = extractLabel(c) || String(c.uri || "?");
       return c.type ? `${label} [${c.type}]` : String(label);
     });
     lines.push(`   Concepts: ${items.join(", ")}`);
   }
   if (Array.isArray(art.categories) && art.categories.length > 0) {
-    const items = (art.categories as Record<string, unknown>[]).map((c) =>
-      String(c.label || c.uri || "?"),
+    const items = (art.categories as Record<string, unknown>[]).map(
+      (c) => extractLabel(c) || String(c.uri || "?"),
     );
     lines.push(`   Categories: ${items.join(", ")}`);
   }
@@ -145,14 +145,14 @@ function formatEventExtras(evt: Record<string, unknown>): string {
   if (evt.sentiment != null) lines.push(`   Sentiment: ${evt.sentiment}`);
   if (Array.isArray(evt.concepts) && evt.concepts.length > 0) {
     const items = (evt.concepts as Record<string, unknown>[]).map((c) => {
-      const label = c.label || c.uri || "?";
+      const label = extractLabel(c) || String(c.uri || "?");
       return c.type ? `${label} [${c.type}]` : String(label);
     });
     lines.push(`   Concepts: ${items.join(", ")}`);
   }
   if (Array.isArray(evt.categories) && evt.categories.length > 0) {
-    const items = (evt.categories as Record<string, unknown>[]).map((c) =>
-      String(c.label || c.uri || "?"),
+    const items = (evt.categories as Record<string, unknown>[]).map(
+      (c) => extractLabel(c) || String(c.uri || "?"),
     );
     lines.push(`   Categories: ${items.join(", ")}`);
   }

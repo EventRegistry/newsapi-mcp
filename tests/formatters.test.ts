@@ -668,6 +668,32 @@ describe("formatArticleDetails", () => {
     expect(result).toContain("Concepts: AI [concept]");
     expect(result).toContain("Categories: news/Tech");
   });
+
+  it("handles multi-language object labels in concepts and categories", () => {
+    const data = {
+      "art-2": {
+        info: {
+          title: "Full Detail Article",
+          dateTimePub: "2024-03-10T08:00:00Z",
+          source: { title: "Src" },
+          body: "Body.",
+          concepts: [
+            {
+              label: { eng: "Tesla" },
+              type: "org",
+              uri: "http://en.wikipedia.org/wiki/Tesla,_Inc.",
+            },
+          ],
+          categories: [{ label: { eng: "Business" }, uri: "dmoz/Business" }],
+        },
+      },
+    };
+
+    const result = formatArticleDetails(data, {});
+
+    expect(result).toContain("Concepts: Tesla [org]");
+    expect(result).toContain("Categories: Business");
+  });
 });
 
 describe("formatEventDetails", () => {
@@ -756,6 +782,33 @@ describe("formatEventDetails", () => {
     expect(result).toContain("Concepts: Economy [concept]");
     expect(result).toContain("Images: https://example.com/photo.jpg");
     expect(result).toContain("Social score: 3200");
+  });
+
+  it("handles multi-language object labels in concepts and categories", () => {
+    const data = {
+      "evt-2": {
+        info: {
+          title: { eng: "Full Detail Event" },
+          eventDate: "2024-06-15",
+          summary: { eng: "Summary." },
+          totalArticleCount: 5,
+          uri: "evt-2",
+          concepts: [
+            {
+              label: { eng: "Tesla" },
+              type: "org",
+              uri: "http://en.wikipedia.org/wiki/Tesla,_Inc.",
+            },
+          ],
+          categories: [{ label: { eng: "Business" }, uri: "dmoz/Business" }],
+        },
+      },
+    };
+
+    const result = formatEventDetails(data, {});
+
+    expect(result).toContain("Concepts: Tesla [org]");
+    expect(result).toContain("Categories: Business");
   });
 });
 
