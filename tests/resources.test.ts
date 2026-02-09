@@ -135,10 +135,10 @@ describe("Server Instructions", () => {
     expect(serverInstructions).toContain("conceptUri");
   });
 
-  it("instructions contain token optimization tips", () => {
-    expect(serverInstructions).toContain("forceMaxDataTimeWindow");
+  it("instructions contain coverage strategy", () => {
+    expect(serverInstructions).toContain("Coverage Strategy");
     expect(serverInstructions).toContain("detailLevel");
-    expect(serverInstructions).toContain("includeFields");
+    expect(serverInstructions).toContain("articlesPage");
   });
 
   it("instructions contain workflow patterns", () => {

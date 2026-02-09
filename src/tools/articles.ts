@@ -122,7 +122,7 @@ export const detailLevelProp: Record<string, unknown> = {
   detailLevel: {
     type: "string",
     description:
-      'Controls result count and body length. "minimal": 5 results, 200-char bodies. "standard" (default): 10 results, full bodies. "full": original API maximums, full bodies. Explicit params (articlesCount, eventsCount, articleBodyLen) override presets.',
+      'Controls result count and body length. "minimal": 5 results, 200-char bodies. "standard" (default): 10 results, full bodies. "full": 50 articles/20 events, full bodies. Prefer "standard" or "full" to ensure sufficient coverage — it is better to retrieve more articles than risk missing relevant content.',
     enum: ["minimal", "standard", "full"],
   },
 };

@@ -12,11 +12,12 @@ ALWAYS resolve entity names to URIs before searching:
 
 This ensures accurate results. Keyword search is a fallback, not the primary method.
 
-## Token Optimization
-- Use forceMaxDataTimeWindow: 7 or 31 to limit to recent news
-- Set detailLevel: "minimal" for 5 results with 200-char bodies
-- Use includeFields only when needed (e.g., "sentiment,concepts")
-- Omit articleBodyLen or set to 0 to exclude article bodies
+## Coverage Strategy
+- Retrieve more results than you think you need — better to have extra than miss important articles
+- Use detailLevel: "standard" (10 results) or "full" (50 articles/20 events) for comprehensive coverage
+- Paginate with articlesPage/eventsPage if initial results seem incomplete
+- Use forceMaxDataTimeWindow: 7 or 31 only when recent news is explicitly needed
+- Set articleBodyLen: 200 if you only need headlines/summaries, -1 (default) for full text
 
 ## Workflow Patterns
 1. **Topic search**: suggest(concepts) → search_articles(conceptUri)
