@@ -26,11 +26,7 @@ import {
   getArticleDetails,
   applyDetailLevel,
 } from "../src/tools/articles.js";
-import {
-  searchEvents,
-  getEventDetails,
-  findEventForText,
-} from "../src/tools/events.js";
+import { searchEvents, getEventDetails } from "../src/tools/events.js";
 import {
   getTopicPageArticles,
   getTopicPageEvents,
@@ -144,23 +140,6 @@ describe("getEventDetails", () => {
       "/event/getEvent",
       expect.objectContaining({
         eventUri: ["evt-123", "evt-456"],
-        includeEventSummary: true,
-      }),
-    );
-  });
-});
-
-describe("findEventForText", () => {
-  it("calls correct endpoint with text param and includeEventSummary", async () => {
-    await findEventForText.handler({ text: "A big earthquake hit Japan" });
-
-    expect(mockedApiPost).toHaveBeenCalledWith(
-      "/event/getEvents",
-      expect.objectContaining({
-        keyword: "A big earthquake hit Japan",
-        resultType: "events",
-        eventsCount: 1,
-        eventsSortBy: "rel",
         includeEventSummary: true,
       }),
     );

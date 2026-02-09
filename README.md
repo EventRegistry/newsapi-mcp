@@ -112,7 +112,7 @@ Pull articles or events from saved [Topic Pages](https://newsapi.ai) on NewsAPI.
 | Category | Tools |
 |----------|-------|
 | **Articles** | `search_articles`, `get_article_details` |
-| **Events** | `search_events`, `get_event_details`, `find_event_for_text` |
+| **Events** | `search_events`, `get_event_details` |
 | **Topic Pages** | `get_topic_page_articles`, `get_topic_page_events` |
 | **Lookups** | `suggest` (supports concepts, categories, sources, locations, authors) |
 | **Usage** | `get_api_usage` |

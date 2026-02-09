@@ -83,7 +83,6 @@ describe("MCP Resources", () => {
     expect(text).toContain("NewsAPI MCP Examples");
     expect(text).toContain("Topic Search");
     expect(text).toContain("Person Tracking");
-    expect(text).toContain("Event Monitoring");
     expect(text).toContain("Source Comparison");
     expect(text).toContain("Sentiment Filtering");
     expect(text).toContain("Date Range Search");
@@ -143,7 +142,6 @@ describe("Server Instructions", () => {
 
   it("instructions contain workflow patterns", () => {
     expect(serverInstructions).toContain("Topic search");
-    expect(serverInstructions).toContain("Event monitoring");
     expect(serverInstructions).toContain("Source-specific");
   });
 

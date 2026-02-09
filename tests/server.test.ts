@@ -63,7 +63,7 @@ describe("MCP server E2E", () => {
     const result = await client.listTools();
     const names = result.tools.map((t) => t.name).sort();
 
-    expect(names).toHaveLength(9);
+    expect(names).toHaveLength(8);
     expect(names).toContain("search_articles");
     expect(names).toContain("search_events");
     expect(names).toContain("suggest");

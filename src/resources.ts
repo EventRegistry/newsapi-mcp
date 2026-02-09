@@ -67,10 +67,6 @@ Primary tool for finding news articles. Supports filtering by:
 Events are clusters of related articles about the same real-world happening.
 Use when you need high-level summaries rather than individual articles.
 
-### find_event_for_text
-Match a news snippet or headline to a known event cluster.
-Useful for: "What event is this article about?"
-
 ## Response Control
 
 ### detailLevel Presets
@@ -164,15 +160,7 @@ search_articles({
   articlesSortBy: "date"
 })
 
-## 3. Event Monitoring — "What happened with the earthquake?"
-find_event_for_text({text: "major earthquake struck Turkey"})
-get_event_details({eventUri: "<uri-from-find>"})
-search_articles({
-  keyword: "earthquake Turkey",
-  forceMaxDataTimeWindow: 7
-})
-
-## 4. Source Comparison — "How Reuters vs BBC cover climate"
+## 3. Source Comparison — "How Reuters vs BBC cover climate"
 suggest({type: "sources", prefix: "Reuters"})
 suggest({type: "sources", prefix: "BBC"})
 suggest({type: "concepts", prefix: "climate change"})
@@ -187,7 +175,7 @@ search_articles({
   detailLevel: "minimal"
 })
 
-## 5. Sentiment Filtering — "Positive news about Tesla"
+## 4. Sentiment Filtering — "Positive news about Tesla"
 suggest({type: "concepts", prefix: "Tesla"})
 search_articles({
   conceptUri: "<uri-from-suggest>",
@@ -195,7 +183,7 @@ search_articles({
   includeFields: "sentiment"
 })
 
-## 6. Date Range Search — "Bitcoin news in January 2025"
+## 5. Date Range Search — "Bitcoin news in January 2025"
 suggest({type: "concepts", prefix: "Bitcoin"})
 search_articles({
   conceptUri: "<uri-from-suggest>",
@@ -204,7 +192,7 @@ search_articles({
   lang: "eng"
 })
 
-## 7. Multi-Concept Query — "Apple AND iPhone news"
+## 6. Multi-Concept Query — "Apple AND iPhone news"
 suggest({type: "concepts", prefix: "Apple Inc"})
 suggest({type: "concepts", prefix: "iPhone"})
 search_articles({
