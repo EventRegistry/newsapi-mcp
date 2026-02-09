@@ -86,6 +86,7 @@ export function getEventIncludeParams(
 ): Record<string, boolean> {
   const params: Record<string, boolean> = {
     includeEventSummary: true, // always include summary for events
+    includeEventArticleCounts: true,
   };
   if (groups.has("full")) {
     params.includeEventConcepts = true;

@@ -185,6 +185,19 @@ describe("MCP server E2E", () => {
     expect(content.text).toContain("fetch failed");
   });
 
+  it("sends includeEventArticleCounts for search_events", async () => {
+    mockFetchOk({ events: { results: [] } });
+
+    await client.callTool({
+      name: "search_events",
+      arguments: { keyword: "AI" },
+    });
+
+    const lastCall = fetchSpy.mock.calls[fetchSpy.mock.calls.length - 1];
+    const body = JSON.parse(lastCall[1].body);
+    expect(body.includeEventArticleCounts).toBe(true);
+  });
+
   it("advertises resources", async () => {
     const result = await client.listResources();
     expect(result.resources.length).toBe(3);
