@@ -1,3 +1,4 @@
+import { LRUCache } from "../cache.js";
 import { apiPost } from "../client.js";
 import type { ResponseFormatter, ToolDef } from "../types.js";
 import {
@@ -31,6 +32,22 @@ const SUGGEST_FORMATTERS: Record<string, ResponseFormatter> = {
   locations: formatSuggestLocations,
   authors: formatSuggestAuthors,
 };
+
+// Module-level cache: 1000 entries, 24h TTL
+const suggestCache = new LRUCache<unknown>(1000, 24);
+
+function cacheKey(type: string, prefix: string, lang: string): string {
+  return `${type}:${prefix.toLowerCase()}:${lang}`;
+}
+
+// Exported for testing
+export function clearSuggestCache(): void {
+  suggestCache.clear();
+}
+
+export function getSuggestCacheSize(): number {
+  return suggestCache.size;
+}
 
 export const suggest: ToolDef = {
   name: "suggest",
@@ -70,11 +87,19 @@ Prefer "concepts" as the default type. Use specific types when entity type is un
   },
   handler: async (params) => {
     const type = params.type as string;
+    const prefix = params.prefix as string;
+    const lang = (params.lang as string) ?? "eng";
     const path = SUGGEST_PATHS[type];
-    return apiPost(path, {
-      prefix: params.prefix,
-      lang: params.lang ?? "eng",
-    });
+
+    const key = cacheKey(type, prefix, lang);
+    const cached = suggestCache.get(key);
+    if (cached !== null) {
+      return cached;
+    }
+
+    const result = await apiPost(path, { prefix, lang });
+    suggestCache.set(key, result);
+    return result;
   },
   formatter: (data, params) => {
     const type = params.type as string;
