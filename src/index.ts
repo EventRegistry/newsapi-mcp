@@ -2,6 +2,8 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { initClient } from "./client.js";
+import { serverInstructions } from "./instructions.js";
+import { registerResources } from "./resources.js";
 import { allTools, ToolRegistry } from "./tools/index.js";
 
 const apiKey = process.env.NEWSAPI_KEY;
@@ -11,13 +13,14 @@ if (!apiKey) {
 }
 initClient(apiKey);
 
-const server = new McpServer({
-  name: "newsapi",
-  version: "1.0.0",
-});
+const server = new McpServer(
+  { name: "newsapi", version: "1.0.0" },
+  { instructions: serverInstructions },
+);
 
 const registry = new ToolRegistry(allTools);
 registry.attach(server);
+registerResources(server);
 
 async function main() {
   const transport = new StdioServerTransport();

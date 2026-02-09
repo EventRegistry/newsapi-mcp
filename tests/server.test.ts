@@ -3,6 +3,8 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { initClient } from "../src/client.js";
+import { serverInstructions } from "../src/instructions.js";
+import { registerResources } from "../src/resources.js";
 import { allTools, ToolRegistry } from "../src/tools/index.js";
 
 // Mock fetch globally so no real HTTP requests are made
@@ -30,10 +32,14 @@ let server: McpServer;
 beforeAll(async () => {
   initClient("test-key");
 
-  server = new McpServer({ name: "newsapi", version: "1.0.0" });
+  server = new McpServer(
+    { name: "newsapi", version: "1.0.0" },
+    { instructions: serverInstructions },
+  );
 
   const registry = new ToolRegistry(allTools);
   registry.attach(server);
+  registerResources(server);
 
   // Connect via in-memory transport
   const [clientTransport, serverTransport] =
@@ -176,5 +182,14 @@ describe("MCP server E2E", () => {
     const content = result.content[0] as { text: string };
     expect(content.text).toContain("Network/unexpected error");
     expect(content.text).toContain("fetch failed");
+  });
+
+  it("advertises resources", async () => {
+    const result = await client.listResources();
+    expect(result.resources.length).toBe(3);
+    const uris = result.resources.map((r) => r.uri);
+    expect(uris).toContain("newsapi://guide");
+    expect(uris).toContain("newsapi://examples");
+    expect(uris).toContain("newsapi://fields");
   });
 });

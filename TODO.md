@@ -48,10 +48,10 @@ Findings from analyzing the current implementation against MCP best practices (o
 ## MCP Features Not Used (P1)
 
 ### Resources
-- **Current**: Not implemented
+- **Current**: 3 resources implemented (`newsapi://guide`, `newsapi://examples`, `newsapi://fields`)
 - **Best practice**: Use resources for static/semi-static context (API documentation, field descriptions, category taxonomies, example queries)
 - **Next steps**:
-  - [ ] Expose `newsapi://docs/fields` resource with field name descriptions
+  - [x] Expose `newsapi://fields` resource with field name descriptions (in `newsapi://fields`)
   - [ ] Expose `newsapi://docs/categories` with available category URIs
   - [ ] Expose `newsapi://docs/event-types` with event type taxonomy
   - [ ] Expose `newsapi://usage` as a dynamic resource showing current API quota
@@ -96,10 +96,10 @@ Findings from analyzing the current implementation against MCP best practices (o
 ## Caching (P1)
 
 ### Suggest results caching
-- **Current**: No caching — every `suggest_*` call hits the API
+- **Current**: No caching — every `suggest` call hits the API
 - **Best practice**: Entity URIs rarely change. Cache suggest results to reduce API calls and latency.
 - **Next steps**:
-  - [ ] Add in-memory LRU cache for `suggest_*` results (TTL: 24h, max: 1000 entries)
+  - [ ] Add in-memory LRU cache for `suggest` results (TTL: 24h, max: 1000 entries)
   - [ ] Cache `get_api_usage` with medium TTL (15 min)
   - [ ] Consider persistent cache (SQLite/file) for suggest results across server restarts
 
@@ -114,14 +114,14 @@ Findings from analyzing the current implementation against MCP best practices (o
 ## Tool Design (P1)
 
 ### Tool consolidation
-- **Current**: 13 tools (reduced from 23 — removed streaming, analytics, and mentions tools)
+- **Current**: 9 tools (reduced from 23 — removed streaming, analytics, mentions, and consolidated suggest tools)
 - **Best practice**: Fewer focused tools reduce confusion. GitHub MCP uses ~10 tools. Brave Search uses 2.
 - **Completed**:
   - [x] Removed `stream_articles` and `stream_events` (streaming use cases handled via `search_*` with date filters)
   - [x] Removed analytics tools (`annotate_text`, `categorize_text`, `analyze_sentiment`, `detect_language`, `compute_semantic_similarity`, `extract_article_info`)
   - [x] Removed `search_mentions` and `get_breaking_events`
+  - [x] Merged 5 `suggest_*` tools into one `suggest` tool with a `type` parameter
 - **Next steps**:
-  - [x] Evaluate merging all `suggest_*` tools (5 tools) into one `suggest` tool with a `type` parameter
   - [ ] Consider a unified `search` tool that auto-detects intent (articles vs events)
 
 ### Tool descriptions
@@ -137,13 +137,13 @@ Findings from analyzing the current implementation against MCP best practices (o
 ## LLM Guidance & Workflow Documentation (P1)
 
 ### Server-level instructions
-- **Current**: No `instructions` field set on `McpServer` constructor
+- **Current**: `instructions` field set via `src/instructions.ts` (~280 words)
 - **Best practice**: The MCP SDK supports an `instructions` string that provides server-level guidance to LLM clients — purpose, core workflows, tips. Some clients ignore it, so critical guidance must stay in tool descriptions too.
 - **Next steps**:
-  - [ ] Add `instructions` string to `McpServer` constructor options in `src/index.ts` (~300 words)
-  - [ ] Content should cover: server purpose, core suggest→search workflow, token optimization tips
-  - [ ] Include summaries of the 5 workflow patterns (basic search, filtered search, event tracking, source-specific, topic monitoring)
-  - [ ] Keep critical guidance duplicated in tool descriptions for clients that don't surface `instructions`
+  - [x] Add `instructions` string to `McpServer` constructor options in `src/index.ts` (~300 words)
+  - [x] Content should cover: server purpose, core suggest→search workflow, token optimization tips
+  - [x] Include summaries of the 5 workflow patterns (basic search, filtered search, event tracking, source-specific, topic monitoring)
+  - [x] Keep critical guidance duplicated in tool descriptions for clients that don't surface `instructions`
 
 ### Enhanced tool descriptions with examples
 - **Current**: Good descriptions with parameter docs, but no example invocations or disambiguation guidance
@@ -158,13 +158,13 @@ Findings from analyzing the current implementation against MCP best practices (o
   - [x] Files: `src/tools/articles.ts`, `events.ts`, `suggest.ts`, `topic-pages.ts`, `usage.ts`
 
 ### MCP Resources for static documentation
-- **Current**: Resources not implemented (tracked in MCP Features section above)
+- **Current**: 3 resources implemented in `src/resources.ts`, registered from `src/index.ts`
 - **Best practice**: Resources provide static/semi-static context that LLMs can read on demand without burning tool calls
 - **Next steps**:
-  - [ ] `newsapi://guide` — comprehensive usage guide with all 5 workflow patterns
-  - [ ] `newsapi://examples` — example queries for 7 common use cases (topic search, person tracking, event monitoring, source comparison, sentiment filtering, date-range search, multi-concept queries)
-  - [ ] `newsapi://fields` — field reference (includeFields groups, detailLevel presets, lang codes)
-  - [ ] New file: `src/resources.ts`, registered from `src/index.ts`
+  - [x] `newsapi://guide` — comprehensive usage guide with all 5 workflow patterns
+  - [x] `newsapi://examples` — example queries for 7 common use cases (topic search, person tracking, event monitoring, source comparison, sentiment filtering, date-range search, multi-concept queries)
+  - [x] `newsapi://fields` — field reference (includeFields groups, detailLevel presets, lang codes)
+  - [x] New file: `src/resources.ts`, registered from `src/index.ts`
 
 ### MCP Prompts for common workflows
 - **Current**: Prompts not implemented (tracked in MCP Features section above)
@@ -177,14 +177,14 @@ Findings from analyzing the current implementation against MCP best practices (o
 
 ### Workflow patterns to document across all guidance surfaces
 Five canonical patterns to reference in instructions, tool descriptions, resources, and prompts:
-1. **Basic search**: `suggest({type: "concepts", prefix: "Tesla"})` → `search_articles(conceptUri: "...")`
-2. **Filtered search**: `suggest(type: "concepts")` + `suggest(type: "sources")`/`suggest(type: "categories")` → `search_articles` with multiple filters
-3. **Event tracking**: `find_event_for_text("...")` → `get_event_details` → `search_articles` for related coverage
-4. **Source-specific**: `suggest({type: "sources", prefix: "Reuters"})` → `search_articles(sourceUri: "...")`
-5. **Topic monitoring**: `get_topic_page_articles(uri: "...")`
+1. **Basic search**: `suggest({type: "concepts", prefix: "Tesla"})` → `search_articles({conceptUri: "..."})`
+2. **Filtered search**: `suggest({type: "concepts"})` + `suggest({type: "sources"})` → `search_articles` with multiple filters
+3. **Event tracking**: `find_event_for_text({text: "..."})` → `get_event_details` → `search_articles` for related coverage
+4. **Source-specific**: `suggest({type: "sources", prefix: "Reuters"})` → `search_articles({sourceUri: "..."})`
+5. **Topic monitoring**: `get_topic_page_articles({uri: "..."})`
 
-### Suggest tool selection guidance
-LLMs see a generic "use suggest_* tools to look up URIs" instruction but need disambiguation between the 5 suggest tools. Add selection rules to all guidance surfaces (instructions, tool descriptions, resources):
+### Suggest tool type selection guidance
+The unified `suggest` tool has a `type` parameter. Selection rules (now documented in tool description):
 
 | Suggest type | When to use | Example prompt trigger |
 |---|---|---|
@@ -199,9 +199,9 @@ Key rules:
 - **`"concepts"` overlaps** with locations and people — use it when the entity could be multiple types or when building `conceptUri` filters
 - **Multiple suggest calls** are normal for filtered searches (e.g., `suggest({type: "concepts"})` + `suggest({type: "sources"})` for "Reuters articles about Tesla")
 
-- [ ] Surface in `instructions` string (server-level)
-- [ ] Surface in enhanced tool descriptions
-- [ ] Surface in MCP Resources
+- [x] Documented in unified `suggest` tool description
+- [x] Surface in `instructions` string (server-level)
+- [x] Surface in MCP Resources
 
 ---
 
