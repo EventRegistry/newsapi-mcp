@@ -229,8 +229,7 @@ export const formatEventResults: ResponseFormatter = (data) => {
       typeof summaryField === "string"
         ? summaryField
         : (summaryField as Record<string, unknown> | undefined)?.eng || "";
-    const count =
-      (evt.articleCounts as Record<string, unknown> | undefined)?.total || 0;
+    const count = (evt.totalArticleCount as number) || 0;
     return `${i + 1}. [${evt.eventDate || "Unknown"}] ${title} (${count} articles)\n   URI: ${evt.uri || ""}${formatEventExtras(evt)}\n\n${summary}`;
   });
 
@@ -294,8 +293,7 @@ export const formatEventDetails: ResponseFormatter = (data) => {
       typeof summaryField === "string"
         ? summaryField
         : (summaryField as Record<string, unknown> | undefined)?.eng || "";
-    const count =
-      (evt.articleCounts as Record<string, unknown> | undefined)?.total || 0;
+    const count = (evt.totalArticleCount as number) || 0;
     return `${i + 1}. [${evt.eventDate || "Unknown"}] ${title} (${count} articles)\n   URI: ${evt.uri || ""}${formatEventExtras(evt)}\n\n${summary}`;
   });
 

@@ -213,7 +213,7 @@ const EVENT_MINIMAL = new Set([
   "title",
   "eventDate",
   "summary",
-  "articleCounts",
+  "totalArticleCount",
 ]);
 
 const EVENT_GROUP_FIELDS: Record<string, string[]> = {
@@ -223,7 +223,7 @@ const EVENT_GROUP_FIELDS: Record<string, string[]> = {
   images: ["images"],
   location: ["location"],
   social: ["socialScore"],
-  metadata: ["wgt", "relevance"],
+  metadata: ["articleCounts", "wgt", "relevance"],
 };
 
 /** Fields to always keep on mentions (minimal set). */
@@ -327,15 +327,8 @@ export function filterEvent(
   if (result.title !== undefined) result.title = flattenLang(result.title);
   if (result.summary !== undefined)
     result.summary = flattenLang(result.summary);
-  // Trim articleCounts to just total
-  if (
-    result.articleCounts &&
-    typeof result.articleCounts === "object" &&
-    !groups.has("metadata")
-  ) {
-    const counts = result.articleCounts as Record<string, unknown>;
-    result.articleCounts = { total: counts.total };
-  }
+  // articleCounts (per-language breakdown) is only included with metadata group
+  // totalArticleCount (scalar) is always in the minimal set
   filterSubFields(result);
   return result;
 }

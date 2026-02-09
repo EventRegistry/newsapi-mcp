@@ -265,7 +265,8 @@ describe("filterEvent", () => {
     title: { eng: "Test Event" },
     eventDate: "2024-01-01",
     summary: { eng: "Summary text" },
-    articleCounts: { total: 100, eng: 80, deu: 20 },
+    totalArticleCount: 100,
+    articleCounts: { eng: 80, deu: 20 },
     sentiment: 0.3,
     concepts: [
       {
@@ -290,7 +291,8 @@ describe("filterEvent", () => {
     expect(result.title).toBe("Test Event");
     expect(result.eventDate).toBe("2024-01-01");
     expect(result.summary).toBe("Summary text");
-    expect(result.articleCounts).toEqual({ total: 100 });
+    expect(result.totalArticleCount).toBe(100);
+    expect(result.articleCounts).toBeUndefined();
 
     expect(result.sentiment).toBeUndefined();
     expect(result.concepts).toBeUndefined();
@@ -314,9 +316,10 @@ describe("filterEvent", () => {
     expect(result.categories).toEqual([{ uri: "cat-1", label: "Tech" }]);
   });
 
-  it("preserves full articleCounts with metadata group", () => {
+  it("includes per-language articleCounts with metadata group", () => {
     const result = filterEvent(fullEvent, new Set(["metadata"]));
-    expect(result.articleCounts).toEqual({ total: 100, eng: 80, deu: 20 });
+    expect(result.articleCounts).toEqual({ eng: 80, deu: 20 });
+    expect(result.totalArticleCount).toBe(100);
     expect(result.wgt).toBe(200);
   });
 });
@@ -467,7 +470,8 @@ describe("filterResponse", () => {
             title: { eng: "Event" },
             eventDate: "2024-01-01",
             summary: { eng: "Summary" },
-            articleCounts: { total: 50, eng: 30 },
+            totalArticleCount: 50,
+            articleCounts: { eng: 30 },
             socialScore: 100,
           },
         ],
@@ -484,7 +488,8 @@ describe("filterResponse", () => {
     const results = events.results as Record<string, unknown>[];
     expect(results[0].uri).toBe("evt-1");
     expect(results[0].socialScore).toBeUndefined();
-    expect(results[0].articleCounts).toEqual({ total: 50 });
+    expect(results[0].totalArticleCount).toBe(50);
+    expect(results[0].articleCounts).toBeUndefined();
   });
 
   it("filters mentions in standard wrapper", () => {
