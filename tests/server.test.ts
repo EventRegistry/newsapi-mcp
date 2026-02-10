@@ -6,6 +6,7 @@ import { initClient } from "../src/client.js";
 import { serverInstructions } from "../src/instructions.js";
 import { registerResources } from "../src/resources.js";
 import { allTools, ToolRegistry } from "../src/tools/index.js";
+import { VERSION } from "../src/version.js";
 
 // Mock fetch globally so no real HTTP requests are made
 const fetchSpy = vi.fn();
@@ -33,7 +34,7 @@ beforeAll(async () => {
   initClient("test-key");
 
   server = new McpServer(
-    { name: "newsapi", version: "1.0.0" },
+    { name: "newsapi", version: VERSION },
     { instructions: serverInstructions },
   );
 

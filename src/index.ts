@@ -5,6 +5,7 @@ import { initClient } from "./client.js";
 import { serverInstructions } from "./instructions.js";
 import { registerResources } from "./resources.js";
 import { allTools, ToolRegistry } from "./tools/index.js";
+import { VERSION } from "./version.js";
 
 const apiKey = process.env.NEWSAPI_KEY;
 if (!apiKey) {
@@ -14,7 +15,7 @@ if (!apiKey) {
 initClient(apiKey);
 
 const server = new McpServer(
-  { name: "newsapi", version: "1.0.0" },
+  { name: "newsapi", version: VERSION },
   { instructions: serverInstructions },
 );
 
