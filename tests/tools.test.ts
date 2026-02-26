@@ -15,6 +15,9 @@ vi.mock("../src/client.js", () => ({
         // fall through
       }
     }
+    if (/https?:\/\//.test(s)) {
+      return s.split(/,(?=\s*https?:\/\/)/).map((x: string) => x.trim());
+    }
     return s.split(",").map((x: string) => x.trim());
   }),
   initClient: vi.fn(),

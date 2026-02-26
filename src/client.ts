@@ -22,6 +22,9 @@ export function parseArray(value: unknown): string[] | undefined {
       // fall through to comma split
     }
   }
+  if (/https?:\/\//.test(s)) {
+    return s.split(/,(?=\s*https?:\/\/)/).map((v) => v.trim());
+  }
   return s.split(",").map((v) => v.trim());
 }
 

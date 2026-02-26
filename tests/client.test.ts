@@ -39,6 +39,58 @@ describe("parseArray", () => {
   it("converts numeric array elements to strings", () => {
     expect(parseArray([1, 2, 3])).toEqual(["1", "2", "3"]);
   });
+
+  it("preserves a single URI containing a comma", () => {
+    expect(parseArray("http://en.wikipedia.org/wiki/Tesla,_Inc.")).toEqual([
+      "http://en.wikipedia.org/wiki/Tesla,_Inc.",
+    ]);
+  });
+
+  it("splits multiple URIs with commas in their paths", () => {
+    const input =
+      "http://en.wikipedia.org/wiki/Tesla,_Inc.,http://en.wikipedia.org/wiki/Wells,_Maine";
+    expect(parseArray(input)).toEqual([
+      "http://en.wikipedia.org/wiki/Tesla,_Inc.",
+      "http://en.wikipedia.org/wiki/Wells,_Maine",
+    ]);
+  });
+
+  it("handles whitespace between URI separators", () => {
+    const input =
+      "http://en.wikipedia.org/wiki/Tesla,_Inc., https://en.wikipedia.org/wiki/Wells,_Maine";
+    expect(parseArray(input)).toEqual([
+      "http://en.wikipedia.org/wiki/Tesla,_Inc.",
+      "https://en.wikipedia.org/wiki/Wells,_Maine",
+    ]);
+  });
+
+  it("preserves a single URI without commas", () => {
+    expect(parseArray("http://en.wikipedia.org/wiki/Electric_vehicle")).toEqual(
+      ["http://en.wikipedia.org/wiki/Electric_vehicle"],
+    );
+  });
+
+  it("splits multiple comma-free URIs", () => {
+    const input =
+      "http://en.wikipedia.org/wiki/Tesla_Motors,http://en.wikipedia.org/wiki/SpaceX";
+    expect(parseArray(input)).toEqual([
+      "http://en.wikipedia.org/wiki/Tesla_Motors",
+      "http://en.wikipedia.org/wiki/SpaceX",
+    ]);
+  });
+
+  it("handles mixed http and https URIs with commas", () => {
+    const input =
+      "http://en.wikipedia.org/wiki/AT%26T,_Inc.,https://en.wikipedia.org/wiki/Wells,_Maine";
+    expect(parseArray(input)).toEqual([
+      "http://en.wikipedia.org/wiki/AT%26T,_Inc.",
+      "https://en.wikipedia.org/wiki/Wells,_Maine",
+    ]);
+  });
+
+  it("still splits non-URI values normally", () => {
+    expect(parseArray("eng, deu, fra")).toEqual(["eng", "deu", "fra"]);
+  });
 });
 
 describe("apiPost", () => {
