@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.3] - 2026-02-26
+
+### Fixes
+
+- **Exact token count reporting** — Removed `toLocaleString()` from usage formatter so token counts are plain numbers, enabling LLMs to compute precise differences
+
 ## [1.1.2] - 2026-02-26
 
 - **README rewrite** — Collapsible configuration sections, expanded tools table with per-tool descriptions, and usage pattern examples
