@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.1.2] - 2026-02-26
+
+- **README rewrite** — Collapsible configuration sections, expanded tools table with per-tool descriptions, and usage pattern examples
+
+## [1.1.1] - 2026-02-26
+
+### Fixes
+
+- **URI-aware comma splitting** — `parseArray()` no longer splits Wikipedia URIs containing commas (e.g., `Tesla,_Inc.`) into garbage fragments; splits only on commas followed by a URL scheme
+
+### Docs
+
+- **Keyword matching clarification** — Documented that each keyword value matches as an exact phrase and that terms should be comma-separated for word-level matching
+
 ## [1.1.0] - 2026-02-10
 
 ### Features
