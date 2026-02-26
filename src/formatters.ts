@@ -223,7 +223,7 @@ export const formatEventResults: ResponseFormatter = (data) => {
       typeof titleField === "string"
         ? titleField
         : (titleField as Record<string, unknown> | undefined)?.eng ||
-          "Untitled";
+        "Untitled";
     const summaryField = evt.summary;
     const summary =
       typeof summaryField === "string"
@@ -287,7 +287,7 @@ export const formatEventDetails: ResponseFormatter = (data) => {
       typeof titleField === "string"
         ? titleField
         : (titleField as Record<string, unknown> | undefined)?.eng ||
-          "Untitled";
+        "Untitled";
     const summaryField = evt.summary;
     const summary =
       typeof summaryField === "string"
@@ -306,7 +306,7 @@ export const formatUsageResults: ResponseFormatter = (data) => {
   const used = (u.usedTokens as number) || 0;
   const available = (u.availableTokens as number) || 0;
   return [
-    `Tokens used: ${used.toLocaleString()}`,
-    `Tokens available: ${available.toLocaleString()}`,
+    `Tokens used: ${used}`,
+    `Tokens available: ${available}`,
   ].join("\n");
 };
