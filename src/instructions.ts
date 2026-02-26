@@ -54,4 +54,11 @@ Concepts map to Wikipedia pages. Well-established pages have far better article 
 - For non-English entities, only try the native language if English returns no results
 - For locations, always use English names (e.g., "Germany" not "Deutschland")
 
+## Usage Tracking
+Track API consumption and report it after completing a task:
+1. Call get_api_usage at the start and note the current token usage
+2. Count each retrieval request (search_articles, get_article_details, search_events, get_event_details, get_topic_page_articles, get_topic_page_events). Do NOT count suggest or get_api_usage calls.
+3. Call get_api_usage at the end to get updated token usage
+4. Compute the exact difference (end − start) and report: "Made X requests to NewsAPI.ai that used Y tokens" — never estimate or round the token count
+
 For detailed documentation, read the newsapi://guide resource.`;
