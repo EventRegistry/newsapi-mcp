@@ -1,6 +1,6 @@
 {
   "name": "newsapi-mcp",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "MCP server for NewsAPI.ai (Event Registry)",
   "author": "Erik Novak",
   "type": "module",
