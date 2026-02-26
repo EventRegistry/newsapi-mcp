@@ -1,8 +1,17 @@
 # NewsAPI.ai MCP Server
 
-An [MCP server](https://modelcontextprotocol.io) for real-time news intelligence — search articles, track events, and analyze text through natural conversation.
+[![npm version](https://img.shields.io/npm/v/newsapi-mcp)](https://www.npmjs.com/package/newsapi-mcp)
+[![MIT License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+A Model Context Protocol (MCP) server that provides real-time news intelligence
+using [NewsAPI.ai](https://newsapi.ai/). This server enables LLMs to search articles,
+track events, and analyze news through natural conversation.
 
 Make sure to follow the [NewsAPI.ai Terms of Service](https://newsapi.ai/terms).
+
+## Requirements
+- Node.js 18 or newer
+- Claude Desktop, Claude Code, VS Code, Cursor, Windsurf or any other MCP client
 
 ## Quick Start
 
@@ -11,14 +20,11 @@ Make sure to follow the [NewsAPI.ai Terms of Service](https://newsapi.ai/terms).
 
 ## Configuration
 
-The server runs via `npx -y newsapi-mcp` with your API key in the `NEWSAPI_KEY` environment variable. Below are examples for popular MCP clients.
+Install the NewsAPI.ai MCP server with your client.
 
-### Claude Desktop
+The server runs via `npx -y newsapi-mcp` with your API key in the `NEWSAPI_KEY` environment variable.
 
-Add to `claude_desktop_config.json`:
-
-- **macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json`
-- **Windows:** `%APPDATA%\Claude\claude_desktop_config.json`
+**Standard config** works in most of the tools:
 
 ```json
 {
@@ -34,90 +40,126 @@ Add to `claude_desktop_config.json`:
 }
 ```
 
-### Claude Code
+Below are examples for popular MCP clients.
+
+<details>
+<summary><strong>Antigravity</strong></summary>
+
+Add via the Antigravity settings or by updating your configuration file:
+
+```json
+{
+  "mcpServers": {
+    "newsapi": {
+      "command": "npx",
+      "args": ["-y", "newsapi-mcp"],
+      "env": {
+        "NEWSAPI_KEY": "your_api_key_here"
+      }
+    }
+  }
+}
+```
+
+</details>
+
+
+<details>
+<summary><strong>Claude Code</strong></summary>
 
 ```bash
 claude mcp add newsapi -e NEWSAPI_KEY=your_api_key_here -- npx -y newsapi-mcp
 ```
 
-Or add to `.claude/settings.json` (project) or `~/.claude/settings.json` (global):
+</details>
 
-```json
-{
-  "mcpServers": {
-    "newsapi": {
-      "command": "npx",
-      "args": ["-y", "newsapi-mcp"],
-      "env": {
-        "NEWSAPI_KEY": "your_api_key_here"
-      }
-    }
-  }
-}
+
+<details>
+<summary><strong>Claude Desktop</strong></summary>
+
+Follow the MCP install [guide](https://modelcontextprotocol.io/docs/develop/connect-local-servers), use the standard config above.
+
+</details>
+
+
+<details>
+<summary><strong>Gemini CLI</strong></summary>
+
+Follow the MCP install [guide](https://github.com/google-gemini/gemini-cli/blob/main/docs/tools/mcp-server.md#configure-the-mcp-server-in-settingsjson), use the standard config above.
+
+</details>
+
+
+<details>
+<summary><strong>Qodo Gen</strong></summary>
+
+Open [Qodo Gen](https://docs.qodo.ai/qodo-documentation/qodo-gen) chat panel in VSCode or IntelliJ → Connect more tools → + Add new MCP → Paste the standard config above.
+
+</details>
+
+
+<details>
+<summary><strong>VS Code</strong></summary>
+
+Follow the MCP install [guide](https://code.visualstudio.com/docs/copilot/customization/mcp-servers#_add-an-mcp-server), use the standard config above. You can also install the NewsAPI.ai MCP server using the VS Code CLI:
+
+```bash
+# For VS Code
+code --add-mcp '{"name":"newsapi","command":"npx","args":["-y","newsapi-mcp"],"env":{"NEWSAPI_KEY":"your_api_key_here"}}'
 ```
 
-### Cursor
+After installation, the NewsAPI.ai MCP server will be available for use with your GitHub Copilot agent in VS Code.
 
-Add to `.cursor/mcp.json`:
+</details>
 
-```json
-{
-  "mcpServers": {
-    "newsapi": {
-      "command": "npx",
-      "args": ["-y", "newsapi-mcp"],
-      "env": {
-        "NEWSAPI_KEY": "your_api_key_here"
-      }
-    }
-  }
-}
-```
 
-### Other MCP Clients
+<details>
+<summary><strong>Windsurf</strong></summary>
 
-Use the same JSON structure above. The server expects:
-- **Command:** `npx`
-- **Args:** `["-y", "newsapi-mcp"]`
-- **Environment:** `NEWSAPI_KEY` set to your API key
+Follow Windsurf MCP [documentation](https://docs.windsurf.com/windsurf/cascade/mcp). Use the standard config above.
 
-## What You Can Do
+</details>
+
+## Usage Patterns
 
 ### Search News Articles
 
 Find articles by keyword, source, author, date, language, sentiment, and more.
 
-> "Find recent articles about the EU AI Act"
-
-> "What has Reuters published about climate change this week?"
-
-> "Show me negative-sentiment articles about Tesla from the last 3 days"
+- Find recent articles about the EU AI Act
+- What has Reuters published about climate change this week?
+- Show me negative-sentiment articles about Tesla from the last 3 days
+- Find French-language coverage of the Paris Olympics
+- What are German media reporting about the EU budget?
 
 ### Track Events
 
 Events are clusters of related articles about the same real-world happening.
 
-> "Find events related to mergers and acquisitions in the tech sector"
-
-> "What larger events happened in Slovenia last week?"
+- Find events related to mergers and acquisitions in the tech sector
+- What larger events happened in Slovenia last week?
+- What are the biggest news stories globally this week?
 
 ### Use Topic Pages
 
 Pull articles or events from saved [Topic Pages](https://newsapi.ai) on NewsAPI.ai.
 
-> "Make a summary of the latest articles from my topic page on cyber-security with URI b220679c-95ff-4e4e-a1fa-ad8b3905b7df"
+- Summarize the latest articles from my cyber-security topic page with URI b220679c-95ff-4e4e-a1fa-ad8b3905b7df
+
 
 ## Available Tools
 
-| Category | Tools |
-|----------|-------|
-| **Articles** | `search_articles`, `get_article_details` |
-| **Events** | `search_events`, `get_event_details` |
-| **Topic Pages** | `get_topic_page_articles`, `get_topic_page_events` |
-| **Lookups** | `suggest` (supports concepts, categories, sources, locations, authors) |
-| **Usage** | `get_api_usage` |
+| Tool | Description |
+|------|-------------|
+| `suggest` | Look up URIs for entities by name. Required before searching with URI filters. |
+| `search_articles` | Search articles by concepts, sources, categories, dates, language, sentiment. |
+| `search_events` | Search events (clusters of related articles about the same happening). |
+| `get_topic_page_articles` | Get articles from a pre-configured topic page on NewsAPI.ai. |
+| `get_topic_page_events` | Get events from a pre-configured topic page on NewsAPI.ai. |
+| `get_api_usage` | Check token usage and plan details for the current API key. |
 
 ## Links
 
+- [npm package](https://www.npmjs.com/package/newsapi-mcp)
 - [NewsAPI.ai Documentation](https://newsapi.ai/documentation)
 - [MCP Protocol Specification](https://modelcontextprotocol.io)
