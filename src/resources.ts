@@ -63,6 +63,12 @@ Primary tool for finding news articles. Supports filtering by:
 - lang (ISO codes: "eng", "deu", "fra", "slv", etc.)
 - sentiment range (minSentiment, maxSentiment: -1 to 1)
 
+**Keyword matching**:
+- Each keyword value is matched as an exact phrase
+- Comma-separate individual terms for word-level matching: keyword: "SaaS, acquisition, merger" (NOT "SaaS acquisition merger")
+- Use keywordOper for AND/OR logic between comma-separated terms
+- keywordLoc: "title,body" uses OR (matches in either location)
+
 ### search_events
 Events are clusters of related articles about the same real-world happening.
 Use when you need high-level summaries rather than individual articles.

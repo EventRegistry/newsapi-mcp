@@ -35,6 +35,12 @@ Results must fit in the model's context window. Start with what you need, then p
 4. **Country sources**: suggest(locations, "Slovenia") → search_articles(sourceLocationUri) for news from sources in that country
 5. **Topic monitoring**: get_topic_page_articles(uri) for pre-configured searches
 
+## Keyword Usage
+- Each keyword value is matched as an **exact phrase** — multi-word strings like "tech layoffs" search for that exact phrase
+- **Comma-separate individual terms** for word-level matching: keyword: "SaaS, acquisition, merger" (NOT "SaaS acquisition merger")
+- Use keywordOper: "and" (default) to require all terms, or "or" to match any
+- keywordLoc: "title,body" uses OR logic (matches in title OR body)
+
 ## Concept Selection
 Concepts map to Wikipedia pages. Well-established pages have far better article coverage than recent or year-specific ones.
 

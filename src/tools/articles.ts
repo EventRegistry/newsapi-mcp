@@ -12,7 +12,7 @@ export const contentFilterProps: Record<string, unknown> = {
   keyword: {
     type: "string",
     description:
-      'Secondary keyword filter. Use conceptUri as the primary search method. Keywords narrow concept results — especially useful with broad concepts (e.g., keyword: "2026" with Olympic Games concept). Also effective as a fallback when a specific concept returns no results. Multiple keywords can be comma-separated. Exact phrase match when quoted.',
+      'Secondary keyword filter. Use conceptUri as the primary search method. Keywords narrow concept results — especially useful with broad concepts (e.g., keyword: "2026" with Olympic Games concept). Also effective as a fallback when a specific concept returns no results. IMPORTANT: each keyword value is matched as an exact phrase. Comma-separate individual words for multi-term matching (e.g., "SaaS, acquisition, merger" NOT "SaaS acquisition merger"). Use keywordOper to control AND/OR logic for comma-separated keywords.',
   },
   conceptUri: {
     type: "string",
@@ -66,7 +66,7 @@ export const contentFilterProps: Record<string, unknown> = {
   keywordLoc: {
     type: "string",
     description:
-      'Where to match keywords: "body", "title", or "title,body". Default: "body".',
+      'Where to match keywords: "body", "title", or "title,body" (OR — matches in either location). Default: "body".',
     enum: ["body", "title", "title,body"],
   },
   keywordOper: {
