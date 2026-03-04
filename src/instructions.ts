@@ -71,14 +71,13 @@ Concepts map to Wikipedia pages. Well-established pages have far better article 
 - For locations, always use English names (e.g., "Germany" not "Deutschland")
 
 ## Usage Tracking
-Each tool response includes a footer with token usage for that request and remaining quota (e.g., "Tokens used: 5 | Remaining: 49995").
+Each tool response includes a footer with token usage for that request and remaining quota (e.g., "Tokens used: 5 | Remaining: 49995"). The suggest tool is free and costs 0 tokens — its footer will show "Tokens used: 0".
 
 **You MUST track and report usage:**
-- Note the token count from each response as you work
+- Read the exact "Tokens used" number from each response footer — do not estimate or count requests as tokens
 - When you finish answering the user's question, include a usage summary:
-  - Total NewsAPI requests made
-  - Total tokens consumed (sum of all "Tokens used" values)
-  - Remaining token quota
+  - Total tokens consumed (sum of all "Tokens used" values from response footers)
+  - Remaining token quota (from the last response footer)
 
 Use get_api_usage only when the user explicitly asks about quota or plan details.
 

@@ -124,10 +124,11 @@ export class ToolRegistry {
               "or pagination (articlesPage/eventsPage) to get remaining data.";
           }
 
-          if (tokenUsage && tokenUsage.reqTokens > 0) {
-            text +=
-              `\n\n---\nTokens used: ${tokenUsage.reqTokens}` +
-              ` | Remaining: ${tokenUsage.remaining}`;
+          if (tokenUsage) {
+            text += tokenUsage.cached
+              ? "\n\n---\nTokens used: 0 (cached)"
+              : `\n\n---\nTokens used: ${tokenUsage.reqTokens}` +
+                ` | Remaining: ${tokenUsage.remaining}`;
           }
 
           return {

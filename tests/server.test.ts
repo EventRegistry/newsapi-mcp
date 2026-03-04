@@ -220,7 +220,7 @@ describe("MCP server E2E", () => {
     expect(content.text).toContain("Remaining: 499999");
   });
 
-  it("omits token footer for suggest (free request)", async () => {
+  it("shows zero-cost token footer for suggest (free request)", async () => {
     mockFetchOk(
       [
         {
@@ -229,7 +229,7 @@ describe("MCP server E2E", () => {
           type: "org",
         },
       ],
-      { "req-tokens": "0", "X-RateLimit-Remaining": "499999" },
+      { "req-tokens": "0", "x-ratelimit-remaining": "499999" },
     );
 
     const result = await client.callTool({
@@ -238,7 +238,59 @@ describe("MCP server E2E", () => {
     });
 
     const content = result.content[0] as { text: string };
-    expect(content.text).not.toContain("Tokens used:");
+    expect(content.text).toContain("Tokens used: 0 |");
+    expect(content.text).toContain("Remaining: 499999");
+  });
+
+  it("shows cached token footer for suggest cache hit", async () => {
+    mockFetchOk(
+      [
+        {
+          uri: "http://en.wikipedia.org/wiki/CacheTest",
+          label: "CacheTest",
+          type: "org",
+        },
+      ],
+      { "req-tokens": "0", "x-ratelimit-remaining": "499999" },
+    );
+
+    // First call populates cache
+    await client.callTool({
+      name: "suggest",
+      arguments: { type: "concepts", prefix: "CacheFooterTest" },
+    });
+
+    // Second call hits cache
+    const result = await client.callTool({
+      name: "suggest",
+      arguments: { type: "concepts", prefix: "CacheFooterTest" },
+    });
+
+    const content = result.content[0] as { text: string };
+    expect(content.text).toContain("Tokens used: 0 (cached)");
+    expect(content.text).not.toContain("Remaining:");
+  });
+
+  it("shows zero-cost token footer for suggest even without headers", async () => {
+    mockFetchOk(
+      [
+        {
+          uri: "http://en.wikipedia.org/wiki/NoHeaders",
+          label: "NoHeaders",
+          type: "org",
+        },
+      ],
+      {},
+    );
+
+    const result = await client.callTool({
+      name: "suggest",
+      arguments: { type: "concepts", prefix: "NoHeadersTest" },
+    });
+
+    const content = result.content[0] as { text: string };
+    expect(content.text).toContain("Tokens used: 0 |");
+    expect(content.text).toContain("Remaining: 0");
   });
 
   it("omits token footer when headers are missing", async () => {

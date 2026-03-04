@@ -8,6 +8,7 @@ export type ResponseFormatter = (
 export interface TokenUsage {
   reqTokens: number;
   remaining: number;
+  cached?: boolean;
 }
 
 /** Wrapper returned by API client and tool handlers. */

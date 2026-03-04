@@ -111,12 +111,15 @@ TIPS:
     const key = cacheKey(type, prefix, lang);
     const cached = suggestCache.get(key);
     if (cached !== null) {
-      return { data: cached };
+      return {
+        data: cached,
+        tokenUsage: { reqTokens: 0, remaining: 0, cached: true },
+      };
     }
 
     const { data, tokenUsage } = await apiPost(path, { prefix, lang });
     suggestCache.set(key, data);
-    return { data, tokenUsage };
+    return { data, tokenUsage: tokenUsage ?? { reqTokens: 0, remaining: 0 } };
   },
   formatter: (data, params) => {
     const type = params.type as string;
