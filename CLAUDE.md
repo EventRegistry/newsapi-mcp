@@ -22,7 +22,7 @@ MCP server for NewsAPI.ai (Event Registry). Provides 8 tools for searching news 
 ### Request Flow
 
 ```
-MCP Client → McpServer (SDK) → ToolRegistry handler → apiPost()/analyticsPost() → NewsAPI.ai
+MCP Client → McpServer (SDK) → ToolRegistry handler → apiPost() → NewsAPI.ai
                                       ↓
                               Response Filter (strip fields)
                                       ↓
@@ -33,7 +33,7 @@ MCP Client → McpServer (SDK) → ToolRegistry handler → apiPost()/analyticsP
 
 ### Key Modules
 
-- **`src/client.ts`** — HTTP client. `apiPost()` for main API, `analyticsPost()` for analytics. Auto-injects API key.
+- **`src/client.ts`** — HTTP client. `apiPost()` for main API. Auto-injects API key.
 - **`src/tools/registry.ts`** — `ToolRegistry` class. Registers all tools at startup. `buildZodShape()` converts JSON Schema → Zod for MCP SDK registration.
 - **`src/response-filter.ts`** — Token optimization. `includeFields` param maps to API include params + post-response field stripping. `filterResponse()` preserves pagination metadata.
 - **`src/formatters.ts`** — Converts JSON responses to compact text. All tools with formatters output human-readable numbered text.
@@ -43,7 +43,8 @@ MCP Client → McpServer (SDK) → ToolRegistry handler → apiPost()/analyticsP
 
 The `detailLevel` param on search tools controls defaults:
 - **minimal**: 5 results, 200-char bodies
-- **standard** (default): 10 results, full bodies
+- **standard**: 10 results, full bodies
+- **extended** (default): 50 articles/20 events, 1000-char bodies
 - **full**: API maximums, full bodies
 
 Explicit params (e.g. `articlesCount`) override presets.

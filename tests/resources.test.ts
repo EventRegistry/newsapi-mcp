@@ -10,7 +10,11 @@ import { allTools, ToolRegistry } from "../src/tools/index.js";
 // Mock fetch globally so no real HTTP requests are made
 vi.stubGlobal(
   "fetch",
-  vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve({}) }),
+  vi.fn().mockResolvedValue({
+    ok: true,
+    json: () => Promise.resolve({}),
+    headers: { get: () => null },
+  }),
 );
 
 let client: Client;

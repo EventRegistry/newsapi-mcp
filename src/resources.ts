@@ -70,15 +70,38 @@ Primary tool for finding news articles. Supports filtering by:
 - keywordLoc: "title,body" uses OR (matches in either location)
 
 ### search_events
-Events are clusters of related articles about the same real-world happening.
-Use when you need high-level summaries rather than individual articles.
+Events are clusters of related articles about the same real-world happening. Each event groups all articles covering the same story into one entry with a summary, article count, and date.
+
+Use search_events when you need:
+- A high-level overview of what's happening with a topic
+- Deduplicated results (one entry per story, not per article)
+- Summary of developments over a time period
+- Quick scan of major happenings without reading full articles
+
+Supports the same filters as search_articles:
+- conceptUri, categoryUri, sourceUri, locationUri, authorUri
+- keyword, dateStart, dateEnd, lang, sentiment range
+- eventsSortBy: "date", "rel", "size" (article count), "socialScore"
+- minArticlesInEvent / maxArticlesInEvent to filter by event significance
+
+Example:
+search_events({
+  conceptUri: "<uri>",
+  forceMaxDataTimeWindow: 31,
+  eventsSortBy: "size"
+})
+
+### Choosing Between Articles and Events
+- **search_articles**: when you need full article text, specific source coverage, or individual stories
+- **search_events**: when you need an overview, want deduplicated results, or the user asks "what's happening with X"
 
 ## Response Control
 
 ### detailLevel Presets
 - **minimal**: 5 results, 200-character bodies (fastest, cheapest)
-- **standard**: 10 results, full bodies (default)
-- **full**: 50 articles or 20 events, full bodies
+- **standard**: 10 results, full bodies
+- **extended** (default): 50 articles/20 events, 1000-character body previews — good for most queries
+- **full**: 50 articles/20 events, full bodies (may be truncated if response is too large)
 
 ### includeFields Groups
 Request additional data beyond the minimal set:
@@ -148,11 +171,16 @@ Daily quota exceeded. Wait until next day or reduce query frequency.
 - Verify URIs are correct via suggest
 
 ## Usage Tracking
-Track API consumption and report it after completing a task:
-1. Call get_api_usage at the start and note the current token usage
-2. Count each retrieval request (search_articles, get_article_details, search_events, get_event_details, get_topic_page_articles, get_topic_page_events). Do NOT count suggest or get_api_usage calls.
-3. Call get_api_usage at the end to get updated token usage
-4. Compute the exact difference (end − start) and report: "Made X requests to NewsAPI.ai that used Y tokens" — never estimate or round the token count`;
+Each tool response includes a footer with token usage for that request and remaining quota (e.g., "Tokens used: 5 | Remaining: 49995").
+
+**You MUST track and report usage:**
+- Note the token count from each response as you work
+- When you finish answering the user's question, include a usage summary:
+  - Total NewsAPI requests made
+  - Total tokens consumed (sum of all "Tokens used" values)
+  - Remaining token quota
+
+Use get_api_usage only when the user explicitly asks about quota or plan details.`;
 
 // ============================================================================
 // Examples Resource (~400 words)
@@ -217,6 +245,24 @@ search_articles({
   forceMaxDataTimeWindow: 7
 })
 
+## 7. Event Overview — "What's happening with AI?"
+suggest({type: "concepts", prefix: "artificial intelligence"})
+search_events({
+  conceptUri: "<uri-from-suggest>",
+  forceMaxDataTimeWindow: 7,
+  eventsSortBy: "size",
+  detailLevel: "standard"
+})
+
+## 8. Major Events — "Big climate stories this month"
+suggest({type: "concepts", prefix: "climate change"})
+search_events({
+  conceptUri: "<uri-from-suggest>",
+  forceMaxDataTimeWindow: 31,
+  eventsSortBy: "size",
+  minArticlesInEvent: 20
+})
+
 ## Common Patterns
 
 ### Get article details by URI
@@ -269,7 +315,8 @@ Default (no includeFields): title, body, date, source, URL
 |-------|----------|--------|-------------|
 | minimal | 5 | 5 | 200 chars |
 | standard | 10 | 10 | full |
-| full | 100 | 50 | full |
+| extended (default) | 50 | 20 | 1000 chars |
+| full | 50 | 20 | full |
 
 Explicit params (articlesCount, articleBodyLen) override presets.
 

@@ -11,7 +11,7 @@ USE THIS WHEN checking remaining quota before large queries or when the user ask
     properties: {},
   },
   handler: async () => {
-    return apiPost("/usage", {});
+    return await apiPost("/usage", {});
   },
   formatter: formatUsageResults,
 };

@@ -3,10 +3,8 @@ import {
   parseFieldGroups,
   getArticleIncludeParams,
   getEventIncludeParams,
-  getMentionIncludeParams,
   filterArticle,
   filterEvent,
-  filterMention,
   filterResponse,
 } from "../src/response-filter.js";
 
@@ -94,19 +92,6 @@ describe("getEventIncludeParams", () => {
     expect(params.includeEventSummary).toBe(true);
     expect(params.includeEventConcepts).toBe(true);
     expect(params.includeEventCategories).toBe(true);
-  });
-});
-
-// ---------- getMentionIncludeParams ----------
-
-describe("getMentionIncludeParams", () => {
-  it("returns empty object for no groups", () => {
-    expect(getMentionIncludeParams(new Set())).toEqual({});
-  });
-
-  it("returns location param", () => {
-    const params = getMentionIncludeParams(new Set(["location"]));
-    expect(params.includeMentionSourceLocation).toBe(true);
   });
 });
 
@@ -324,57 +309,6 @@ describe("filterEvent", () => {
   });
 });
 
-// ---------- filterMention ----------
-
-describe("filterMention", () => {
-  const fullMention = {
-    uri: "mention-1",
-    sentence: "Company X laid off 500 employees.",
-    date: "2024-01-01",
-    source: {
-      title: "Example News",
-      uri: "example.com",
-      location: { country: "US" },
-    },
-    time: "12:00:00",
-    lang: "eng",
-    eventTypeUri: "et/layoff",
-    sentiment: -0.5,
-    factLevel: "fact",
-    articleUri: "art-1",
-    articleUrl: "https://example.com/article",
-    sentenceIdx: 3,
-  };
-
-  it("keeps minimal fields by default", () => {
-    const result = filterMention(fullMention, new Set());
-    expect(result.uri).toBe("mention-1");
-    expect(result.sentence).toBe("Company X laid off 500 employees.");
-    expect(result.date).toBe("2024-01-01");
-    expect(result.source).toEqual({
-      title: "Example News",
-      uri: "example.com",
-    });
-
-    expect(result.time).toBeUndefined();
-    expect(result.lang).toBeUndefined();
-    expect(result.sentiment).toBeUndefined();
-    expect(result.articleUri).toBeUndefined();
-  });
-
-  it("returns full mention for full group", () => {
-    const result = filterMention(fullMention, new Set(["full"]));
-    expect(result).toEqual(fullMention);
-  });
-
-  it("includes metadata fields", () => {
-    const result = filterMention(fullMention, new Set(["metadata"]));
-    expect(result.time).toBe("12:00:00");
-    expect(result.lang).toBe("eng");
-    expect(result.articleUri).toBe("art-1");
-  });
-});
-
 // ---------- filterResponse ----------
 
 describe("filterResponse", () => {
@@ -490,34 +424,5 @@ describe("filterResponse", () => {
     expect(results[0].socialScore).toBeUndefined();
     expect(results[0].totalArticleCount).toBe(50);
     expect(results[0].articleCounts).toBeUndefined();
-  });
-
-  it("filters mentions in standard wrapper", () => {
-    const response = {
-      mentions: {
-        results: [
-          {
-            uri: "m-1",
-            sentence: "Test sentence",
-            date: "2024-01-01",
-            source: { title: "News" },
-            lang: "eng",
-            sentiment: -0.2,
-          },
-        ],
-      },
-    };
-
-    const result = filterResponse(response, {
-      resultType: "mentions",
-      groups: new Set(),
-    }) as Record<string, unknown>;
-
-    const mentions = result.mentions as Record<string, unknown>;
-    const results = mentions.results as Record<string, unknown>[];
-    expect(results[0].uri).toBe("m-1");
-    expect(results[0].sentence).toBe("Test sentence");
-    expect(results[0].lang).toBeUndefined();
-    expect(results[0].sentiment).toBeUndefined();
   });
 });

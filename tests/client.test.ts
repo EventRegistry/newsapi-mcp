@@ -1,10 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import {
-  parseArray,
-  initClient,
-  apiPost,
-  analyticsPost,
-} from "../src/client.js";
+import { parseArray, initClient, apiPost } from "../src/client.js";
 import { ApiError } from "../src/types.js";
 
 describe("parseArray", () => {
@@ -110,6 +105,7 @@ describe("apiPost", () => {
     fetchSpy.mockResolvedValue({
       ok: true,
       json: () => Promise.resolve({ data: "ok" }),
+      headers: { get: () => null },
     });
 
     await apiPost("/test/path", { foo: "bar" });
@@ -124,6 +120,7 @@ describe("apiPost", () => {
     fetchSpy.mockResolvedValue({
       ok: true,
       json: () => Promise.resolve({}),
+      headers: { get: () => null },
     });
 
     await apiPost("/test", { foo: "bar" });
@@ -137,6 +134,7 @@ describe("apiPost", () => {
     fetchSpy.mockResolvedValue({
       ok: true,
       json: () => Promise.resolve({}),
+      headers: { get: () => null },
     });
 
     await apiPost("/test", { keep: "yes", drop: undefined });
@@ -150,6 +148,7 @@ describe("apiPost", () => {
     fetchSpy.mockResolvedValue({
       ok: true,
       json: () => Promise.resolve({}),
+      headers: { get: () => null },
     });
 
     await apiPost("/test", {});
@@ -190,50 +189,67 @@ describe("apiPost", () => {
     fetchSpy.mockResolvedValue({
       ok: true,
       json: () => Promise.resolve({ results: [1, 2, 3] }),
+      headers: { get: () => null },
     });
 
     const result = await apiPost("/test", {});
-    expect(result).toEqual({ results: [1, 2, 3] });
-  });
-});
-
-describe("analyticsPost", () => {
-  let fetchSpy: ReturnType<typeof vi.fn>;
-
-  beforeEach(() => {
-    fetchSpy = vi.fn();
-    vi.stubGlobal("fetch", fetchSpy);
-    initClient("test-api-key");
+    expect(result.data).toEqual({ results: [1, 2, 3] });
   });
 
-  afterEach(() => {
-    vi.restoreAllMocks();
+  it("parses token usage from response headers", async () => {
+    const headerMap = new Map([
+      ["req-tokens", "65.000"],
+      ["x-ratelimit-remaining", "499345"],
+    ]);
+    fetchSpy.mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ ok: true }),
+      headers: { get: (k: string) => headerMap.get(k) ?? null },
+    });
+
+    const result = await apiPost("/test", {});
+    expect(result.tokenUsage).toEqual({
+      reqTokens: 65,
+      remaining: 499345,
+    });
   });
 
-  it("sends POST to analytics.eventregistry.org base URL", async () => {
+  it("defaults missing remaining to 0 when only req-tokens is present", async () => {
     fetchSpy.mockResolvedValue({
       ok: true,
       json: () => Promise.resolve({}),
+      headers: { get: (k: string) => (k === "req-tokens" ? "42" : null) },
     });
-
-    await analyticsPost("/annotate", { text: "hello" });
-
-    expect(fetchSpy).toHaveBeenCalledWith(
-      "http://analytics.eventregistry.org/api/v1/annotate",
-      expect.objectContaining({ method: "POST" }),
-    );
+    const result = await apiPost("/test", {});
+    expect(result.tokenUsage).toEqual({ reqTokens: 42, remaining: 0 });
   });
 
-  it("injects apiKey into body", async () => {
+  it("propagates fetch rejection (not wrapped in ApiError)", async () => {
+    fetchSpy.mockRejectedValue(new TypeError("Failed to fetch"));
+    await expect(apiPost("/test", {})).rejects.toThrow(TypeError);
+  });
+
+  it("throws ApiError with status 502 when response body is not valid JSON", async () => {
     fetchSpy.mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({}),
+      json: () => Promise.reject(new SyntaxError("Unexpected token")),
+      headers: { get: () => null },
+    });
+    await expect(apiPost("/test", {})).rejects.toThrow(ApiError);
+    await expect(apiPost("/test", {})).rejects.toMatchObject({
+      status: 502,
+      body: "Response body is not valid JSON",
+    });
+  });
+
+  it("returns undefined tokenUsage when headers are missing", async () => {
+    fetchSpy.mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ ok: true }),
+      headers: { get: () => null },
     });
 
-    await analyticsPost("/test", { text: "hello" });
-
-    const body = JSON.parse(fetchSpy.mock.calls[0][1].body);
-    expect(body.apiKey).toBe("test-api-key");
-    expect(body.text).toBe("hello");
+    const result = await apiPost("/test", {});
+    expect(result.tokenUsage).toBeUndefined();
   });
 });

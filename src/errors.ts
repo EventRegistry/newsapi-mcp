@@ -60,7 +60,7 @@ const KNOWN_PARAM_VALUES: Record<string, string[]> = {
     "zul",
     "gle",
   ],
-  detailLevel: ["minimal", "standard", "full"],
+  detailLevel: ["minimal", "standard", "extended", "full"],
   articlesSortBy: [
     "date",
     "rel",
@@ -79,10 +79,11 @@ const KNOWN_PARAM_VALUES: Record<string, string[]> = {
 /** Try to extract a param name from the API error body. */
 function extractParamHint(body: unknown): string | undefined {
   if (!body) return undefined;
-  const text =
-    typeof body === "string" ? body : JSON.stringify(body).toLowerCase();
+  const raw = typeof body === "string" ? body : JSON.stringify(body);
+  const text = raw.toLowerCase();
   for (const param of Object.keys(KNOWN_PARAM_VALUES)) {
-    if (text.includes(param.toLowerCase())) return param;
+    const pattern = new RegExp(`\\b${param.toLowerCase()}\\b`);
+    if (pattern.test(text)) return param;
   }
   return undefined;
 }

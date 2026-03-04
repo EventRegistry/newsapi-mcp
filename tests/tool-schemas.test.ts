@@ -3,29 +3,32 @@ import { z } from "zod";
 
 // Mock the client module before importing tools
 vi.mock("../src/client.js", () => ({
-  apiPost: vi.fn().mockResolvedValue({ mocked: true }),
-  analyticsPost: vi.fn().mockResolvedValue({ mocked: true }),
+  apiPost: vi.fn().mockResolvedValue({ data: { mocked: true } }),
   parseArray: vi.fn((v: unknown) => {
     if (v === undefined || v === null) return undefined;
     if (Array.isArray(v)) return v.map(String);
     const s = String(v).trim();
     if (s.startsWith("[")) {
       try {
-        return JSON.parse(s);
+        const parsed = JSON.parse(s);
+        if (Array.isArray(parsed)) return parsed.map(String);
+        return [String(parsed)];
       } catch {
         // fall through
       }
+    }
+    if (/https?:\/\//.test(s)) {
+      return s.split(/,(?=\s*https?:\/\/)/).map((x: string) => x.trim());
     }
     return s.split(",").map((x: string) => x.trim());
   }),
   initClient: vi.fn(),
 }));
 
-import { apiPost, analyticsPost } from "../src/client.js";
+import { apiPost } from "../src/client.js";
 import { allTools } from "../src/tools/index.js";
 
 const mockedApiPost = vi.mocked(apiPost);
-const mockedAnalyticsPost = vi.mocked(analyticsPost);
 
 const VALID_JSON_SCHEMA_TYPES = [
   "string",
@@ -180,11 +183,23 @@ describe("zod schema conversion", () => {
         }
 
         if (def.enum && Array.isArray(def.enum)) {
-          const values = def.enum as string[];
+          const values = def.enum as unknown[];
           if (values.length > 0) {
-            field = z
-              .enum(values as [string, ...string[]])
-              .describe((def.description as string) || "");
+            const desc = (def.description as string) || "";
+            if (values.every((v) => typeof v === "string")) {
+              field = z.enum(values as [string, ...string[]]).describe(desc);
+            } else {
+              const literals = values.map((v) => z.literal(v as number));
+              field = z
+                .union(
+                  literals as [
+                    z.ZodLiteral<number>,
+                    z.ZodLiteral<number>,
+                    ...z.ZodLiteral<number>[],
+                  ],
+                )
+                .describe(desc);
+            }
           }
         }
 
@@ -248,12 +263,10 @@ describe("handler smoke tests", () => {
       // Should not throw
       await tool.handler(params);
 
-      // Handler should have called one of the API functions
-      const totalCalls =
-        mockedApiPost.mock.calls.length + mockedAnalyticsPost.mock.calls.length;
+      // Handler should have called the API function
       expect(
-        totalCalls,
-        `${tool.name} handler did not call apiPost or analyticsPost`,
+        mockedApiPost.mock.calls.length,
+        `${tool.name} handler did not call apiPost`,
       ).toBeGreaterThan(0);
     });
   }

@@ -1,7 +1,7 @@
 import { ApiError } from "./types.js";
+import type { ApiResponse, TokenUsage } from "./types.js";
 
 const BASE_URL = "https://eventregistry.org/api/v1";
-const ANALYTICS_URL = "http://analytics.eventregistry.org/api/v1";
 
 let apiKey: string;
 
@@ -17,7 +17,9 @@ export function parseArray(value: unknown): string[] | undefined {
   const s = String(value).trim();
   if (s.startsWith("[")) {
     try {
-      return JSON.parse(s) as string[];
+      const parsed = JSON.parse(s);
+      if (Array.isArray(parsed)) return parsed.map(String);
+      return [String(parsed)];
     } catch {
       // fall through to comma split
     }
@@ -32,22 +34,28 @@ export function parseArray(value: unknown): string[] | undefined {
 export async function apiPost(
   path: string,
   body: Record<string, unknown>,
-): Promise<unknown> {
+): Promise<ApiResponse> {
   return request(`${BASE_URL}${path}`, body);
 }
 
-/** Make a POST request to the analytics API. */
-export async function analyticsPost(
-  path: string,
-  body: Record<string, unknown>,
-): Promise<unknown> {
-  return request(`${ANALYTICS_URL}${path}`, body);
+/** Extract token usage from response headers, if present. */
+function parseTokenUsage(headers: Headers): TokenUsage | undefined {
+  const reqTokens = headers.get("req-tokens");
+  const remaining = headers.get("x-ratelimit-remaining");
+  if (reqTokens == null && remaining == null) return undefined;
+  return {
+    reqTokens: reqTokens ? parseFloat(reqTokens) : 0,
+    remaining: remaining ? parseFloat(remaining) : 0,
+  };
 }
 
 async function request(
   url: string,
   body: Record<string, unknown>,
-): Promise<unknown> {
+): Promise<ApiResponse> {
+  if (!apiKey) {
+    throw new Error("Client not initialized. Call initClient() first.");
+  }
   // Inject API key and strip undefined values
   const payload: Record<string, unknown> = { apiKey };
   for (const [k, v] of Object.entries(body)) {
@@ -71,5 +79,12 @@ async function request(
     throw new ApiError(res.status, parsed);
   }
 
-  return res.json();
+  let data: unknown;
+  try {
+    data = await res.json();
+  } catch {
+    throw new ApiError(502, "Response body is not valid JSON");
+  }
+  const tokenUsage = parseTokenUsage(res.headers);
+  return { data, tokenUsage };
 }

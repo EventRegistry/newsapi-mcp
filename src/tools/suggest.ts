@@ -102,21 +102,27 @@ TIPS:
     const prefix = params.prefix as string;
     const lang = (params.lang as string) ?? "eng";
     const path = SUGGEST_PATHS[type];
+    if (!path) {
+      throw new Error(
+        `Unknown suggest type: "${type}". Valid: ${SUGGEST_TYPES.join(", ")}`,
+      );
+    }
 
     const key = cacheKey(type, prefix, lang);
     const cached = suggestCache.get(key);
     if (cached !== null) {
-      return cached;
+      return { data: cached };
     }
 
-    const result = await apiPost(path!, { prefix, lang });
-    suggestCache.set(key, result);
-    return result;
+    const { data, tokenUsage } = await apiPost(path, { prefix, lang });
+    suggestCache.set(key, data);
+    return { data, tokenUsage };
   },
   formatter: (data, params) => {
     const type = params.type as string;
     const formatter = SUGGEST_FORMATTERS[type];
-    return formatter!(data, params);
+    if (!formatter) return JSON.stringify(data);
+    return formatter(data, params);
   },
 };
 

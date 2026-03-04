@@ -1,4 +1,5 @@
 import { apiPost, parseArray } from "../client.js";
+import { ApiError } from "../types.js";
 import type { ToolDef } from "../types.js";
 import {
   parseFieldGroups,
@@ -7,7 +8,7 @@ import {
 } from "../response-filter.js";
 import { formatArticleResults, formatArticleDetails } from "../formatters.js";
 
-/** Shared content filter properties used by articles, events, and mentions. */
+/** Shared content filter properties. Some props (e.g. sourceRankPercentile) are article-only and stripped by events handler. */
 export const contentFilterProps: Record<string, unknown> = {
   keyword: {
     type: "string",
@@ -92,6 +93,83 @@ export const contentFilterProps: Record<string, unknown> = {
     type: "integer",
     description: "Max source rank percentile (0-100). Default: 100.",
   },
+  ignoreKeyword: {
+    type: "string",
+    description:
+      "Exclude articles/events mentioning these keywords. Comma-separated for multiple.",
+  },
+  ignoreConceptUri: {
+    type: "string",
+    description:
+      'Exclude by concept URI(s). Comma-separated for multiple. Use suggest(type: "concepts") to look up URIs.',
+  },
+  ignoreCategoryUri: {
+    type: "string",
+    description:
+      'Exclude by category URI(s). Comma-separated for multiple. Use suggest(type: "categories") to look up URIs.',
+  },
+  ignoreSourceUri: {
+    type: "string",
+    description:
+      'Exclude by source URI(s). Comma-separated for multiple. Use suggest(type: "sources") to look up URIs.',
+  },
+  ignoreSourceLocationUri: {
+    type: "string",
+    description:
+      'Exclude by source location URI(s). Comma-separated for multiple. Use suggest(type: "locations") to look up URIs.',
+  },
+  ignoreSourceGroupUri: {
+    type: "string",
+    description:
+      "Exclude by source group URI(s). Comma-separated for multiple.",
+  },
+  ignoreAuthorUri: {
+    type: "string",
+    description:
+      'Exclude by author URI(s). Comma-separated for multiple. Use suggest(type: "authors") to look up URIs.',
+  },
+  ignoreLocationUri: {
+    type: "string",
+    description:
+      'Exclude by location URI(s). Comma-separated for multiple. Use suggest(type: "locations") to look up URIs.',
+  },
+  ignoreLang: {
+    type: "string",
+    description:
+      'Exclude by language code(s). Comma-separated ISO codes (e.g. "eng", "deu").',
+  },
+  ignoreKeywordLoc: {
+    type: "string",
+    description:
+      'Where to match ignoreKeyword: "body", "title", or "title,body". Default: "body".',
+    enum: ["body", "title", "title,body"],
+  },
+  sourceGroupUri: {
+    type: "string",
+    description: "Filter by source group URI(s). Comma-separated for multiple.",
+  },
+  conceptOper: {
+    type: "string",
+    description:
+      'Boolean operator for multiple concepts: "and" or "or". Default: "and".',
+    enum: ["and", "or"],
+  },
+  categoryOper: {
+    type: "string",
+    description:
+      'Boolean operator for multiple categories: "and" or "or". Default: "or".',
+    enum: ["and", "or"],
+  },
+  dateMentionStart: {
+    type: "string",
+    description:
+      "Articles mentioning dates >= this (YYYY-MM-DD). Filters by dates mentioned in content.",
+  },
+  dateMentionEnd: {
+    type: "string",
+    description:
+      "Articles mentioning dates <= this (YYYY-MM-DD). Filters by dates mentioned in content.",
+  },
 };
 
 /** Response control properties for article-returning tools. */
@@ -122,22 +200,27 @@ export const detailLevelProp: Record<string, unknown> = {
   detailLevel: {
     type: "string",
     description:
-      'Controls result count and body length. "minimal": 5 results, 200-char bodies. "standard" (default): 10 results, full bodies. "full": 50 articles/20 events, full bodies. Prefer "standard" or "full" to ensure sufficient coverage — it is better to retrieve more articles than risk missing relevant content.',
-    enum: ["minimal", "standard", "full"],
+      'Controls result count and body length. "minimal": 5 results, 200-char bodies. ' +
+      '"standard": 10 results, full bodies. ' +
+      '"extended" (default): 50 articles/20 events, 1000-char bodies. ' +
+      '"full": 50 articles/20 events, full bodies (may be truncated if too large). ' +
+      'Prefer "standard" or "extended" to ensure sufficient coverage.',
+    enum: ["minimal", "standard", "extended", "full"],
   },
 };
 
 const DETAIL_PRESETS: Record<string, Record<string, number>> = {
   minimal: { articlesCount: 5, eventsCount: 5, articleBodyLen: 200 },
   standard: { articlesCount: 10, eventsCount: 10, articleBodyLen: -1 },
+  extended: { articlesCount: 50, eventsCount: 20, articleBodyLen: 1000 },
   full: { articlesCount: 50, eventsCount: 20, articleBodyLen: -1 },
 };
 
 /** Apply detailLevel preset values for any params not explicitly set. */
 export function applyDetailLevel(params: Record<string, unknown>): void {
-  const level = (params.detailLevel as string) ?? "standard";
-  const preset = DETAIL_PRESETS[level] ?? DETAIL_PRESETS["standard"]!;
-  for (const [k, v] of Object.entries(preset!)) {
+  const level = (params.detailLevel as string) ?? "extended";
+  const preset = DETAIL_PRESETS[level] ?? DETAIL_PRESETS["extended"]!;
+  for (const [k, v] of Object.entries(preset)) {
     if (params[k] === undefined) {
       params[k] = v;
     }
@@ -165,13 +248,30 @@ export function buildFilterBody(
     "authorUri",
     "locationUri",
     "lang",
+    "ignoreKeyword",
+    "ignoreConceptUri",
+    "ignoreCategoryUri",
+    "ignoreSourceUri",
+    "ignoreSourceLocationUri",
+    "ignoreSourceGroupUri",
+    "ignoreAuthorUri",
+    "ignoreLocationUri",
+    "ignoreLang",
+    "sourceGroupUri",
   ];
   for (const [k, v] of Object.entries(params)) {
     if (v === undefined || v === null) continue;
     if (LOCAL_PARAMS.has(k)) continue;
     if (k === "query") {
-      // Pass through raw query object
-      body[k] = typeof v === "string" ? JSON.parse(v as string) : v;
+      if (typeof v === "string") {
+        try {
+          body[k] = JSON.parse(v);
+        } catch {
+          throw new ApiError(400, `Invalid JSON in "query" parameter`);
+        }
+      } else {
+        body[k] = v;
+      }
     } else if (arrayFields.includes(k)) {
       body[k] = parseArray(v);
     } else {
@@ -213,8 +313,7 @@ NOT THIS when you need high-level event summaries — use search_events instead.
       },
       articlesCount: {
         type: "integer",
-        description: "Articles per page (max 100). Default: 10.",
-        default: 10,
+        description: "Articles per page (max 100). Default set by detailLevel.",
         maximum: 100,
       },
       articlesSortBy: {
@@ -249,18 +348,20 @@ NOT THIS when you need high-level event summaries — use search_events instead.
     const body = buildFilterBody(params);
     body.resultType = "articles";
     body.articleBodyLen = bodyLen;
-    body.articlesCount ??= 10;
     if (params.dataType) {
       body.dataType = parseArray(params.dataType);
     }
     Object.assign(body, getArticleIncludeParams(groups));
 
-    const result = await apiPost("/article/getArticles", body);
-    return filterResponse(result, {
-      resultType: "articles",
-      groups,
-      bodyLen,
-    });
+    const { data, tokenUsage } = await apiPost("/article/getArticles", body);
+    return {
+      data: filterResponse(data, {
+        resultType: "articles",
+        groups,
+        bodyLen,
+      }),
+      tokenUsage,
+    };
   },
   formatter: formatArticleResults,
 };
@@ -298,12 +399,15 @@ NOT THIS for searching — use search_articles with filters instead.`,
       ...getArticleIncludeParams(groups),
     };
 
-    const result = await apiPost("/article/getArticle", apiBody);
-    return filterResponse(result, {
-      resultType: "articles",
-      groups,
-      bodyLen,
-    });
+    const { data, tokenUsage } = await apiPost("/article/getArticle", apiBody);
+    return {
+      data: filterResponse(data, {
+        resultType: "articles",
+        groups,
+        bodyLen,
+      }),
+      tokenUsage,
+    };
   },
   formatter: formatArticleDetails,
 };

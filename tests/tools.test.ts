@@ -2,15 +2,16 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // Mock the client module before importing tools
 vi.mock("../src/client.js", () => ({
-  apiPost: vi.fn().mockResolvedValue({ mocked: true }),
-  analyticsPost: vi.fn().mockResolvedValue({ mocked: true }),
+  apiPost: vi.fn().mockResolvedValue({ data: { mocked: true } }),
   parseArray: vi.fn((v: unknown) => {
     if (v === undefined || v === null) return undefined;
     if (Array.isArray(v)) return v.map(String);
     const s = String(v).trim();
     if (s.startsWith("[")) {
       try {
-        return JSON.parse(s);
+        const parsed = JSON.parse(s);
+        if (Array.isArray(parsed)) return parsed.map(String);
+        return [String(parsed)];
       } catch {
         // fall through
       }
@@ -28,7 +29,9 @@ import {
   searchArticles,
   getArticleDetails,
   applyDetailLevel,
+  buildFilterBody,
 } from "../src/tools/articles.js";
+import { ApiError } from "../src/types.js";
 import { searchEvents, getEventDetails } from "../src/tools/events.js";
 import {
   getTopicPageArticles,
@@ -57,8 +60,8 @@ describe("searchArticles", () => {
       "/article/getArticles",
       expect.objectContaining({
         resultType: "articles",
-        articleBodyLen: -1,
-        articlesCount: 10,
+        articleBodyLen: 1000,
+        articlesCount: 50,
         keyword: ["Tesla"],
       }),
     );
@@ -90,6 +93,17 @@ describe("searchArticles", () => {
     expect(body.articlesPage).toBe(2);
     expect(body.articlesCount).toBe(50);
   });
+
+  it("passes dateMentionStart/dateMentionEnd through as strings", async () => {
+    await searchArticles.handler({
+      keyword: "election",
+      dateMentionStart: "2025-06-01",
+      dateMentionEnd: "2025-06-30",
+    });
+    const body = mockedApiPost.mock.calls[0][1];
+    expect(body.dateMentionStart).toBe("2025-06-01");
+    expect(body.dateMentionEnd).toBe("2025-06-30");
+  });
 });
 
 describe("getArticleDetails", () => {
@@ -116,7 +130,7 @@ describe("searchEvents", () => {
       "/event/getEvents",
       expect.objectContaining({
         resultType: "events",
-        eventsCount: 10,
+        eventsCount: 20,
         keyword: ["earthquake"],
         includeEventSummary: true,
       }),
@@ -132,6 +146,32 @@ describe("searchEvents", () => {
     const body = mockedApiPost.mock.calls[0][1];
     expect(body.minArticlesInEvent).toBe(10);
     expect(body.reportingDateStart).toBe("2024-01-01");
+  });
+
+  it("renames minSentiment/maxSentiment to event-specific param names", async () => {
+    await searchEvents.handler({
+      keyword: "earthquake",
+      minSentiment: -0.5,
+      maxSentiment: 0.8,
+    });
+
+    const body = mockedApiPost.mock.calls[0][1];
+    expect(body.minSentimentEvent).toBe(-0.5);
+    expect(body.maxSentimentEvent).toBe(0.8);
+    expect(body.minSentiment).toBeUndefined();
+    expect(body.maxSentiment).toBeUndefined();
+  });
+
+  it("strips article-only source rank params", async () => {
+    await searchEvents.handler({
+      keyword: "earthquake",
+      startSourceRankPercentile: 0,
+      endSourceRankPercentile: 50,
+    });
+
+    const body = mockedApiPost.mock.calls[0][1];
+    expect(body.startSourceRankPercentile).toBeUndefined();
+    expect(body.endSourceRankPercentile).toBeUndefined();
   });
 });
 
@@ -149,6 +189,75 @@ describe("getEventDetails", () => {
   });
 });
 
+// ---------- Ignore / Negative Filters ----------
+
+describe("ignore params", () => {
+  it("searchArticles expands ignore* params as arrays", async () => {
+    await searchArticles.handler({
+      keyword: "AI",
+      ignoreConceptUri: "uri1,uri2",
+      ignoreSourceUri: "src1",
+      ignoreLang: "deu,fra",
+    });
+
+    const body = mockedApiPost.mock.calls[0][1];
+    expect(body.ignoreConceptUri).toEqual(["uri1", "uri2"]);
+    expect(body.ignoreSourceUri).toEqual(["src1"]);
+    expect(body.ignoreLang).toEqual(["deu", "fra"]);
+  });
+
+  it("searchEvents expands ignore* params as arrays", async () => {
+    await searchEvents.handler({
+      keyword: "earthquake",
+      ignoreKeyword: "tsunami,flood",
+      ignoreCategoryUri: "cat1",
+    });
+
+    const body = mockedApiPost.mock.calls[0][1];
+    expect(body.ignoreKeyword).toEqual(["tsunami", "flood"]);
+    expect(body.ignoreCategoryUri).toEqual(["cat1"]);
+  });
+
+  it("passes ignoreKeywordLoc as scalar string", async () => {
+    await searchArticles.handler({
+      keyword: "AI",
+      ignoreKeyword: "spam",
+      ignoreKeywordLoc: "title",
+    });
+    const body = mockedApiPost.mock.calls[0][1];
+    expect(body.ignoreKeywordLoc).toBe("title");
+  });
+
+  it("searchArticles passes sourceGroupUri and operator params", async () => {
+    await searchArticles.handler({
+      keyword: "AI",
+      sourceGroupUri: "group1,group2",
+      conceptOper: "or",
+      categoryOper: "and",
+    });
+
+    const body = mockedApiPost.mock.calls[0][1];
+    expect(body.sourceGroupUri).toEqual(["group1", "group2"]);
+    expect(body.conceptOper).toBe("or");
+    expect(body.categoryOper).toBe("and");
+  });
+});
+
+describe("searchEvents operators and sourceGroupUri", () => {
+  it("passes operator and sourceGroupUri params through", async () => {
+    await searchEvents.handler({
+      keyword: "earthquake",
+      sourceGroupUri: "group1",
+      conceptOper: "or",
+      categoryOper: "and",
+    });
+    const body = mockedApiPost.mock.calls[0][1];
+    expect(body.sourceGroupUri).toEqual(["group1"]);
+    expect(body.conceptOper).toBe("or");
+    expect(body.categoryOper).toBe("and");
+  });
+});
+
 // ---------- Topic Pages ----------
 
 describe("getTopicPageArticles", () => {
@@ -160,8 +269,8 @@ describe("getTopicPageArticles", () => {
       expect.objectContaining({
         uri: "topic-123",
         resultType: "articles",
-        articleBodyLen: -1,
-        articlesCount: 10,
+        articleBodyLen: 1000,
+        articlesCount: 50,
       }),
     );
   });
@@ -190,7 +299,7 @@ describe("getTopicPageEvents", () => {
       expect.objectContaining({
         uri: "topic-456",
         resultType: "events",
-        eventsCount: 10,
+        eventsCount: 20,
         includeEventSummary: true,
       }),
     );
@@ -214,12 +323,12 @@ describe("getTopicPageEvents", () => {
 // ---------- Detail Level ----------
 
 describe("applyDetailLevel", () => {
-  it("applies standard preset by default", () => {
+  it("applies extended preset by default", () => {
     const params: Record<string, unknown> = {};
     applyDetailLevel(params);
-    expect(params.articlesCount).toBe(10);
-    expect(params.eventsCount).toBe(10);
-    expect(params.articleBodyLen).toBe(-1);
+    expect(params.articlesCount).toBe(50);
+    expect(params.eventsCount).toBe(20);
+    expect(params.articleBodyLen).toBe(1000);
   });
 
   it("applies minimal preset", () => {
@@ -230,7 +339,23 @@ describe("applyDetailLevel", () => {
     expect(params.articleBodyLen).toBe(200);
   });
 
-  it("applies full preset", () => {
+  it("applies standard preset", () => {
+    const params: Record<string, unknown> = { detailLevel: "standard" };
+    applyDetailLevel(params);
+    expect(params.articlesCount).toBe(10);
+    expect(params.eventsCount).toBe(10);
+    expect(params.articleBodyLen).toBe(-1);
+  });
+
+  it("applies extended preset", () => {
+    const params: Record<string, unknown> = { detailLevel: "extended" };
+    applyDetailLevel(params);
+    expect(params.articlesCount).toBe(50);
+    expect(params.eventsCount).toBe(20);
+    expect(params.articleBodyLen).toBe(1000);
+  });
+
+  it("applies full preset with unlimited body length", () => {
     const params: Record<string, unknown> = { detailLevel: "full" };
     applyDetailLevel(params);
     expect(params.articlesCount).toBe(50);
@@ -263,7 +388,18 @@ describe("detailLevel integration", () => {
     expect(body.articleBodyLen).toBe(200);
   });
 
-  it("searchArticles with full detailLevel sends 50 articles", async () => {
+  it("searchArticles with extended detailLevel sends 50 articles and 1000 bodyLen", async () => {
+    await searchArticles.handler({
+      keyword: "AI",
+      detailLevel: "extended",
+    });
+
+    const body = mockedApiPost.mock.calls[0][1];
+    expect(body.articlesCount).toBe(50);
+    expect(body.articleBodyLen).toBe(1000);
+  });
+
+  it("searchArticles with full detailLevel sends 50 articles with full bodies", async () => {
     await searchArticles.handler({
       keyword: "AI",
       detailLevel: "full",
@@ -272,6 +408,15 @@ describe("detailLevel integration", () => {
     const body = mockedApiPost.mock.calls[0][1];
     expect(body.articlesCount).toBe(50);
     expect(body.articleBodyLen).toBe(-1);
+  });
+
+  it("searchEvents with no detailLevel sends standard defaults", async () => {
+    await searchEvents.handler({
+      keyword: "earthquake",
+    });
+
+    const body = mockedApiPost.mock.calls[0][1];
+    expect(body.eventsCount).toBe(20);
   });
 
   it("searchEvents with minimal detailLevel sends 5 events", async () => {
@@ -376,8 +521,8 @@ describe("suggest", () => {
     });
 
     it("returns same data from cache as from API", async () => {
-      const mockResult = [{ uri: "test-uri", label: "Test" }];
-      mockedApiPost.mockResolvedValueOnce(mockResult);
+      const mockData = [{ uri: "test-uri", label: "Test" }];
+      mockedApiPost.mockResolvedValueOnce({ data: mockData });
 
       const first = await suggest.handler({ type: "concepts", prefix: "Test" });
       const second = await suggest.handler({
@@ -385,8 +530,8 @@ describe("suggest", () => {
         prefix: "Test",
       });
 
-      expect(first).toEqual(mockResult);
-      expect(second).toEqual(mockResult);
+      expect(first.data).toEqual(mockData);
+      expect(second.data).toEqual(mockData);
     });
 
     it("tracks cache size correctly", async () => {
@@ -424,5 +569,52 @@ describe("getApiUsage", () => {
     await getApiUsage.handler({});
 
     expect(mockedApiPost).toHaveBeenCalledWith("/usage", {});
+  });
+
+  it("returns apiPost result as data", async () => {
+    mockedApiPost.mockResolvedValueOnce({
+      data: { usedTokens: 100, remainingTokens: 9900 },
+      tokenUsage: undefined,
+    });
+
+    const result = await getApiUsage.handler({});
+    expect(result.data).toEqual({ usedTokens: 100, remainingTokens: 9900 });
+  });
+});
+
+// ---------- buildFilterBody ----------
+
+describe("buildFilterBody", () => {
+  it("parses string query as JSON", () => {
+    const body = buildFilterBody({ query: '{"$query":{"keyword":"AI"}}' });
+    expect(body.query).toEqual({ $query: { keyword: "AI" } });
+  });
+
+  it("passes object query through directly", () => {
+    const queryObj = { $query: { keyword: "AI" } };
+    const body = buildFilterBody({ query: queryObj });
+    expect(body.query).toEqual(queryObj);
+  });
+
+  it("throws ApiError on invalid JSON string query", () => {
+    expect(() => buildFilterBody({ query: "{not valid json" })).toThrow(
+      ApiError,
+    );
+    expect(() => buildFilterBody({ query: "{not valid json" })).toThrow(
+      /Invalid JSON/,
+    );
+  });
+
+  it("strips local params (includeFields, articleBodyLen, detailLevel)", () => {
+    const body = buildFilterBody({
+      keyword: "test",
+      includeFields: "sentiment",
+      articleBodyLen: 200,
+      detailLevel: "minimal",
+    });
+    expect(body.includeFields).toBeUndefined();
+    expect(body.articleBodyLen).toBeUndefined();
+    expect(body.detailLevel).toBeUndefined();
+    expect(body.keyword).toBeDefined();
   });
 });

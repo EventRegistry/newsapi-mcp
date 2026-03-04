@@ -1,4 +1,12 @@
-import { describe, it, expect, vi, beforeAll, afterAll } from "vitest";
+import {
+  describe,
+  it,
+  expect,
+  vi,
+  beforeAll,
+  beforeEach,
+  afterAll,
+} from "vitest";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
@@ -7,15 +15,24 @@ import { serverInstructions } from "../src/instructions.js";
 import { registerResources } from "../src/resources.js";
 import { allTools, ToolRegistry } from "../src/tools/index.js";
 import { VERSION } from "../src/version.js";
+import { clearSuggestCache } from "../src/tools/suggest.js";
 
 // Mock fetch globally so no real HTTP requests are made
 const fetchSpy = vi.fn();
 vi.stubGlobal("fetch", fetchSpy);
 
-function mockFetchOk(data: unknown) {
+function mockFetchOk(
+  data: unknown,
+  headers: Record<string, string> = {
+    "req-tokens": "1.000",
+    "x-ratelimit-remaining": "499999",
+  },
+) {
+  const headerMap = new Map(Object.entries(headers));
   fetchSpy.mockResolvedValue({
     ok: true,
     json: () => Promise.resolve(data),
+    headers: { get: (k: string) => headerMap.get(k) ?? null },
   });
 }
 
@@ -52,6 +69,10 @@ beforeAll(async () => {
     client.connect(clientTransport),
     server.connect(serverTransport),
   ]);
+});
+
+beforeEach(() => {
+  clearSuggestCache();
 });
 
 afterAll(async () => {
@@ -108,7 +129,7 @@ describe("MCP server E2E", () => {
     const content = result.content[0] as { type: string; text: string };
     expect(content).toMatchObject({ type: "text" });
     // Formatter always runs now — empty results return text message
-    expect(content.text).toBe("No articles found.");
+    expect(content.text).toContain("No articles found.");
 
     // Verify fetch was called with the right endpoint
     const url = fetchSpy.mock.calls[fetchSpy.mock.calls.length - 1][0];
@@ -184,6 +205,81 @@ describe("MCP server E2E", () => {
     const content = result.content[0] as { text: string };
     expect(content.text).toContain("Network/unexpected error");
     expect(content.text).toContain("fetch failed");
+  });
+
+  it("appends token footer to search_articles response", async () => {
+    mockFetchOk({ articles: { results: [] } });
+
+    const result = await client.callTool({
+      name: "search_articles",
+      arguments: { keyword: "AI" },
+    });
+
+    const content = result.content[0] as { text: string };
+    expect(content.text).toContain("Tokens used: 1");
+    expect(content.text).toContain("Remaining: 499999");
+  });
+
+  it("omits token footer for suggest (free request)", async () => {
+    mockFetchOk(
+      [
+        {
+          uri: "http://en.wikipedia.org/wiki/Test",
+          label: "Test",
+          type: "org",
+        },
+      ],
+      { "req-tokens": "0", "X-RateLimit-Remaining": "499999" },
+    );
+
+    const result = await client.callTool({
+      name: "suggest",
+      arguments: { type: "concepts", prefix: "TokenFooterTest" },
+    });
+
+    const content = result.content[0] as { text: string };
+    expect(content.text).not.toContain("Tokens used:");
+  });
+
+  it("omits token footer when headers are missing", async () => {
+    mockFetchOk({ articles: { results: [] } }, {});
+
+    const result = await client.callTool({
+      name: "search_articles",
+      arguments: { keyword: "no-headers" },
+    });
+
+    const content = result.content[0] as { text: string };
+    expect(content.text).not.toContain("Tokens used:");
+  });
+
+  it("truncates oversized responses and preserves token footer", async () => {
+    // Generate articles with large bodies to exceed 100K chars
+    const articles = Array.from({ length: 50 }, (_, i) => ({
+      uri: `art-${i}`,
+      title: `Article ${i}`,
+      body: "x".repeat(3000),
+      date: "2025-01-01",
+      source: { title: `Source ${i}`, uri: `src-${i}` },
+    }));
+    mockFetchOk({ articles: { results: articles } });
+
+    const result = await client.callTool({
+      name: "search_articles",
+      arguments: { keyword: "test", detailLevel: "full" },
+    });
+
+    const content = result.content[0] as { text: string };
+    // Response should be truncated and within limit
+    expect(content.text).toContain("Response truncated to fit context window");
+    expect(content.text.length).toBeLessThan(110_000);
+    // Token footer should still be present after truncation
+    expect(content.text).toContain("Tokens used:");
+    expect(content.text).toContain("Remaining:");
+    // Truncation warning should come before token footer
+    const truncIdx = content.text.indexOf("Response truncated");
+    const footerIdx = content.text.indexOf("Tokens used:");
+    expect(truncIdx).toBeLessThan(footerIdx);
   });
 
   it("sends includeEventArticleCounts for search_events", async () => {

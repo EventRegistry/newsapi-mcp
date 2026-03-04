@@ -36,8 +36,7 @@ USE THIS WHEN monitoring a pre-configured topic. NOT THIS for ad-hoc searches â€
       },
       articlesCount: {
         type: "integer",
-        description: "Articles per page (max 100). Default: 10.",
-        default: 10,
+        description: "Articles per page (max 100). Default set by detailLevel.",
         maximum: 100,
       },
       articlesSortBy: {
@@ -61,15 +60,21 @@ USE THIS WHEN monitoring a pre-configured topic. NOT THIS for ad-hoc searches â€
       ...getArticleIncludeParams(groups),
     };
     if (params.articlesPage) body.articlesPage = params.articlesPage;
-    body.articlesCount = params.articlesCount ?? 10;
+    body.articlesCount = params.articlesCount;
     if (params.articlesSortBy) body.articlesSortBy = params.articlesSortBy;
 
-    const result = await apiPost("/article/getArticlesForTopicPage", body);
-    return filterResponse(result, {
-      resultType: "articles",
-      groups,
-      bodyLen,
-    });
+    const { data, tokenUsage } = await apiPost(
+      "/article/getArticlesForTopicPage",
+      body,
+    );
+    return {
+      data: filterResponse(data, {
+        resultType: "articles",
+        groups,
+        bodyLen,
+      }),
+      tokenUsage,
+    };
   },
   formatter: formatArticleResults,
 };
@@ -96,8 +101,7 @@ USE THIS WHEN monitoring a pre-configured topic for events. NOT THIS for ad-hoc 
       },
       eventsCount: {
         type: "integer",
-        description: "Events per page (max 50). Default: 10.",
-        default: 10,
+        description: "Events per page (max 50). Default set by detailLevel.",
         maximum: 50,
       },
       eventsSortBy: {
@@ -119,11 +123,17 @@ USE THIS WHEN monitoring a pre-configured topic for events. NOT THIS for ad-hoc 
       ...getEventIncludeParams(groups),
     };
     if (params.eventsPage) body.eventsPage = params.eventsPage;
-    body.eventsCount = params.eventsCount ?? 10;
+    body.eventsCount = params.eventsCount;
     if (params.eventsSortBy) body.eventsSortBy = params.eventsSortBy;
 
-    const result = await apiPost("/event/getEventsForTopicPage", body);
-    return filterResponse(result, { resultType: "events", groups });
+    const { data, tokenUsage } = await apiPost(
+      "/event/getEventsForTopicPage",
+      body,
+    );
+    return {
+      data: filterResponse(data, { resultType: "events", groups }),
+      tokenUsage,
+    };
   },
   formatter: formatEventResults,
 };

@@ -1,4 +1,5 @@
 import { apiPost, parseArray } from "../client.js";
+import type { ToolDef } from "../types.js";
 import {
   contentFilterProps,
   buildFilterBody,
@@ -6,7 +7,6 @@ import {
   detailLevelProp,
   applyDetailLevel,
 } from "./articles.js";
-import type { ToolDef } from "../types.js";
 import {
   parseFieldGroups,
   getEventIncludeParams,
@@ -53,8 +53,7 @@ NOT THIS when you need full article text — use search_articles instead.`,
       },
       eventsCount: {
         type: "integer",
-        description: "Events per page (max 50). Default: 10.",
-        default: 10,
+        description: "Events per page (max 50). Default set by detailLevel.",
         maximum: 50,
       },
       eventsSortBy: {
@@ -80,11 +79,27 @@ NOT THIS when you need full article text — use search_articles instead.`,
 
     const body = buildFilterBody(params);
     body.resultType = "events";
-    body.eventsCount ??= 10;
+
+    // Rename sentiment params for events API (different param names)
+    if (body.minSentiment !== undefined) {
+      body.minSentimentEvent = body.minSentiment;
+      delete body.minSentiment;
+    }
+    if (body.maxSentiment !== undefined) {
+      body.maxSentimentEvent = body.maxSentiment;
+      delete body.maxSentiment;
+    }
+    // Strip article-only params not supported by events API
+    delete body.startSourceRankPercentile;
+    delete body.endSourceRankPercentile;
+
     Object.assign(body, getEventIncludeParams(groups));
 
-    const result = await apiPost("/event/getEvents", body);
-    return filterResponse(result, { resultType: "events", groups });
+    const { data, tokenUsage } = await apiPost("/event/getEvents", body);
+    return {
+      data: filterResponse(data, { resultType: "events", groups }),
+      tokenUsage,
+    };
   },
   formatter: formatEventResults,
 };
@@ -117,8 +132,11 @@ NOT THIS for searching — use search_events with filters instead.`,
       ...getEventIncludeParams(groups),
     };
 
-    const result = await apiPost("/event/getEvent", apiBody);
-    return filterResponse(result, { resultType: "events", groups });
+    const { data, tokenUsage } = await apiPost("/event/getEvent", apiBody);
+    return {
+      data: filterResponse(data, { resultType: "events", groups }),
+      tokenUsage,
+    };
   },
   formatter: formatEventDetails,
 };

@@ -4,6 +4,18 @@ export type ResponseFormatter = (
   params: Record<string, unknown>,
 ) => string;
 
+/** Per-request token usage extracted from API response headers. */
+export interface TokenUsage {
+  reqTokens: number;
+  remaining: number;
+}
+
+/** Wrapper returned by API client and tool handlers. */
+export interface ApiResponse {
+  data: unknown;
+  tokenUsage?: TokenUsage;
+}
+
 /** Tool definition for MCP registration. */
 export interface ToolDef {
   name: string;
@@ -13,7 +25,7 @@ export interface ToolDef {
     properties: Record<string, unknown>;
     required?: string[];
   };
-  handler: (params: Record<string, unknown>) => Promise<unknown>;
+  handler: (params: Record<string, unknown>) => Promise<ApiResponse>;
   /** Optional text formatter. If provided, output is always formatted text. */
   formatter?: ResponseFormatter;
 }

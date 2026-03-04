@@ -1,6 +1,6 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { ApiError } from "../types.js";
-import type { ToolDef } from "../types.js";
+import type { ApiResponse, ToolDef } from "../types.js";
 import { formatErrorResponse, formatUnknownError } from "../errors.js";
 import { validateFieldGroups } from "../response-filter.js";
 import { z } from "zod";
@@ -68,6 +68,7 @@ function buildZodShape(tool: ToolDef): Record<string, z.ZodTypeAny> {
 /** Manages tool registration on an McpServer. */
 export class ToolRegistry {
   private allTools: ToolDef[] = [];
+  private server: McpServer | null = null;
 
   constructor(tools: ToolDef[]) {
     this.allTools = tools;
@@ -95,16 +96,38 @@ export class ToolRegistry {
             ? validateFieldGroups(params.includeFields as string | undefined)
             : [];
 
-          const result = await handler(
+          const { data, tokenUsage } = (await handler(
             params as unknown as Record<string, unknown>,
-          );
+          )) as ApiResponse;
 
           let text = formatter
-            ? formatter(result, params as Record<string, unknown>)
-            : JSON.stringify(result);
+            ? formatter(data, params as Record<string, unknown>)
+            : JSON.stringify(data);
 
           if (fieldWarnings.length > 0) {
             text += "\n\n⚠ " + fieldWarnings.join("\n⚠ ");
+          }
+
+          // Truncate oversized responses before appending token footer
+          const MAX_RESPONSE_CHARS = 100_000;
+          if (text.length > MAX_RESPONSE_CHARS) {
+            const sep = "\n\n";
+            let cut = text.lastIndexOf(sep, MAX_RESPONSE_CHARS);
+            if (cut < MAX_RESPONSE_CHARS * 0.5) {
+              cut = text.lastIndexOf("\n", MAX_RESPONSE_CHARS);
+            }
+            if (cut < MAX_RESPONSE_CHARS * 0.5) cut = MAX_RESPONSE_CHARS;
+            text =
+              text.slice(0, cut) +
+              "\n\n⚠ Response truncated to fit context window. " +
+              "Use fewer results (articlesCount), shorter bodies (articleBodyLen), " +
+              "or pagination (articlesPage/eventsPage) to get remaining data.";
+          }
+
+          if (tokenUsage && tokenUsage.reqTokens > 0) {
+            text +=
+              `\n\n---\nTokens used: ${tokenUsage.reqTokens}` +
+              ` | Remaining: ${tokenUsage.remaining}`;
           }
 
           return {
@@ -123,8 +146,6 @@ export class ToolRegistry {
       },
     );
   }
-
-  private server: McpServer | null = null;
 
   /** Register all tools on the server. */
   attach(server: McpServer): void {

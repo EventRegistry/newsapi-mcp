@@ -106,18 +106,6 @@ export function getEventIncludeParams(
   return params;
 }
 
-export function getMentionIncludeParams(
-  groups: Set<string>,
-): Record<string, boolean> {
-  const params: Record<string, boolean> = {};
-  if (groups.has("full")) {
-    params.includeMentionSourceLocation = true;
-    return params;
-  }
-  if (groups.has("location")) params.includeMentionSourceLocation = true;
-  return params;
-}
-
 // --- Sub-field filtering for nested objects ---
 
 /** Flatten a multilingual object to a plain string (prefer English). */
@@ -226,23 +214,6 @@ const EVENT_GROUP_FIELDS: Record<string, string[]> = {
   metadata: ["articleCounts", "wgt", "relevance"],
 };
 
-/** Fields to always keep on mentions (minimal set). */
-const MENTION_MINIMAL = new Set(["uri", "sentence", "date", "source"]);
-
-const MENTION_GROUP_FIELDS: Record<string, string[]> = {
-  sentiment: ["sentiment"],
-  metadata: [
-    "time",
-    "lang",
-    "eventTypeUri",
-    "factLevel",
-    "articleUri",
-    "articleUrl",
-    "sentenceIdx",
-  ],
-  location: ["location"],
-};
-
 function buildAllowedFields(
   minimal: Set<string>,
   groupFields: Record<string, string[]>,
@@ -333,25 +304,7 @@ export function filterEvent(
   return result;
 }
 
-/** Filter a single mention object. */
-export function filterMention(
-  mention: Record<string, unknown>,
-  groups: Set<string>,
-): Record<string, unknown> {
-  if (groups.has("full")) return mention;
-  const allowed = buildAllowedFields(
-    MENTION_MINIMAL,
-    MENTION_GROUP_FIELDS,
-    groups,
-  );
-  const result = pickFields(mention, allowed);
-  if (result.source && !groups.has("location")) {
-    result.source = filterSource(result.source);
-  }
-  return result;
-}
-
-export type ResultType = "articles" | "events" | "mentions";
+export type ResultType = "articles" | "events";
 
 export interface FilterOptions {
   resultType: ResultType;
@@ -397,8 +350,6 @@ export function filterResponse(
           return filterArticle(obj, groups, bodyLen);
         case "events":
           return filterEvent(obj, groups);
-        case "mentions":
-          return filterMention(obj, groups);
         default:
           return obj;
       }
