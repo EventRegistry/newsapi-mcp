@@ -30,8 +30,8 @@ describe("classifyError", () => {
     expect(classifyError(500)).toBe("api_error");
   });
 
-  it("classifies 503 as api_error", () => {
-    expect(classifyError(503)).toBe("api_error");
+  it("classifies 503 as concurrent_limit", () => {
+    expect(classifyError(503)).toBe("concurrent_limit");
   });
 
   it("classifies unknown status as api_error", () => {
@@ -51,6 +51,12 @@ describe("ApiError", () => {
   it("sets category and isRetryable for 500", () => {
     const err = new ApiError(500, "internal error");
     expect(err.category).toBe("api_error");
+    expect(err.isRetryable).toBe(true);
+  });
+
+  it("sets category and isRetryable for 503", () => {
+    const err = new ApiError(503, "too many concurrent requests");
+    expect(err.category).toBe("concurrent_limit");
     expect(err.isRetryable).toBe(true);
   });
 
@@ -97,6 +103,14 @@ describe("formatErrorResponse", () => {
     const msg = formatErrorResponse(err);
     expect(msg).toContain("No results found");
     expect(msg).toContain("broader search");
+  });
+
+  it("returns concurrent limit guidance for 503", () => {
+    const err = new ApiError(503, "too many concurrent requests");
+    const msg = formatErrorResponse(err);
+    expect(msg).toContain("simultaneous requests");
+    expect(msg).toContain("max 5 concurrent");
+    expect(msg).toContain("sequentially");
   });
 
   it("returns server error guidance for 500 with retryable hint", () => {

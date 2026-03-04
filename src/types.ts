@@ -37,6 +37,7 @@ export type ErrorCategory =
   | "rate_limit"
   | "invalid_param"
   | "not_found"
+  | "concurrent_limit"
   | "api_error"
   | "network_error";
 
@@ -46,6 +47,7 @@ export function classifyError(status: number): ErrorCategory {
   if (status === 429) return "rate_limit";
   if (status === 400) return "invalid_param";
   if (status === 404) return "not_found";
+  if (status === 503) return "concurrent_limit";
   if (status >= 500) return "api_error";
   return "api_error";
 }
@@ -63,6 +65,8 @@ export class ApiError extends Error {
     this.name = "ApiError";
     this.category = classifyError(status);
     this.isRetryable =
-      this.category === "rate_limit" || this.category === "api_error";
+      this.category === "rate_limit" ||
+      this.category === "api_error" ||
+      this.category === "concurrent_limit";
   }
 }

@@ -163,6 +163,9 @@ Check parameter names and values. Use suggest to get valid URIs.
 ### Rate limiting (429)
 Daily quota exceeded. Wait until next day or reduce query frequency.
 
+### Too many simultaneous requests (503)
+Max 5 concurrent requests allowed. Make requests sequentially — wait for each response before sending the next.
+
 ### No results
 - Try a broader concept (e.g., "Olympic Games" instead of "2026 Winter Olympics")
 - Combine broad concept + keyword for precision

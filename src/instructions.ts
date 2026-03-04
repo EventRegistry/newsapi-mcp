@@ -81,4 +81,7 @@ Each tool response includes a footer with token usage for that request and remai
 
 Use get_api_usage only when the user explicitly asks about quota or plan details.
 
+## Sequential Requests
+Event Registry allows max 5 concurrent requests. Always make requests sequentially — wait for each response before sending the next. Do not fire multiple NewsAPI tool calls in parallel.
+
 For detailed documentation, read the newsapi://guide resource.`;

@@ -102,6 +102,11 @@ export function formatErrorResponse(err: ApiError): string {
     case "not_found":
       parts.push("No results found. Try broader search terms or check URIs.");
       break;
+    case "concurrent_limit":
+      parts.push(
+        "Too many simultaneous requests (HTTP 503). Event Registry allows max 5 concurrent requests. Make requests sequentially, one after the other.",
+      );
+      break;
     case "api_error":
       parts.push(
         `Server error (HTTP ${err.status}, retryable). Try again shortly.`,
