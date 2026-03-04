@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.2.0] - 2026-03-04
+
+### Features
+
+- **Per-request token usage footer** — Every tool response now includes a footer showing tokens consumed and remaining quota (e.g., `Tokens used: 5 | Remaining: 49995`), replacing the old start/end `get_api_usage` workflow
+- **`extended` detail level (new default)** — New preset returning 50 articles/20 events with 1000-char body previews, balancing coverage and context window usage. Previous default `standard` (10 results) is still available
+- **Exclusion filters** — All search tools now support `ignoreKeyword`, `ignoreConceptUri`, `ignoreCategoryUri`, `ignoreSourceUri`, `ignoreLocationUri`, `ignoreAuthorUri`, `ignoreLang`, and more for filtering out unwanted results
+- **Boolean operators** — `conceptOper` and `categoryOper` params (`"and"` / `"or"`) for controlling how multiple concept or category URIs combine
+- **Date mention filters** — `dateMentionStart` / `dateMentionEnd` filter articles by dates mentioned in their content
+- **Response truncation** — Oversized responses (>100K chars) are automatically truncated at a clean boundary with a warning, preventing context window overflow
+- **Concurrent request error handling** — HTTP 503 (concurrent request limit) is now a distinct error category with specific recovery guidance
+
+### Fixes
+
+- **Event search sentiment params** — `minSentiment`/`maxSentiment` are now correctly renamed to `minSentimentEvent`/`maxSentimentEvent` for the events API
+- **Event search param cleanup** — Article-only params (`startSourceRankPercentile`, `endSourceRankPercentile`) are stripped before sending to the events API
+- **Suggest cache token reporting** — Cached suggest results correctly show `Tokens used: 0 (cached)` instead of omitting the footer
+
 ## [1.1.3] - 2026-02-26
 
 ### Fixes
