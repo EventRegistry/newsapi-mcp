@@ -400,6 +400,7 @@ Use comma-separated for multiple: lang: "eng,deu,fra"
 - rel: Relevance to query
 - sourceImportance: Source authority rank
 - socialScore: Social media engagement
+  ⚠ Tip: socialScore may surface low-authority viral sources. Combine with startSourceRankPercentile/endSourceRankPercentile to ensure quality (e.g., endSourceRankPercentile: 30 for top 30% sources).
 
 ### eventsSortBy
 - date: Event date (default)
@@ -414,6 +415,12 @@ Filter by source importance (0 = most important, 100 = least):
 - endSourceRankPercentile: 30
 
 This returns only top 30% most authoritative sources.
+
+## Date Mentions
+
+dateMentionStart and dateMentionEnd filter articles that mention specific dates in their content (not publication date).
+
+⚠ **Quirk:** Using both dateMentionStart and dateMentionEnd together often returns 0 results. Prefer using dateMentionStart alone to find articles mentioning dates on or after a given date.
 
 ## Sentiment Values
 

@@ -168,7 +168,7 @@ export const contentFilterProps: Record<string, unknown> = {
   dateMentionEnd: {
     type: "string",
     description:
-      "Articles mentioning dates <= this (YYYY-MM-DD). Filters by dates mentioned in content.",
+      "Articles mentioning dates <= this (YYYY-MM-DD). Filters by dates mentioned in content. WARNING: combining both dateMentionStart and dateMentionEnd often returns 0 results — prefer using dateMentionStart alone.",
   },
 };
 
@@ -319,7 +319,7 @@ NOT THIS when you need high-level event summaries — use search_events instead.
       articlesSortBy: {
         type: "string",
         description:
-          'Sort by: "date", "rel", "sourceImportance", "socialScore". Default: "date".',
+          'Sort by: "date", "rel", "sourceImportance", "socialScore". Default: "date". Note: socialScore may surface low-authority viral sources — combine with startSourceRankPercentile/endSourceRankPercentile to filter for quality.',
         enum: [
           "date",
           "rel",
