@@ -15,19 +15,35 @@ function buildZodShape(tool: ToolDef): Record<string, z.ZodTypeAny> {
     const def = schemaDef as Record<string, unknown>;
     let field: z.ZodTypeAny;
 
-    const typeDef = def.type;
-    if (
-      typeDef === "integer" ||
-      typeDef === "number" ||
-      (Array.isArray(typeDef) && typeDef.includes("number"))
-    ) {
-      field = z.number();
-    } else if (typeDef === "boolean") {
-      field = z.boolean();
-    } else if (Array.isArray(typeDef) && typeDef.includes("object")) {
-      field = z.any();
+    // Handle oneOf with string | string[] union
+    if (Array.isArray(def.oneOf)) {
+      const oneOf = def.oneOf as Record<string, unknown>[];
+      const hasString = oneOf.some((o) => o.type === "string");
+      const hasArray = oneOf.some(
+        (o) =>
+          o.type === "array" &&
+          (o.items as Record<string, unknown>)?.type === "string",
+      );
+      if (hasString && hasArray) {
+        field = z.union([z.string(), z.array(z.string())]);
+      } else {
+        field = z.any();
+      }
     } else {
-      field = z.string();
+      const typeDef = def.type;
+      if (
+        typeDef === "integer" ||
+        typeDef === "number" ||
+        (Array.isArray(typeDef) && typeDef.includes("number"))
+      ) {
+        field = z.number();
+      } else if (typeDef === "boolean") {
+        field = z.boolean();
+      } else if (Array.isArray(typeDef) && typeDef.includes("object")) {
+        field = z.any();
+      } else {
+        field = z.string();
+      }
     }
 
     if (def.description) {

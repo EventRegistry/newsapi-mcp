@@ -71,9 +71,9 @@ describe("MCP Resources", () => {
     // Check for expected content
     const text = content.text as string;
     expect(text).toContain("NewsAPI MCP Server Guide");
-    expect(text).toContain("suggest → search");
+    expect(text).toContain("suggest → scan → triage → retrieve");
     expect(text).toContain("conceptUri");
-    expect(text).toContain("detailLevel");
+    expect(text).toContain("articleBodyLen");
   });
 
   it("reads newsapi://examples resource", async () => {
@@ -85,12 +85,12 @@ describe("MCP Resources", () => {
 
     const text = content.text as string;
     expect(text).toContain("NewsAPI MCP Examples");
-    expect(text).toContain("Topic Search");
-    expect(text).toContain("Person Tracking");
+    expect(text).toContain("Full Workflow");
+    expect(text).toContain("Event Workflow");
     expect(text).toContain("Source Comparison");
     expect(text).toContain("Sentiment Filtering");
-    expect(text).toContain("Date Range Search");
-    expect(text).toContain("Multi-Concept Query");
+    expect(text).toContain("Date Range");
+    expect(text).toContain("Multi-Concept");
   });
 
   it("reads newsapi://fields resource", async () => {
@@ -138,15 +138,15 @@ describe("Server Instructions", () => {
     expect(serverInstructions).toContain("conceptUri");
   });
 
-  it("instructions contain retrieval strategy", () => {
-    expect(serverInstructions).toContain("Retrieval Strategy");
-    expect(serverInstructions).toContain("detailLevel");
-    expect(serverInstructions).toContain("articlesPage");
+  it("instructions contain scan workflow", () => {
+    expect(serverInstructions).toContain("Scan");
+    expect(serverInstructions).toContain("articleBodyLen");
+    expect(serverInstructions).toContain("Triage");
   });
 
-  it("instructions contain workflow patterns", () => {
-    expect(serverInstructions).toContain("Topic search");
-    expect(serverInstructions).toContain("Source-specific");
+  it("instructions contain workflow guidance", () => {
+    expect(serverInstructions).toContain("search_articles");
+    expect(serverInstructions).toContain("get_article_details");
   });
 
   it("instructions mention resources", () => {

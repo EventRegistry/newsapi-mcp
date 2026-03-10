@@ -5,45 +5,39 @@
 
 export const serverInstructions = `NewsAPI MCP server provides access to Event Registry's global news database with 8 tools for searching articles, events, and entity lookup.
 
-## Critical Workflow: suggest → search
-ALWAYS resolve entity names to URIs before searching:
-1. suggest({type: "concepts", prefix: "Tesla"}) → get conceptUri
-2. search_articles({conceptUri: "<uri>"}) or search_events({conceptUri: "<uri>"}) depending on need
+## Workflow: suggest → scan → triage → retrieve
 
-This ensures accurate results. Keyword search is a fallback, not the primary method.
+### Step 1: Suggest — resolve names to URIs
+suggest({type: "concepts", prefix: "Tesla"}) → get conceptUri
+Always resolve entity names before searching. Keyword search is a fallback.
 
-## Choosing Between Articles and Events
-- **search_articles** → full article text, specific sources, detailed reporting, individual stories
-- **search_events** → high-level overview, what happened, deduplicated event clusters, summary of developments
+### Step 2: Scan — retrieve titles only
+search_articles({
+  conceptUri: "<uri>",
+  articlesCount: 100,
+  articleBodyLen: 0
+})
+Fetch up to 100 articles with NO bodies — returns only titles, dates, sources, and URIs. Very token-efficient. Do NOT use detailLevel here; set articlesCount and articleBodyLen explicitly.
 
-Use search_events when the user asks "what's happening with X", wants a summary of developments, or needs an overview. Use search_articles when they need full text, specific source coverage, or detailed reporting.
+### Step 3: Triage — assess relevance
+Read the titles from step 2. Select the articles relevant to the user's question by their URIs. If too few relevant results, paginate (articlesPage: 2) and repeat step 2.
 
-## Retrieval Strategy
-Results must fit in the model's context window. Responses over ~100K characters are auto-truncated with a warning. Start with what you need, then paginate for more.
+### Step 4: Retrieve — get full details
+get_article_details({
+  articleUri: ["<uri1>", "<uri2>", "<uri3>", ...]
+})
+Pass up to 100 URIs per call. If you have more than 100 relevant articles, batch them into multiple calls of 100 URIs each. Add includeFields only for data you need.
 
-**Initial retrieval:**
-- Default detailLevel is "extended" (50 results, 1000-char body previews) — good for most queries
-- Use "standard" (10 results, full bodies) when you need complete article text for a small set
-- Use "minimal" (5 results, 200-char bodies) for quick lookups
-- Add includeFields only for data you'll actually use
+### Choosing search_articles vs search_events
+- **search_articles** → individual articles, full text, specific sources
+- **search_events** → high-level overview, deduplicated event clusters, "what's happening with X"
 
-**If results are insufficient:**
-- Paginate with articlesPage/eventsPage to retrieve the next batch
-- Continue until you have enough relevant articles or exhaust available results
+The same pattern applies to events: scan with search_events → triage → get_event_details with selected URIs.
 
-**When to retrieve more upfront:**
-- Historical analysis requiring comprehensive coverage → detailLevel: "extended" or "full"
-- Time-critical breaking news → forceMaxDataTimeWindow: 7
-- Use "full" only when complete article text is needed — may be truncated if response is too large
-
-## Workflow Patterns
-1. **Topic search**: suggest(concepts) → search_articles(conceptUri)
-2. **Event overview**: suggest(concepts) → search_events(conceptUri) — for "what's happening with X" queries
-3. **Person/org tracking**: suggest(concepts) → search_articles(conceptUri, dateStart)
-4. **Event tracking**: suggest(concepts) → search_events(conceptUri, dateStart) — for tracking developments over time
-5. **Source-specific**: suggest(sources) → search_articles(sourceUri)
-6. **Country sources**: suggest(locations, "Slovenia") → search_articles(sourceLocationUri) for news from sources in that country
-7. **Topic monitoring**: get_topic_page_articles(uri) for pre-configured searches
+### When to simplify
+- Quick lookups (known URI): go directly to get_article_details
+- Topic page monitoring: use get_topic_page_articles
+- Simple questions needing few results: search_articles with articlesCount: 10 (skip triage)
 
 ## Keyword Usage
 - Each keyword value is matched as an **exact phrase** — multi-word strings like "tech layoffs" search for that exact phrase
@@ -71,13 +65,16 @@ Concepts map to Wikipedia pages. Well-established pages have far better article 
 - For locations, always use English names (e.g., "Germany" not "Deutschland")
 
 ## Usage Tracking
-Each tool response includes a footer with token usage for that request and remaining quota (e.g., "Tokens used: 5 | Remaining: 49995"). The suggest tool is free and costs 0 tokens — its footer will show "Tokens used: 0".
+Each tool response includes a footer with token usage for that request (e.g., "Tokens used: 5"). The suggest tool is free and costs 0 tokens — its footer will show "Tokens used: 0".
 
-**You MUST track and report usage:**
+**You MUST track and report usage at the end of every response:**
+- Count every NewsAPI tool call you make (including suggest calls)
 - Read the exact "Tokens used" number from each response footer — do not estimate or count requests as tokens
-- When you finish answering the user's question, include a usage summary:
-  - Total tokens consumed (sum of all "Tokens used" values from response footers)
-  - Remaining token quota (from the last response footer)
+- Include a usage summary in this exact format:
+
+**NewsAPI usage:** {N} requests | {T} tokens consumed
+
+Example: **NewsAPI usage:** 4 requests | 6 tokens consumed
 
 Use get_api_usage only when the user explicitly asks about quota or plan details.
 

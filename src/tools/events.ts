@@ -109,6 +109,7 @@ export const getEventDetails: ToolDef = {
   description: `Get full details for one or more events by their URI(s).
 
 EXAMPLE: get_event_details({eventUri: "eng-4567890", includeFields: "concepts,categories"})
+EXAMPLE (multiple): get_event_details({eventUri: ["eng-4567890", "eng-1234567"]})
 
 USE THIS WHEN you have event URIs from search results and need full details.
 NOT THIS for searching — use search_events with filters instead.`,
@@ -116,8 +117,12 @@ NOT THIS for searching — use search_events with filters instead.`,
     type: "object",
     properties: {
       eventUri: {
-        type: "string",
-        description: "Event URI(s). Comma-separated for multiple.",
+        oneOf: [
+          { type: "string" },
+          { type: "array", items: { type: "string" } },
+        ],
+        description:
+          "Event URI or array of URIs. Also accepts comma-separated string.",
       },
       ...includeFieldsProp,
     },

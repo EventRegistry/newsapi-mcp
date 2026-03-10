@@ -85,6 +85,8 @@ describe("tool schema structure", () => {
           tool.inputSchema.properties,
         )) {
           const def = schemaDef as Record<string, unknown>;
+          // oneOf is a valid alternative to type (e.g. string | string[])
+          if (def.oneOf) continue;
           const typeDef = def.type;
           if (Array.isArray(typeDef)) {
             for (const t of typeDef) {

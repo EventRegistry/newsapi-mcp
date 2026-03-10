@@ -347,6 +347,35 @@ describe("MCP server E2E", () => {
     expect(body.includeEventArticleCounts).toBe(true);
   });
 
+  it("accepts array input for articleUri in get_article_details", async () => {
+    mockFetchOk({});
+
+    const result = await client.callTool({
+      name: "get_article_details",
+      arguments: { articleUri: ["art-1", "art-2"] },
+    });
+
+    // Should not error from schema validation
+    expect(result.isError).toBeUndefined();
+    const lastCall = fetchSpy.mock.calls[fetchSpy.mock.calls.length - 1];
+    const body = JSON.parse(lastCall[1].body);
+    expect(body.articleUri).toEqual(["art-1", "art-2"]);
+  });
+
+  it("accepts array input for eventUri in get_event_details", async () => {
+    mockFetchOk({});
+
+    const result = await client.callTool({
+      name: "get_event_details",
+      arguments: { eventUri: ["evt-1", "evt-2"] },
+    });
+
+    expect(result.isError).toBeUndefined();
+    const lastCall = fetchSpy.mock.calls[fetchSpy.mock.calls.length - 1];
+    const body = JSON.parse(lastCall[1].body);
+    expect(body.eventUri).toEqual(["evt-1", "evt-2"]);
+  });
+
   it("advertises resources", async () => {
     const result = await client.listResources();
     expect(result.resources.length).toBe(3);

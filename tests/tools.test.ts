@@ -118,6 +118,18 @@ describe("getArticleDetails", () => {
       }),
     );
   });
+
+  it("accepts array input for articleUri", async () => {
+    await getArticleDetails.handler({ articleUri: ["uri1", "uri2"] });
+
+    expect(mockedApiPost).toHaveBeenCalledWith(
+      "/article/getArticle",
+      expect.objectContaining({
+        articleUri: ["uri1", "uri2"],
+        articleBodyLen: -1,
+      }),
+    );
+  });
 });
 
 // ---------- Events ----------
@@ -183,6 +195,18 @@ describe("getEventDetails", () => {
       "/event/getEvent",
       expect.objectContaining({
         eventUri: ["evt-123", "evt-456"],
+        includeEventSummary: true,
+      }),
+    );
+  });
+
+  it("accepts array input for eventUri", async () => {
+    await getEventDetails.handler({ eventUri: ["evt-1", "evt-2"] });
+
+    expect(mockedApiPost).toHaveBeenCalledWith(
+      "/event/getEvent",
+      expect.objectContaining({
+        eventUri: ["evt-1", "evt-2"],
         includeEventSummary: true,
       }),
     );

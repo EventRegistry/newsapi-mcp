@@ -18,17 +18,30 @@ This server provides access to Event Registry's global news database covering 15
 ### Entity URIs
 NewsAPI uses URIs to identify entities precisely. Raw text searches can be ambiguous, so always resolve names to URIs first using the suggest tool.
 
-### The suggest → search Workflow
-This is the most important pattern:
+### The suggest → scan → triage → retrieve Workflow
+This is the most important pattern. It separates cheap discovery from expensive retrieval.
 
-1. **Resolve entity**: Call suggest with the entity name
-   suggest({type: "concepts", prefix: "Apple Inc"})
+**Step 1: Suggest** — resolve entity names to URIs:
+suggest({type: "concepts", prefix: "Apple Inc"})
+→ returns URI: "http://en.wikipedia.org/wiki/Apple_Inc."
 
-2. **Get URI**: Extract the URI from results
-   "http://en.wikipedia.org/wiki/Apple_Inc."
+**Step 2: Scan** — fetch titles only (no bodies):
+search_articles({
+  conceptUri: "http://en.wikipedia.org/wiki/Apple_Inc.",
+  articlesCount: 100,
+  articleBodyLen: 0
+})
+This returns up to 100 article titles, dates, sources, and URIs with minimal token cost. Do NOT use detailLevel here; set articlesCount and articleBodyLen explicitly.
 
-3. **Search with URI**: Pass URI to search tools
-   search_articles({conceptUri: "http://en.wikipedia.org/wiki/Apple_Inc."})
+**Step 3: Triage** — read the titles and select relevant articles by URI. If too few results are relevant, paginate with articlesPage: 2 and scan again.
+
+**Step 4: Retrieve** — get full details for selected articles:
+get_article_details({
+  articleUri: ["<uri1>", "<uri2>", "<uri3>"]
+})
+Pass up to 100 URIs per call. For more than 100 articles, batch into multiple calls. Add includeFields only for data you need.
+
+The same pattern works for events: scan with search_events (articleBodyLen: 0) → triage → get_event_details with selected URIs.
 
 ### Suggest Types Explained
 
@@ -117,10 +130,10 @@ Request additional data beyond the minimal set:
 - full: all available fields
 
 ### Token Optimization Tips
-1. Start with detailLevel: "minimal" and increase if needed
+1. Always use scan→triage→retrieve for comprehensive queries: scan with articlesCount: 100, articleBodyLen: 0, then retrieve only relevant articles via get_article_details
 2. Use forceMaxDataTimeWindow: 7 for "recent news" queries
-3. Set articleBodyLen: 0 if you only need titles
-4. Request specific includeFields rather than "full"
+3. In the retrieve step, request specific includeFields — avoid "full" unless you need everything
+4. For simple questions needing few results, skip triage: use articlesCount: 10 directly
 
 ## Advanced Patterns
 
@@ -174,14 +187,16 @@ Max 5 concurrent requests allowed. Make requests sequentially — wait for each 
 - Verify URIs are correct via suggest
 
 ## Usage Tracking
-Each tool response includes a footer with token usage for that request and remaining quota (e.g., "Tokens used: 5 | Remaining: 49995").
+Each tool response includes a footer with token usage for that request (e.g., "Tokens used: 5"). The suggest tool is free and costs 0 tokens — its footer will show "Tokens used: 0".
 
-**You MUST track and report usage:**
-- Note the token count from each response as you work
-- When you finish answering the user's question, include a usage summary:
-  - Total NewsAPI requests made
-  - Total tokens consumed (sum of all "Tokens used" values)
-  - Remaining token quota
+**You MUST track and report usage at the end of every response:**
+- Count every NewsAPI tool call you make (including suggest calls)
+- Read the exact "Tokens used" number from each response footer — do not estimate or count requests as tokens
+- Include a usage summary in this exact format:
+
+**NewsAPI usage:** {N} requests | {T} tokens consumed
+
+Example: **NewsAPI usage:** 4 requests | 6 tokens consumed
 
 Use get_api_usage only when the user explicitly asks about quota or plan details.`;
 
@@ -191,36 +206,60 @@ Use get_api_usage only when the user explicitly asks about quota or plan details
 
 export const EXAMPLES_CONTENT = `# NewsAPI MCP Examples
 
-## 1. Topic Search — "Recent AI news"
+## 1. Full Workflow — "Recent AI news"
+// Step 1: Suggest
 suggest({type: "concepts", prefix: "artificial intelligence"})
+// Step 2: Scan — titles only
 search_articles({
   conceptUri: "<uri-from-suggest>",
   forceMaxDataTimeWindow: 7,
   lang: "eng",
-  detailLevel: "minimal"
+  articlesCount: 100,
+  articleBodyLen: 0
+})
+// Step 3: Triage — read titles, pick relevant URIs
+// Step 4: Retrieve — get full text for selected articles
+get_article_details({
+  articleUri: ["<uri1>", "<uri2>", "<uri3>"]
 })
 
-## 2. Person Tracking — "News about Elon Musk"
-suggest({type: "concepts", prefix: "Elon Musk"})
-search_articles({
+## 2. Event Workflow — "What's happening with climate?"
+suggest({type: "concepts", prefix: "climate change"})
+// Scan events
+search_events({
   conceptUri: "<uri-from-suggest>",
-  dateStart: "2025-01-01",
-  articlesSortBy: "date"
+  forceMaxDataTimeWindow: 31,
+  eventsCount: 50,
+  eventsSortBy: "size"
+})
+// Triage — pick relevant event URIs
+// Retrieve full event details
+get_event_details({
+  eventUri: ["<event-uri1>", "<event-uri2>"],
+  includeFields: "concepts,categories"
 })
 
 ## 3. Source Comparison — "How Reuters vs BBC cover climate"
 suggest({type: "sources", prefix: "Reuters"})
 suggest({type: "sources", prefix: "BBC"})
 suggest({type: "concepts", prefix: "climate change"})
+// Scan from each source
 search_articles({
   conceptUri: "<climate-uri>",
   sourceUri: "<reuters-uri>",
-  detailLevel: "minimal"
+  articlesCount: 50,
+  articleBodyLen: 0
 })
 search_articles({
   conceptUri: "<climate-uri>",
   sourceUri: "<bbc-uri>",
-  detailLevel: "minimal"
+  articlesCount: 50,
+  articleBodyLen: 0
+})
+// Triage — pick articles from each source
+// Retrieve full text for comparison
+get_article_details({
+  articleUri: ["<reuters-article1>", "<bbc-article1>", "..."]
 })
 
 ## 4. Sentiment Filtering — "Positive news about Tesla"
@@ -228,65 +267,60 @@ suggest({type: "concepts", prefix: "Tesla"})
 search_articles({
   conceptUri: "<uri-from-suggest>",
   minSentiment: 0.3,
+  articlesCount: 100,
+  articleBodyLen: 0
+})
+// Triage and retrieve with sentiment data
+get_article_details({
+  articleUri: ["<uri1>", "<uri2>"],
   includeFields: "sentiment"
 })
 
-## 5. Date Range Search — "Bitcoin news in January 2025"
+## 5. Date Range — "Bitcoin news in January 2025"
 suggest({type: "concepts", prefix: "Bitcoin"})
 search_articles({
   conceptUri: "<uri-from-suggest>",
   dateStart: "2025-01-01",
   dateEnd: "2025-01-31",
-  lang: "eng"
+  lang: "eng",
+  articlesCount: 100,
+  articleBodyLen: 0
+})
+// Triage and retrieve relevant articles
+
+## 6. Quick Lookup — simple question, few results needed
+suggest({type: "concepts", prefix: "Elon Musk"})
+search_articles({
+  conceptUri: "<uri-from-suggest>",
+  articlesCount: 10,
+  forceMaxDataTimeWindow: 7
 })
 
-## 6. Multi-Concept Query — "Apple AND iPhone news"
+## 7. Multi-Concept — "Apple AND iPhone news"
 suggest({type: "concepts", prefix: "Apple Inc"})
 suggest({type: "concepts", prefix: "iPhone"})
 search_articles({
   conceptUri: "<apple-uri>,<iphone-uri>",
-  forceMaxDataTimeWindow: 7
-})
-
-## 7. Event Overview — "What's happening with AI?"
-suggest({type: "concepts", prefix: "artificial intelligence"})
-search_events({
-  conceptUri: "<uri-from-suggest>",
   forceMaxDataTimeWindow: 7,
-  eventsSortBy: "size",
-  detailLevel: "standard"
+  articlesCount: 100,
+  articleBodyLen: 0
 })
+// Triage and retrieve
 
-## 8. Major Events — "Big climate stories this month"
-suggest({type: "concepts", prefix: "climate change"})
-search_events({
-  conceptUri: "<uri-from-suggest>",
-  forceMaxDataTimeWindow: 31,
-  eventsSortBy: "size",
-  minArticlesInEvent: 20
-})
-
-## Common Patterns
-
-### Get article details by URI
-get_article_details({
-  articleUri: "123456789",
-  includeFields: "concepts,sentiment"
-})
-
-### Get event cluster details
-get_event_details({
-  eventUri: "eng-1234567",
-  includeFields: "concepts,categories"
-})
-
-### Monitor a pre-configured topic
+## 8. Topic Page Monitoring
 get_topic_page_articles({
   uri: "<topic-page-uri>",
   detailLevel: "minimal"
 })
 
-### Check API quota
+## 9. Batch Article Retrieval
+// Retrieve up to 100 articles per call
+get_article_details({
+  articleUri: ["123456789", "987654321", "456789123", "..."],
+  includeFields: "concepts,sentiment"
+})
+
+## 10. Check API Quota
 get_api_usage({})`;
 
 // ============================================================================

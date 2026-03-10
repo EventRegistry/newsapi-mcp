@@ -371,6 +371,7 @@ export const getArticleDetails: ToolDef = {
   description: `Get full details for one or more articles by their URI(s).
 
 EXAMPLE: get_article_details({articleUri: "123456789", includeFields: "concepts,sentiment"})
+EXAMPLE (multiple): get_article_details({articleUri: ["123456789", "987654321"]})
 
 USE THIS WHEN you already have article URIs from search results and need more details.
 NOT THIS for searching — use search_articles with filters instead.`,
@@ -378,8 +379,12 @@ NOT THIS for searching — use search_articles with filters instead.`,
     type: "object",
     properties: {
       articleUri: {
-        type: "string",
-        description: "Article URI(s). Comma-separated for multiple.",
+        oneOf: [
+          { type: "string" },
+          { type: "array", items: { type: "string" } },
+        ],
+        description:
+          "Article URI or array of URIs. Also accepts comma-separated string.",
       },
       ...responseControlProps,
     },
