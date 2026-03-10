@@ -1,10 +1,5 @@
 import { apiPost } from "../client.js";
-import {
-  responseControlProps,
-  includeFieldsProp,
-  detailLevelProp,
-  applyDetailLevel,
-} from "./articles.js";
+import { responseControlProps, includeFieldsProp } from "./articles.js";
 import type { ToolDef } from "../types.js";
 import {
   parseFieldGroups,
@@ -18,7 +13,7 @@ export const getTopicPageArticles: ToolDef = {
   name: "get_topic_page_articles",
   description: `Get articles matching a user-created topic page. Topic pages are pre-configured search profiles on newsapi.ai.
 
-EXAMPLE: get_topic_page_articles({uri: "<topic-page-uri>", detailLevel: "minimal"})
+EXAMPLE: get_topic_page_articles({uri: "<topic-page-uri>", articlesCount: 5, articleBodyLen: 200})
 
 USE THIS WHEN monitoring a pre-configured topic. NOT THIS for ad-hoc searches â€” use search_articles.`,
   inputSchema: {
@@ -29,14 +24,13 @@ USE THIS WHEN monitoring a pre-configured topic. NOT THIS for ad-hoc searches â€
         description: "Topic page URI.",
       },
       ...responseControlProps,
-      ...detailLevelProp,
       articlesPage: {
         type: "integer",
         description: "Page number (starting from 1). Default: 1.",
       },
       articlesCount: {
         type: "integer",
-        description: "Articles per page (max 100). Default set by detailLevel.",
+        description: "Articles per page (max 100). Default: 100.",
         maximum: 100,
       },
       articlesSortBy: {
@@ -49,9 +43,9 @@ USE THIS WHEN monitoring a pre-configured topic. NOT THIS for ad-hoc searches â€
     required: ["uri"],
   },
   handler: async (params) => {
-    applyDetailLevel(params);
+    params.articlesCount ??= 100;
     const groups = parseFieldGroups(params.includeFields as string | undefined);
-    const bodyLen = (params.articleBodyLen as number) ?? -1;
+    const bodyLen = (params.articleBodyLen as number) ?? 1000;
 
     const body: Record<string, unknown> = {
       uri: params.uri,
@@ -94,14 +88,13 @@ USE THIS WHEN monitoring a pre-configured topic for events. NOT THIS for ad-hoc 
         description: "Topic page URI.",
       },
       ...includeFieldsProp,
-      ...detailLevelProp,
       eventsPage: {
         type: "integer",
         description: "Page number (starting from 1). Default: 1.",
       },
       eventsCount: {
         type: "integer",
-        description: "Events per page (max 50). Default set by detailLevel.",
+        description: "Events per page (max 50). Default: 50.",
         maximum: 50,
       },
       eventsSortBy: {
@@ -114,7 +107,7 @@ USE THIS WHEN monitoring a pre-configured topic for events. NOT THIS for ad-hoc 
     required: ["uri"],
   },
   handler: async (params) => {
-    applyDetailLevel(params);
+    params.eventsCount ??= 50;
     const groups = parseFieldGroups(params.includeFields as string | undefined);
 
     const body: Record<string, unknown> = {

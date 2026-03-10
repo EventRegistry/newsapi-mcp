@@ -318,7 +318,7 @@ describe("MCP server E2E", () => {
 
     const result = await client.callTool({
       name: "search_articles",
-      arguments: { keyword: "test", detailLevel: "full" },
+      arguments: { keyword: "test", articleBodyLen: -1 },
     });
 
     const content = result.content[0] as { text: string };

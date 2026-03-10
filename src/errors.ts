@@ -60,7 +60,6 @@ const KNOWN_PARAM_VALUES: Record<string, string[]> = {
     "zul",
     "gle",
   ],
-  detailLevel: ["minimal", "standard", "extended", "full"],
   articlesSortBy: [
     "date",
     "rel",

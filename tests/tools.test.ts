@@ -28,7 +28,6 @@ import { apiPost } from "../src/client.js";
 import {
   searchArticles,
   getArticleDetails,
-  applyDetailLevel,
   buildFilterBody,
 } from "../src/tools/articles.js";
 import { ApiError } from "../src/types.js";
@@ -61,7 +60,7 @@ describe("searchArticles", () => {
       expect.objectContaining({
         resultType: "articles",
         articleBodyLen: 1000,
-        articlesCount: 50,
+        articlesCount: 100,
         keyword: ["Tesla"],
       }),
     );
@@ -142,7 +141,7 @@ describe("searchEvents", () => {
       "/event/getEvents",
       expect.objectContaining({
         resultType: "events",
-        eventsCount: 20,
+        eventsCount: 50,
         keyword: ["earthquake"],
         includeEventSummary: true,
       }),
@@ -210,6 +209,45 @@ describe("getEventDetails", () => {
         includeEventSummary: true,
       }),
     );
+  });
+
+  it("sends resultType info by default with array eventUri", async () => {
+    await getEventDetails.handler({ eventUri: "evt-1,evt-2" });
+
+    const body = mockedApiPost.mock.calls[0][1];
+    expect(body.resultType).toBe("info");
+    expect(body.eventUri).toEqual(["evt-1", "evt-2"]);
+  });
+
+  it("sends resultType articles with single string eventUri", async () => {
+    await getEventDetails.handler({
+      eventUri: "evt-123",
+      resultType: "articles",
+    });
+
+    const body = mockedApiPost.mock.calls[0][1];
+    expect(body.resultType).toBe("articles");
+    expect(body.eventUri).toBe("evt-123");
+  });
+
+  it("throws error for resultType articles with multiple URIs", async () => {
+    await expect(
+      getEventDetails.handler({
+        eventUri: ["evt-1", "evt-2"],
+        resultType: "articles",
+      }),
+    ).rejects.toThrow(/only supports a single eventUri/);
+  });
+
+  it("sends resultType info with array URIs (existing behavior)", async () => {
+    await getEventDetails.handler({
+      eventUri: ["evt-1", "evt-2"],
+      resultType: "info",
+    });
+
+    const body = mockedApiPost.mock.calls[0][1];
+    expect(body.resultType).toBe("info");
+    expect(body.eventUri).toEqual(["evt-1", "evt-2"]);
   });
 });
 
@@ -294,7 +332,7 @@ describe("getTopicPageArticles", () => {
         uri: "topic-123",
         resultType: "articles",
         articleBodyLen: 1000,
-        articlesCount: 50,
+        articlesCount: 100,
       }),
     );
   });
@@ -323,7 +361,7 @@ describe("getTopicPageEvents", () => {
       expect.objectContaining({
         uri: "topic-456",
         resultType: "events",
-        eventsCount: 20,
+        eventsCount: 50,
         includeEventSummary: true,
       }),
     );
@@ -344,135 +382,34 @@ describe("getTopicPageEvents", () => {
   });
 });
 
-// ---------- Detail Level ----------
+// ---------- Default Values ----------
 
-describe("applyDetailLevel", () => {
-  it("applies extended preset by default", () => {
-    const params: Record<string, unknown> = {};
-    applyDetailLevel(params);
-    expect(params.articlesCount).toBe(50);
-    expect(params.eventsCount).toBe(20);
-    expect(params.articleBodyLen).toBe(1000);
-  });
-
-  it("applies minimal preset", () => {
-    const params: Record<string, unknown> = { detailLevel: "minimal" };
-    applyDetailLevel(params);
-    expect(params.articlesCount).toBe(5);
-    expect(params.eventsCount).toBe(5);
-    expect(params.articleBodyLen).toBe(200);
-  });
-
-  it("applies standard preset", () => {
-    const params: Record<string, unknown> = { detailLevel: "standard" };
-    applyDetailLevel(params);
-    expect(params.articlesCount).toBe(10);
-    expect(params.eventsCount).toBe(10);
-    expect(params.articleBodyLen).toBe(-1);
-  });
-
-  it("applies extended preset", () => {
-    const params: Record<string, unknown> = { detailLevel: "extended" };
-    applyDetailLevel(params);
-    expect(params.articlesCount).toBe(50);
-    expect(params.eventsCount).toBe(20);
-    expect(params.articleBodyLen).toBe(1000);
-  });
-
-  it("applies full preset with unlimited body length", () => {
-    const params: Record<string, unknown> = { detailLevel: "full" };
-    applyDetailLevel(params);
-    expect(params.articlesCount).toBe(50);
-    expect(params.eventsCount).toBe(20);
-    expect(params.articleBodyLen).toBe(-1);
-  });
-
-  it("does not override explicit params", () => {
-    const params: Record<string, unknown> = {
-      detailLevel: "minimal",
-      articlesCount: 30,
-      articleBodyLen: 500,
-    };
-    applyDetailLevel(params);
-    expect(params.articlesCount).toBe(30);
-    expect(params.articleBodyLen).toBe(500);
-    expect(params.eventsCount).toBe(5); // not set explicitly, uses preset
-  });
-});
-
-describe("detailLevel integration", () => {
-  it("searchArticles with minimal detailLevel sends 5 articles and 200 bodyLen", async () => {
-    await searchArticles.handler({
-      keyword: "AI",
-      detailLevel: "minimal",
-    });
+describe("default values", () => {
+  it("searchArticles sends articlesCount: 100 and articleBodyLen: 1000 by default", async () => {
+    await searchArticles.handler({ keyword: "AI" });
 
     const body = mockedApiPost.mock.calls[0][1];
-    expect(body.articlesCount).toBe(5);
-    expect(body.articleBodyLen).toBe(200);
-  });
-
-  it("searchArticles with extended detailLevel sends 50 articles and 1000 bodyLen", async () => {
-    await searchArticles.handler({
-      keyword: "AI",
-      detailLevel: "extended",
-    });
-
-    const body = mockedApiPost.mock.calls[0][1];
-    expect(body.articlesCount).toBe(50);
+    expect(body.articlesCount).toBe(100);
     expect(body.articleBodyLen).toBe(1000);
   });
 
-  it("searchArticles with full detailLevel sends 50 articles with full bodies", async () => {
+  it("searchEvents sends eventsCount: 50 by default", async () => {
+    await searchEvents.handler({ keyword: "earthquake" });
+
+    const body = mockedApiPost.mock.calls[0][1];
+    expect(body.eventsCount).toBe(50);
+  });
+
+  it("explicit params override defaults", async () => {
     await searchArticles.handler({
       keyword: "AI",
-      detailLevel: "full",
+      articlesCount: 10,
+      articleBodyLen: 200,
     });
 
     const body = mockedApiPost.mock.calls[0][1];
-    expect(body.articlesCount).toBe(50);
-    expect(body.articleBodyLen).toBe(-1);
-  });
-
-  it("searchEvents with no detailLevel sends standard defaults", async () => {
-    await searchEvents.handler({
-      keyword: "earthquake",
-    });
-
-    const body = mockedApiPost.mock.calls[0][1];
-    expect(body.eventsCount).toBe(20);
-  });
-
-  it("searchEvents with minimal detailLevel sends 5 events", async () => {
-    await searchEvents.handler({
-      keyword: "earthquake",
-      detailLevel: "minimal",
-    });
-
-    const body = mockedApiPost.mock.calls[0][1];
-    expect(body.eventsCount).toBe(5);
-  });
-
-  it("explicit articlesCount overrides detailLevel preset", async () => {
-    await searchArticles.handler({
-      keyword: "AI",
-      detailLevel: "minimal",
-      articlesCount: 50,
-    });
-
-    const body = mockedApiPost.mock.calls[0][1];
-    expect(body.articlesCount).toBe(50);
-    expect(body.articleBodyLen).toBe(200); // still from preset
-  });
-
-  it("detailLevel is stripped from API body", async () => {
-    await searchArticles.handler({
-      keyword: "AI",
-      detailLevel: "minimal",
-    });
-
-    const body = mockedApiPost.mock.calls[0][1];
-    expect(body.detailLevel).toBeUndefined();
+    expect(body.articlesCount).toBe(10);
+    expect(body.articleBodyLen).toBe(200);
   });
 });
 
@@ -629,16 +566,14 @@ describe("buildFilterBody", () => {
     );
   });
 
-  it("strips local params (includeFields, articleBodyLen, detailLevel)", () => {
+  it("strips local params (includeFields, articleBodyLen)", () => {
     const body = buildFilterBody({
       keyword: "test",
       includeFields: "sentiment",
       articleBodyLen: 200,
-      detailLevel: "minimal",
     });
     expect(body.includeFields).toBeUndefined();
     expect(body.articleBodyLen).toBeUndefined();
-    expect(body.detailLevel).toBeUndefined();
     expect(body.keyword).toBeDefined();
   });
 });

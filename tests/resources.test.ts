@@ -102,13 +102,13 @@ describe("MCP Resources", () => {
 
     const text = content.text as string;
     expect(text).toContain("includeFields Groups");
-    expect(text).toContain("detailLevel Presets");
+    expect(text).toContain("Default Values");
     expect(text).toContain("Language Codes");
     expect(text).toContain("sentiment");
     expect(text).toContain("concepts");
-    expect(text).toContain("minimal");
-    expect(text).toContain("standard");
-    expect(text).toContain("full");
+    expect(text).toContain("articlesCount");
+    expect(text).toContain("eventsCount");
+    expect(text).toContain("articleBodyLen");
   });
 
   it("resource descriptions are set correctly", async () => {

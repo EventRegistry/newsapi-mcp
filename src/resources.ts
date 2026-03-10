@@ -29,9 +29,10 @@ suggest({type: "concepts", prefix: "Apple Inc"})
 search_articles({
   conceptUri: "http://en.wikipedia.org/wiki/Apple_Inc.",
   articlesCount: 100,
-  articleBodyLen: 0
+  articleBodyLen: 0,
+  isDuplicateFilter: "skipDuplicates"
 })
-This returns up to 100 article titles, dates, sources, and URIs with minimal token cost. Do NOT use detailLevel here; set articlesCount and articleBodyLen explicitly.
+This returns up to 100 article titles, dates, sources, and URIs with minimal token cost. Use isDuplicateFilter: "skipDuplicates" to eliminate wire syndication duplicates that clutter triage.
 
 **Step 3: Triage** — read the titles and select relevant articles by URI. If too few results are relevant, paginate with articlesPage: 2 and scan again.
 
@@ -42,6 +43,8 @@ get_article_details({
 Pass up to 100 URIs per call. For more than 100 articles, batch into multiple calls. Add includeFields only for data you need.
 
 The same pattern works for events: scan with search_events (articleBodyLen: 0) → triage → get_event_details with selected URIs.
+
+get_event_details supports a resultType param: "info" (default, supports multiple URIs), "articles", "articleUris", "similarEvents" (single URI only).
 
 ### Suggest Types Explained
 
@@ -110,11 +113,10 @@ search_events({
 
 ## Response Control
 
-### detailLevel Presets
-- **minimal**: 5 results, 200-character bodies (fastest, cheapest)
-- **standard**: 10 results, full bodies
-- **extended** (default): 50 articles/20 events, 1000-character body previews — good for most queries
-- **full**: 50 articles/20 events, full bodies (may be truncated if response is too large)
+### Default Values
+- articlesCount: 100 (max per page)
+- eventsCount: 50 (max per page)
+- articleBodyLen: 1000 (character preview; use -1 for full text, 0 to exclude body)
 
 ### includeFields Groups
 Request additional data beyond the minimal set:
@@ -131,9 +133,10 @@ Request additional data beyond the minimal set:
 
 ### Token Optimization Tips
 1. Always use scan→triage→retrieve for comprehensive queries: scan with articlesCount: 100, articleBodyLen: 0, then retrieve only relevant articles via get_article_details
-2. Use forceMaxDataTimeWindow: 7 for "recent news" queries
-3. In the retrieve step, request specific includeFields — avoid "full" unless you need everything
-4. For simple questions needing few results, skip triage: use articlesCount: 10 directly
+2. Use isDuplicateFilter: "skipDuplicates" in scan steps to remove wire syndication duplicates — this is the #1 triage efficiency improvement
+3. Use forceMaxDataTimeWindow: 7 for "recent news" queries
+4. In the retrieve step, request specific includeFields — avoid "full" unless you need everything
+5. For simple questions needing few results, skip triage: use articlesCount: 10 directly
 
 ## Advanced Patterns
 
@@ -215,7 +218,8 @@ search_articles({
   forceMaxDataTimeWindow: 7,
   lang: "eng",
   articlesCount: 100,
-  articleBodyLen: 0
+  articleBodyLen: 0,
+  isDuplicateFilter: "skipDuplicates"
 })
 // Step 3: Triage — read titles, pick relevant URIs
 // Step 4: Retrieve — get full text for selected articles
@@ -248,13 +252,15 @@ search_articles({
   conceptUri: "<climate-uri>",
   sourceUri: "<reuters-uri>",
   articlesCount: 50,
-  articleBodyLen: 0
+  articleBodyLen: 0,
+  isDuplicateFilter: "skipDuplicates"
 })
 search_articles({
   conceptUri: "<climate-uri>",
   sourceUri: "<bbc-uri>",
   articlesCount: 50,
-  articleBodyLen: 0
+  articleBodyLen: 0,
+  isDuplicateFilter: "skipDuplicates"
 })
 // Triage — pick articles from each source
 // Retrieve full text for comparison
@@ -268,7 +274,8 @@ search_articles({
   conceptUri: "<uri-from-suggest>",
   minSentiment: 0.3,
   articlesCount: 100,
-  articleBodyLen: 0
+  articleBodyLen: 0,
+  isDuplicateFilter: "skipDuplicates"
 })
 // Triage and retrieve with sentiment data
 get_article_details({
@@ -284,7 +291,8 @@ search_articles({
   dateEnd: "2025-01-31",
   lang: "eng",
   articlesCount: 100,
-  articleBodyLen: 0
+  articleBodyLen: 0,
+  isDuplicateFilter: "skipDuplicates"
 })
 // Triage and retrieve relevant articles
 
@@ -303,14 +311,16 @@ search_articles({
   conceptUri: "<apple-uri>,<iphone-uri>",
   forceMaxDataTimeWindow: 7,
   articlesCount: 100,
-  articleBodyLen: 0
+  articleBodyLen: 0,
+  isDuplicateFilter: "skipDuplicates"
 })
 // Triage and retrieve
 
 ## 8. Topic Page Monitoring
 get_topic_page_articles({
   uri: "<topic-page-uri>",
-  detailLevel: "minimal"
+  articlesCount: 5,
+  articleBodyLen: 200
 })
 
 ## 9. Batch Article Retrieval
@@ -346,16 +356,15 @@ export const FIELDS_CONTENT = `# NewsAPI Fields Reference
 
 Default (no includeFields): title, body, date, source, URL
 
-## detailLevel Presets
+## Default Values
 
-| Level | Articles | Events | Body Length |
-|-------|----------|--------|-------------|
-| minimal | 5 | 5 | 200 chars |
-| standard | 10 | 10 | full |
-| extended (default) | 50 | 20 | 1000 chars |
-| full | 50 | 20 | full |
+| Parameter | Default | Max |
+|-----------|---------|-----|
+| articlesCount | 100 | 100 |
+| eventsCount | 50 | 50 |
+| articleBodyLen | 1000 | -1 (full text) |
 
-Explicit params (articlesCount, articleBodyLen) override presets.
+Set articleBodyLen: 0 to exclude body, -1 for full text.
 
 ## Language Codes (ISO 639-2)
 
@@ -470,7 +479,7 @@ export function registerResources(server: McpServer): void {
     "fields",
     "newsapi://fields",
     {
-      description: "Reference for includeFields, detailLevel, and other params",
+      description: "Reference for includeFields, defaults, and other params",
       mimeType: "text/plain",
     },
     async () => ({

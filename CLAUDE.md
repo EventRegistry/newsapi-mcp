@@ -39,15 +39,9 @@ MCP Client → McpServer (SDK) → ToolRegistry handler → apiPost() → NewsAP
 - **`src/formatters.ts`** — Converts JSON responses to compact text. All tools with formatters output human-readable numbered text.
 - **`src/tools/*.ts`** — Tool definitions as `ToolDef` objects with `name`, `description`, `schema` (JSON Schema), `handler`, and optional `formatter`.
 
-### Detail Level Presets
+### Default Values
 
-The `detailLevel` param on search tools controls defaults:
-- **minimal**: 5 results, 200-char bodies
-- **standard**: 10 results, full bodies
-- **extended** (default): 50 articles/20 events, 1000-char bodies
-- **full**: API maximums, full bodies
-
-Explicit params (e.g. `articlesCount`) override presets.
+Search tools use these defaults when params are not explicitly set: `articlesCount=100`, `eventsCount=50`, `articleBodyLen=1000`. Set `articleBodyLen: -1` for full text, `0` to exclude body.
 
 ### Testing Patterns
 

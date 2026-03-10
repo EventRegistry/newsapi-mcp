@@ -223,7 +223,7 @@ export const formatEventResults: ResponseFormatter = (data) => {
       typeof titleField === "string"
         ? titleField
         : (titleField as Record<string, unknown> | undefined)?.eng ||
-        "Untitled";
+          "Untitled";
     const summaryField = evt.summary;
     const summary =
       typeof summaryField === "string"
@@ -278,6 +278,19 @@ export const formatEventDetails: ResponseFormatter = (data) => {
   const entries = Object.entries(data as Record<string, unknown>);
   if (entries.length === 0) return "No event details found.";
 
+  // Detect non-info resultType responses (articles, articleUris, similarEvents)
+  // These don't have the { "<uri>": { info: {...} } } shape
+  const firstValue = entries[0]![1];
+  const isInfoShape =
+    firstValue &&
+    typeof firstValue === "object" &&
+    ("info" in (firstValue as Record<string, unknown>) ||
+      "title" in (firstValue as Record<string, unknown>) ||
+      "eventDate" in (firstValue as Record<string, unknown>));
+  if (!isInfoShape) {
+    return JSON.stringify(data, null, 2);
+  }
+
   const lines = entries.map(([, value], i) => {
     const obj = value as Record<string, unknown> | undefined;
     if (!obj || typeof obj !== "object") return `${i + 1}. (unavailable)`;
@@ -287,7 +300,7 @@ export const formatEventDetails: ResponseFormatter = (data) => {
       typeof titleField === "string"
         ? titleField
         : (titleField as Record<string, unknown> | undefined)?.eng ||
-        "Untitled";
+          "Untitled";
     const summaryField = evt.summary;
     const summary =
       typeof summaryField === "string"
@@ -305,8 +318,5 @@ export const formatUsageResults: ResponseFormatter = (data) => {
   const u = data as Record<string, unknown>;
   const used = (u.usedTokens as number) || 0;
   const available = (u.availableTokens as number) || 0;
-  return [
-    `Tokens used: ${used}`,
-    `Tokens available: ${available}`,
-  ].join("\n");
+  return [`Tokens used: ${used}`, `Tokens available: ${available}`].join("\n");
 };

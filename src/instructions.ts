@@ -15,9 +15,10 @@ Always resolve entity names before searching. Keyword search is a fallback.
 search_articles({
   conceptUri: "<uri>",
   articlesCount: 100,
-  articleBodyLen: 0
+  articleBodyLen: 0,
+  isDuplicateFilter: "skipDuplicates"
 })
-Fetch up to 100 articles with NO bodies — returns only titles, dates, sources, and URIs. Very token-efficient. Do NOT use detailLevel here; set articlesCount and articleBodyLen explicitly.
+Fetch up to 100 articles with NO bodies — returns only titles, dates, sources, and URIs. Very token-efficient. Use isDuplicateFilter: "skipDuplicates" to remove wire syndication noise.
 
 ### Step 3: Triage — assess relevance
 Read the titles from step 2. Select the articles relevant to the user's question by their URIs. If too few relevant results, paginate (articlesPage: 2) and repeat step 2.
@@ -33,6 +34,7 @@ Pass up to 100 URIs per call. If you have more than 100 relevant articles, batch
 - **search_events** → high-level overview, deduplicated event clusters, "what's happening with X"
 
 The same pattern applies to events: scan with search_events → triage → get_event_details with selected URIs.
+get_event_details also supports resultType: "articles", "articleUris", "similarEvents" (single URI only) in addition to the default "info" (supports multiple URIs).
 
 ### When to simplify
 - Quick lookups (known URI): go directly to get_article_details

@@ -810,6 +810,23 @@ describe("formatEventDetails", () => {
     expect(result).toContain("Concepts: Tesla [org]");
     expect(result).toContain("Categories: Business");
   });
+
+  it("falls back to JSON for non-info resultType response structure", () => {
+    // Non-info responses (articles, articleUris, similarEvents) have different shapes
+    const data = {
+      articles: {
+        results: [{ title: "Article in event", uri: "art-1" }],
+        page: 1,
+        pages: 1,
+      },
+    };
+
+    const result = formatEventDetails(data, {});
+
+    // Should fall back to JSON since this isn't the { uri: { info: ... } } shape
+    expect(result).toContain("articles");
+    expect(result).toContain("Article in event");
+  });
 });
 
 describe("formatUsageResults", () => {

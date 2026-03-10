@@ -1,11 +1,10 @@
 import { apiPost, parseArray } from "../client.js";
+import { ApiError } from "../types.js";
 import type { ToolDef } from "../types.js";
 import {
   contentFilterProps,
   buildFilterBody,
   includeFieldsProp,
-  detailLevelProp,
-  applyDetailLevel,
 } from "./articles.js";
 import {
   parseFieldGroups,
@@ -28,7 +27,6 @@ NOT THIS when you need full article text — use search_articles instead.`,
     properties: {
       ...contentFilterProps,
       ...includeFieldsProp,
-      ...detailLevelProp,
       minArticlesInEvent: {
         type: "integer",
         description: "Minimum number of articles in the event.",
@@ -53,7 +51,7 @@ NOT THIS when you need full article text — use search_articles instead.`,
       },
       eventsCount: {
         type: "integer",
-        description: "Events per page (max 50). Default set by detailLevel.",
+        description: "Events per page (max 50). Default: 50.",
         maximum: 50,
       },
       eventsSortBy: {
@@ -74,7 +72,7 @@ NOT THIS when you need full article text — use search_articles instead.`,
     },
   },
   handler: async (params) => {
-    applyDetailLevel(params);
+    params.eventsCount ??= 50;
     const groups = parseFieldGroups(params.includeFields as string | undefined);
 
     const body = buildFilterBody(params);
@@ -110,6 +108,7 @@ export const getEventDetails: ToolDef = {
 
 EXAMPLE: get_event_details({eventUri: "eng-4567890", includeFields: "concepts,categories"})
 EXAMPLE (multiple): get_event_details({eventUri: ["eng-4567890", "eng-1234567"]})
+EXAMPLE (articles): get_event_details({eventUri: "eng-4567890", resultType: "articles"})
 
 USE THIS WHEN you have event URIs from search results and need full details.
 NOT THIS for searching — use search_events with filters instead.`,
@@ -122,7 +121,13 @@ NOT THIS for searching — use search_events with filters instead.`,
           { type: "array", items: { type: "string" } },
         ],
         description:
-          "Event URI or array of URIs. Also accepts comma-separated string.",
+          'Event URI or array of URIs. Also accepts comma-separated string. Array/multiple URIs only supported with resultType "info" (default).',
+      },
+      resultType: {
+        type: "string",
+        description:
+          'Result type: "info" (default), "articles", "articleUris", "similarEvents". When resultType is "info", eventUri can be a string or array. For all other types, eventUri must be a single string.',
+        enum: ["info", "articles", "articleUris", "similarEvents"],
       },
       ...includeFieldsProp,
     },
@@ -130,18 +135,34 @@ NOT THIS for searching — use search_events with filters instead.`,
   },
   handler: async (params) => {
     const groups = parseFieldGroups(params.includeFields as string | undefined);
+    const resultType = (params.resultType as string) || "info";
 
-    const uris = parseArray(params.eventUri);
     const apiBody: Record<string, unknown> = {
-      eventUri: uris,
+      resultType,
       ...getEventIncludeParams(groups),
     };
 
+    if (resultType === "info") {
+      apiBody.eventUri = parseArray(params.eventUri);
+    } else {
+      const uris = parseArray(params.eventUri) ?? [];
+      if (uris.length > 1) {
+        throw new ApiError(
+          400,
+          `resultType "${resultType}" only supports a single eventUri, got ${uris.length}. Use resultType "info" for multiple URIs.`,
+        );
+      }
+      apiBody.eventUri = uris[0];
+    }
+
     const { data, tokenUsage } = await apiPost("/event/getEvent", apiBody);
-    return {
-      data: filterResponse(data, { resultType: "events", groups }),
-      tokenUsage,
-    };
+
+    const filtered =
+      resultType === "info"
+        ? filterResponse(data, { resultType: "events", groups })
+        : data;
+
+    return { data: filtered, tokenUsage };
   },
   formatter: formatEventDetails,
 };

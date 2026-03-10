@@ -182,7 +182,7 @@ export const responseControlProps: Record<string, unknown> = {
   articleBodyLen: {
     type: "integer",
     description:
-      "Article body length in characters. Default: -1 (full text). Use 0 to exclude body, or a positive number to truncate.",
+      "Article body length in characters. Default: 1000. Use -1 for full text, 0 to exclude body.",
   },
 };
 
@@ -195,44 +195,8 @@ export const includeFieldsProp: Record<string, unknown> = {
   },
 };
 
-/** Detail level presets for controlling response size. */
-export const detailLevelProp: Record<string, unknown> = {
-  detailLevel: {
-    type: "string",
-    description:
-      'Controls result count and body length. "minimal": 5 results, 200-char bodies. ' +
-      '"standard": 10 results, full bodies. ' +
-      '"extended" (default): 50 articles/20 events, 1000-char bodies. ' +
-      '"full": 50 articles/20 events, full bodies (may be truncated if too large). ' +
-      'Prefer "standard" or "extended" to ensure sufficient coverage.',
-    enum: ["minimal", "standard", "extended", "full"],
-  },
-};
-
-const DETAIL_PRESETS: Record<string, Record<string, number>> = {
-  minimal: { articlesCount: 5, eventsCount: 5, articleBodyLen: 200 },
-  standard: { articlesCount: 10, eventsCount: 10, articleBodyLen: -1 },
-  extended: { articlesCount: 50, eventsCount: 20, articleBodyLen: 1000 },
-  full: { articlesCount: 50, eventsCount: 20, articleBodyLen: -1 },
-};
-
-/** Apply detailLevel preset values for any params not explicitly set. */
-export function applyDetailLevel(params: Record<string, unknown>): void {
-  const level = (params.detailLevel as string) ?? "extended";
-  const preset = DETAIL_PRESETS[level] ?? DETAIL_PRESETS["extended"]!;
-  for (const [k, v] of Object.entries(preset)) {
-    if (params[k] === undefined) {
-      params[k] = v;
-    }
-  }
-}
-
 /** Params that are NOT API filter params and should be stripped before sending. */
-const LOCAL_PARAMS = new Set([
-  "includeFields",
-  "articleBodyLen",
-  "detailLevel",
-]);
+const LOCAL_PARAMS = new Set(["includeFields", "articleBodyLen"]);
 
 /** Build the request body from params, expanding array-typed fields. */
 export function buildFilterBody(
@@ -295,11 +259,10 @@ NOT THIS when you need high-level event summaries — use search_events instead.
     properties: {
       ...contentFilterProps,
       ...responseControlProps,
-      ...detailLevelProp,
       isDuplicateFilter: {
         type: "string",
         description:
-          'Duplicate handling: "keepAll" (default), "skipDuplicates", "keepOnlyDuplicates".',
+          'Duplicate handling: "keepAll" (default), "skipDuplicates" (recommended for scan steps — removes wire syndication noise), "keepOnlyDuplicates".',
         enum: ["keepAll", "skipDuplicates", "keepOnlyDuplicates"],
       },
       dataType: {
@@ -313,7 +276,7 @@ NOT THIS when you need high-level event summaries — use search_events instead.
       },
       articlesCount: {
         type: "integer",
-        description: "Articles per page (max 100). Default set by detailLevel.",
+        description: "Articles per page (max 100). Default: 100.",
         maximum: 100,
       },
       articlesSortBy: {
@@ -341,9 +304,9 @@ NOT THIS when you need high-level event summaries — use search_events instead.
     },
   },
   handler: async (params) => {
-    applyDetailLevel(params);
+    params.articlesCount ??= 100;
     const groups = parseFieldGroups(params.includeFields as string | undefined);
-    const bodyLen = (params.articleBodyLen as number) ?? -1;
+    const bodyLen = (params.articleBodyLen as number) ?? 1000;
 
     const body = buildFilterBody(params);
     body.resultType = "articles";
