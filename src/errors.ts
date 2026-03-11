@@ -61,18 +61,29 @@ const KNOWN_PARAM_VALUES: Record<string, string[]> = {
     "gle",
   ],
   articlesSortBy: [
-    "date",
-    "rel",
-    "sourceImportance",
-    "sourceAlexaGlobalRank",
-    "socialScore",
-    "facebookShares",
+    "date", // publishing date
+    "rel", // relevance to the query
+    "sourceImportance", // manually curated score of source importance - high value, high importance
+    "sourceImportanceRank", // reverse of sourceImportance
+    "sourceAlexaGlobalRank", // global rank of the news source
+    "sourceAlexaCountryRank", // country rank of the news source
+    "socialScore", // total shares on social media
+    "facebookShares", // shares on Facebook only
   ],
-  eventsSortBy: ["date", "rel", "size", "socialScore"],
+  eventsSortBy: [
+    "date", // by event date
+    "rel", // relevance to the query
+    "size", // number of articles in the event
+    "socialScore" // amount of shares in social media
+  ],
   isDuplicateFilter: ["keepAll", "skipDuplicates", "keepOnlyDuplicates"],
   keywordLoc: ["body", "title", "title,body"],
   keywordOper: ["and", "or"],
-  dataType: ["news", "pr", "blog"],
+  dataType: [
+    "news", // news content
+    "pr", // press releases
+    "blog" // blogs
+  ],
 };
 
 /** Try to extract a param name from the API error body. */

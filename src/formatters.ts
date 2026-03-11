@@ -183,6 +183,7 @@ export const formatArticleResults: ResponseFormatter = (data) => {
   if (!results?.length) return "No articles found.";
 
   const lines = results.map((art, i) => {
+    const title = art.title || "Untitled";
     const date =
       (art.dateTimePub as string | undefined)?.split("T")[0] || "Unknown";
     const source =
@@ -190,7 +191,7 @@ export const formatArticleResults: ResponseFormatter = (data) => {
     const body = (art.body as string) || "";
     const url = art.url ? `\n   URL: ${art.url}` : "";
     const uri = art.uri ? `\n   URI: ${art.uri}` : "";
-    return `${i + 1}. [${date}] ${art.title || "Untitled"} - ${source}${url}${uri}${formatArticleExtras(art)}\n\n${body}`;
+    return `${i + 1}. [${date}] ${title} - ${source}${url}${uri}${formatArticleExtras(art)}\n\n${body}`;
   });
 
   // Pagination footer
@@ -223,14 +224,16 @@ export const formatEventResults: ResponseFormatter = (data) => {
       typeof titleField === "string"
         ? titleField
         : (titleField as Record<string, unknown> | undefined)?.eng ||
-          "Untitled";
+        "Untitled";
     const summaryField = evt.summary;
     const summary =
       typeof summaryField === "string"
         ? summaryField
         : (summaryField as Record<string, unknown> | undefined)?.eng || "";
+    const date = evt.eventDate || "Unknown";
     const count = (evt.totalArticleCount as number) || 0;
-    return `${i + 1}. [${evt.eventDate || "Unknown"}] ${title} (${count} articles)\n   URI: ${evt.uri || ""}${formatEventExtras(evt)}\n\n${summary}`;
+    const uri = evt.uri ? `\n   URI: ${evt.uri}` : "";
+    return `${i + 1}. [${date}] ${title} (${count} articles)${uri}${formatEventExtras(evt)}\n\n${summary}`;
   });
 
   // Pagination footer
@@ -263,10 +266,11 @@ export const formatArticleDetails: ResponseFormatter = (data) => {
       (art.dateTimePub as string | undefined)?.split("T")[0] || "Unknown";
     const source =
       (art.source as Record<string, unknown> | undefined)?.title || "Unknown";
+    const title = art.title || "Untitled";
     const body = (art.body as string) || "";
     const url = art.url ? `\n   URL: ${art.url}` : "";
     const uri = art.uri ? `\n   URI: ${art.uri}` : "";
-    return `${i + 1}. [${date}] ${art.title || "Untitled"} - ${source}${url}${uri}${formatArticleExtras(art)}\n\n${body}`;
+    return `${i + 1}. [${date}] ${title} - ${source}${url}${uri}${formatArticleExtras(art)}\n\n${body}`;
   });
 
   return lines.join("\n\n---\n\n");
@@ -300,14 +304,16 @@ export const formatEventDetails: ResponseFormatter = (data) => {
       typeof titleField === "string"
         ? titleField
         : (titleField as Record<string, unknown> | undefined)?.eng ||
-          "Untitled";
+        "Untitled";
     const summaryField = evt.summary;
     const summary =
       typeof summaryField === "string"
         ? summaryField
         : (summaryField as Record<string, unknown> | undefined)?.eng || "";
     const count = (evt.totalArticleCount as number) || 0;
-    return `${i + 1}. [${evt.eventDate || "Unknown"}] ${title} (${count} articles)\n   URI: ${evt.uri || ""}${formatEventExtras(evt)}\n\n${summary}`;
+    const date = evt.eventDate || "Unknown";
+    const uri = evt.uri ? `\n   URI: ${evt.uri}` : "";
+    return `${i + 1}. [${date}] ${title} (${count} articles)${uri}${formatEventExtras(evt)}\n\n${summary}`;
   });
 
   return lines.join("\n\n---\n\n");

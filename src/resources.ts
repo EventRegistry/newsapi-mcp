@@ -199,7 +199,7 @@ Each tool response includes a footer with token usage for that request (e.g., "T
 
 **NewsAPI usage:** {N} requests | {T} tokens consumed
 
-Example: **NewsAPI usage:** 4 requests | 6 tokens consumed
+Example: **NewsAPI usage:** 4 requests | 2 tokens consumed
 
 Use get_api_usage only when the user explicitly asks about quota or plan details.`;
 
@@ -408,14 +408,18 @@ Use comma-separated for multiple: lang: "eng,deu,fra"
 - date: Publication date (default)
 - rel: Relevance to query
 - sourceImportance: Source authority rank
+- sourceImportanceRank: Reverse of sourceImportance
+- sourceAlexaGlobalRank: Global rank of the news source
+- sourceAlexaCountryRank: Country rank of the news source
 - socialScore: Social media engagement
+- facebookShares: Facebook shares
   ⚠ Tip: socialScore may surface low-authority viral sources. Combine with startSourceRankPercentile/endSourceRankPercentile to ensure quality (e.g., endSourceRankPercentile: 30 for top 30% sources).
 
 ### eventsSortBy
 - date: Event date (default)
-- rel: Relevance to query
-- size: Number of articles in cluster
-- socialScore: Social engagement
+- rel: Relevance to the query
+- size: Number of articles in the event
+- socialScore: Amount of shares in social media
 
 ## Source Rank Percentiles
 

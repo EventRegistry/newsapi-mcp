@@ -126,8 +126,8 @@ NOT THIS for searching — use search_events with filters instead.`,
       resultType: {
         type: "string",
         description:
-          'Result type: "info" (default), "articles", "articleUris", "similarEvents". When resultType is "info", eventUri can be a string or array. For all other types, eventUri must be a single string.',
-        enum: ["info", "articles", "articleUris", "similarEvents"],
+          'Result type: "info" (default), "articles", "articleUris", "keywordAggr", "sourceExAggr", "dateMentionAggr", "articleTrend", "similarEvents". When resultType is "info", eventUri can be a string or array. For all other types, eventUri must be a single string.',
+        enum: ["info", "articles", "articleUris", "keywordAggr", "sourceExAggr", "dateMentionAggr", "articleTrend", "similarEvents"],
       },
       ...includeFieldsProp,
     },
