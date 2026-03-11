@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.3.0] - 2026-03-11
+
+### Features
+
+- **Missing sort and result type options** — Added `sourceImportanceRank` and `sourceAlexaCountryRank` to `articlesSortBy`, and `keywordAggr`, `sourceExAggr`, `dateMentionAggr`, `articleTrend` to `get_event_details` resultType
+- **Scan→triage→retrieve workflow** — Server instructions and guide resource restructured around token-efficient article retrieval pattern with title-only scanning, relevance triage, and selective detail fetching
+
+### Fixes
+
+- **Empty URI in formatter output** — Articles/events missing a URI no longer produce blank lines in formatted results
+
+### Docs
+
+- **Usage tracking requirements** — Instructions now require reporting request count and tokens consumed (not remaining quota)
+- **`articleBodyLen` default clarified** — Description updated to reflect the actual default of 1000 characters
+
 ## [1.2.0] - 2026-03-04
 
 ### Features
