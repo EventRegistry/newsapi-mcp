@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.3.1] - 2026-03-18
+
+### Features
+
+- **News research skill** — Added Claude Code skill (`skill/SKILL.md`) with 10 report templates (adverse media, company intel, economic, geopolitical, investing, political, research, sentiment, supply chain, findings) for structured news analysis workflows
+
+### Improvements
+
+- **Streamlined server instructions** — Simplified scan→triage→retrieve workflow descriptions, removed verbose code examples and redundant guidance from both instructions and guide resource
+- **Better event search descriptions** — `search_events` description now explains deduplication benefit and sorting/filtering tips; `get_event_details` resultType enum reformatted for readability
+
 ## [1.3.0] - 2026-03-11
 
 ### Features
