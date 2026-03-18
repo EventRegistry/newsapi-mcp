@@ -158,6 +158,19 @@ Pull articles or events from saved [Topic Pages](https://newsapi.ai) on NewsAPI.
 | `get_topic_page_events` | Get events from a pre-configured topic page on NewsAPI.ai. |
 | `get_api_usage` | Check token usage and plan details for the current API key. |
 
+## News Research Skill
+
+The `skill/` directory contains a `/news` slash command for [Claude Code](https://code.claude.com/docs/en/skills)
+(CLI and Desktop) that orchestrates multi-step research workflows on top of the MCP tools.
+It automates the suggest → scan → triage → retrieve pattern and formats findings into structured reports.
+
+```
+/news "What's happening with AI regulation?"
+```
+
+To install, copy the `skill/` directory into your project's `.claude/skills/` directory. See the
+[skills documentation](https://code.claude.com/docs/en/skills) for details.
+
 ## Links
 
 - [npm package](https://www.npmjs.com/package/newsapi-mcp)
