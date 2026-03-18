@@ -59,6 +59,7 @@ The same pattern applies to events: scan with `search_events` → triage → `ge
 - If a URL is missing, cite by title and source name without a link: *"Title" (Source Name)*
 - **No separate Sources section** — all attribution lives inline
 - **Self-check before presenting:** scan your output — if any factual sentence lacks a `[Source](URL)` link, add one before responding
+- **URL availability:** Article URLs come from `get_article_details` responses (the `url` field). For event-based patterns, you can also get article URLs directly from events: `get_event_details({eventUri: "<uri>", resultType: "articles", articlesCount: 10, articlesArticleBodyLen: 0})` returns articles (with URLs) for that event — no bodies needed, just URLs for inline citations. Note: `resultType: "articles"` only works with a single `eventUri`, not an array.
 
 ## Report Structure
 
@@ -106,7 +107,9 @@ Use when the user wants a high-level summary of what's happening with a topic.
 2. `search_events({conceptUri: "<uri>", forceMaxDataTimeWindow: 31, eventsCount: 50, eventsSortBy: "date"})` — scan events
 3. Triage — select relevant event URIs from titles/summaries
 4. `get_event_details({eventUri: ["<uri1>", "<uri2>", ...], includeFields: "concepts,categories"})` — retrieve details
-5. Present findings using the **findings template**
+5. For each key event, fetch article URLs: `get_event_details({eventUri: "<uri>", resultType: "articles", articlesCount: 10, articlesArticleBodyLen: 0})` — returns articles with URLs directly, no need for `search_articles` or `get_article_details`
+6. Use the article URLs from step 5 to provide inline citation links for each event's claims
+7. Present findings using the **findings template**
 
 ### 2. Article Deep Dive
 
@@ -166,8 +169,9 @@ Use when the question involves policy, legislation, elections, or geopolitics.
 2. `search_events({conceptUri: "<uri>", forceMaxDataTimeWindow: 31, eventsCount: 50, eventsSortBy: "date"})` — scan events for political developments
 3. Triage — select relevant events
 4. `get_event_details({eventUri: ["<uri1>", "<uri2>", ...], includeFields: "concepts,categories"})` — retrieve details
-5. Optionally `search_articles({conceptUri: "<uri>", articlesCount: 100, articleBodyLen: 0, isDuplicateFilter: "skipDuplicates", keyword: "legislation, regulation, policy, vote, amendment, coalition, campaign, reform, mandate, opposition", keywordOper: "or"})` for deeper coverage on key developments. Translate keywords to match the language of the task.
-6. Present findings using the **political template**
+5. For each key event, fetch article URLs: `get_event_details({eventUri: "<uri>", resultType: "articles", articlesCount: 10, articlesArticleBodyLen: 0})` — returns articles with URLs directly for inline citations
+6. Optionally, for deeper coverage beyond events: `search_articles({conceptUri: "<uri>", articlesCount: 100, articleBodyLen: 0, isDuplicateFilter: "skipDuplicates", keyword: "legislation, regulation, policy, vote, amendment, coalition, campaign, reform, mandate, opposition", keywordOper: "or"})` — translate keywords to match the language of the task. Triage and `get_article_details` for selected URIs.
+7. Present findings using the **political template**
 
 ### 8. Investing Report
 
