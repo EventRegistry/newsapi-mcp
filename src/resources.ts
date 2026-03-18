@@ -11,63 +11,12 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
 export const GUIDE_CONTENT = `# NewsAPI MCP Server Guide
 
-This server provides access to Event Registry's global news database covering 150,000+ sources in 100+ languages.
+This server provides access to Event Registry's global news database covering 150,000+ sources in 100+ languages. The core suggest → scan → triage → retrieve workflow is described in the server instructions. This guide covers tool details and advanced patterns.
 
 ## Core Concepts
 
 ### Entity URIs
 NewsAPI uses URIs to identify entities precisely. Raw text searches can be ambiguous, so always resolve names to URIs first using the suggest tool.
-
-### The suggest → scan → triage → retrieve Workflow
-This is the most important pattern. It separates cheap discovery from expensive retrieval.
-
-**Step 1: Suggest** — resolve entity names to URIs:
-suggest({type: "concepts", prefix: "Apple Inc"})
-→ returns URI: "http://en.wikipedia.org/wiki/Apple_Inc."
-
-**Step 2: Scan** — fetch titles only (no bodies):
-search_articles({
-  conceptUri: "http://en.wikipedia.org/wiki/Apple_Inc.",
-  articlesCount: 100,
-  articleBodyLen: 0,
-  isDuplicateFilter: "skipDuplicates"
-})
-This returns up to 100 article titles, dates, sources, and URIs with minimal token cost. Use isDuplicateFilter: "skipDuplicates" to eliminate wire syndication duplicates that clutter triage.
-
-**Step 3: Triage** — read the titles and select relevant articles by URI. If too few results are relevant, paginate with articlesPage: 2 and scan again.
-
-**Step 4: Retrieve** — get full details for selected articles:
-get_article_details({
-  articleUri: ["<uri1>", "<uri2>", "<uri3>"]
-})
-Pass up to 100 URIs per call. For more than 100 articles, batch into multiple calls. Add includeFields only for data you need.
-
-The same pattern works for events: scan with search_events (articleBodyLen: 0) → triage → get_event_details with selected URIs.
-
-get_event_details supports a resultType param: "info" (default, supports multiple URIs), "articles", "articleUris", "similarEvents" (single URI only).
-
-### Suggest Types Explained
-
-**concepts** (most common)
-Use for people, organizations, locations, products, or any named entity.
-Examples: "Elon Musk", "Tesla", "Paris", "iPhone", "COVID-19"
-
-**categories**
-Use for news topic categories defined by DMOZ/IPTC taxonomy.
-Examples: "business", "technology", "sports", "politics"
-Returns URIs like "dmoz/Business/Investing" or "news/Technology"
-
-**sources**
-Use for specific news outlets or publishers.
-Examples: "Reuters", "BBC", "New York Times", "TechCrunch"
-
-**locations**
-Use when you specifically need geographic filtering:
-- locationUri: filter by locations mentioned in articles
-- sourceLocationUri: filter by where the news source is based
-
-**authors**
-Use for journalist bylines when tracking specific reporters.
 
 ## Search Tools
 
@@ -78,12 +27,6 @@ Primary tool for finding news articles. Supports filtering by:
 - dateStart, dateEnd (YYYY-MM-DD format)
 - lang (ISO codes: "eng", "deu", "fra", "slv", etc.)
 - sentiment range (minSentiment, maxSentiment: -1 to 1)
-
-**Keyword matching**:
-- Each keyword value is matched as an exact phrase
-- Comma-separate individual terms for word-level matching: keyword: "SaaS, acquisition, merger" (NOT "SaaS acquisition merger")
-- Use keywordOper for AND/OR logic between comma-separated terms
-- keywordLoc: "title,body" uses OR (matches in either location)
 
 ### search_events
 Events are clusters of related articles about the same real-world happening. Each event groups all articles covering the same story into one entry with a summary, article count, and date.
@@ -99,13 +42,6 @@ Supports the same filters as search_articles:
 - keyword, dateStart, dateEnd, lang, sentiment range
 - eventsSortBy: "date", "rel", "size" (article count), "socialScore"
 - minArticlesInEvent / maxArticlesInEvent to filter by event significance
-
-Example:
-search_events({
-  conceptUri: "<uri>",
-  forceMaxDataTimeWindow: 31,
-  eventsSortBy: "size"
-})
 
 ### Choosing Between Articles and Events
 - **search_articles**: when you need full article text, specific source coverage, or individual stories
@@ -180,7 +116,7 @@ Check parameter names and values. Use suggest to get valid URIs.
 Daily quota exceeded. Wait until next day or reduce query frequency.
 
 ### Too many simultaneous requests (503)
-Max 5 concurrent requests allowed. Make requests sequentially — wait for each response before sending the next.
+Max 5 concurrent requests allowed. Always make requests sequentially — wait for each response before sending the next.
 
 ### No results
 - Try a broader concept (e.g., "Olympic Games" instead of "2026 Winter Olympics")
@@ -190,18 +126,7 @@ Max 5 concurrent requests allowed. Make requests sequentially — wait for each 
 - Verify URIs are correct via suggest
 
 ## Usage Tracking
-Each tool response includes a footer with token usage for that request (e.g., "Tokens used: 5"). The suggest tool is free and costs 0 tokens — its footer will show "Tokens used: 0".
-
-**You MUST track and report usage at the end of every response:**
-- Count every NewsAPI tool call you make (including suggest calls)
-- Read the exact "Tokens used" number from each response footer — do not estimate or count requests as tokens
-- Include a usage summary in this exact format:
-
-**NewsAPI usage:** {N} requests | {T} tokens consumed
-
-Example: **NewsAPI usage:** 4 requests | 2 tokens consumed
-
-Use get_api_usage only when the user explicitly asks about quota or plan details.`;
+Each response footer shows: "Tokens used: N | Remaining: M" (or "Tokens used: 0 (cached)" for cached results). Use get_api_usage for full quota details.`;
 
 // ============================================================================
 // Examples Resource (~400 words)

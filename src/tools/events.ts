@@ -15,12 +15,12 @@ import { formatEventResults, formatEventDetails } from "../formatters.js";
 
 export const searchEvents: ToolDef = {
   name: "search_events",
-  description: `Search events (clusters of related articles about the same real-world happening). Returns up to 50 events per call.
+  description: `Search events (clusters of related articles about the same real-world happening). Returns up to 50 events per call. Events deduplicate coverage — one entry per story instead of per article.
 
 WORKFLOW: Use suggest tool first to resolve names to URIs, then search with conceptUri.
 EXAMPLE: search_events({conceptUri: "<uri>", dateStart: "2025-01-01"})
 
-USE THIS WHEN you need a high-level overview of what happened (event summaries, article counts).
+USE THIS WHEN you need a high-level overview of what happened (event summaries, article counts). Use eventsSortBy: "size" for the biggest stories, or minArticlesInEvent to filter by significance.
 NOT THIS when you need full article text — use search_articles instead.`,
   inputSchema: {
     type: "object",
@@ -127,7 +127,16 @@ NOT THIS for searching — use search_events with filters instead.`,
         type: "string",
         description:
           'Result type: "info" (default), "articles", "articleUris", "keywordAggr", "sourceExAggr", "dateMentionAggr", "articleTrend", "similarEvents". When resultType is "info", eventUri can be a string or array. For all other types, eventUri must be a single string.',
-        enum: ["info", "articles", "articleUris", "keywordAggr", "sourceExAggr", "dateMentionAggr", "articleTrend", "similarEvents"],
+        enum: [
+          "info",
+          "articles",
+          "articleUris",
+          "keywordAggr",
+          "sourceExAggr",
+          "dateMentionAggr",
+          "articleTrend",
+          "similarEvents",
+        ],
       },
       ...includeFieldsProp,
     },
