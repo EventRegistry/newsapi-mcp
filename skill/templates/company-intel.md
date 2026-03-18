@@ -6,7 +6,7 @@
 
 ## Summary
 
-[3-5 sentences synthesizing the intelligence picture with inline citations.]
+[3-5 sentences synthesizing the intelligence picture with inline links, e.g. "Company acquired X for $2B ([Reuters](URL)) while expanding into Y market ([Bloomberg](URL))."]
 
 ## Corporate Activity
 

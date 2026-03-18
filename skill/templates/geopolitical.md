@@ -5,7 +5,7 @@
 
 ## Summary
 
-[3-5 sentences synthesizing the geopolitical risk landscape with inline citations.]
+[3-5 sentences synthesizing the geopolitical risk landscape with inline links, e.g. "Tensions escalated after X ([Reuters](URL)), prompting sanctions from Y ([AP](URL))."]
 
 ## Political Stability
 

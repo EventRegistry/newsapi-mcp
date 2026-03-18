@@ -50,11 +50,15 @@ The same pattern applies to events: scan with `search_events` → triage → `ge
 
 ## Citation Format
 
+**CRITICAL: Every factual claim MUST have an inline Markdown link to its source.** This is the single most important formatting rule. A report without clickable source links is incomplete.
+
 - Embed **inline Markdown links** after every factual claim: `[Reuters](URL)`
+- The URL comes from the article's `url` field in the tool response — never fabricate URLs
 - Reuse the same link when citing the same article multiple times
 - If the same source has multiple articles, disambiguate: `[Reuters 1](URL1)` `[Reuters 2](URL2)`
 - If a URL is missing, cite by title and source name without a link: *"Title" (Source Name)*
 - **No separate Sources section** — all attribution lives inline
+- **Self-check before presenting:** scan your output — if any factual sentence lacks a `[Source](URL)` link, add one before responding
 
 ## Report Structure
 

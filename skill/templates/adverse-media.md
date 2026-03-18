@@ -6,7 +6,7 @@
 
 ## Summary
 
-[3-5 sentences synthesizing the adverse media landscape with inline citations. Clearly distinguish allegations from convictions.]
+[3-5 sentences synthesizing the adverse media landscape with inline links, e.g. "Entity faced fraud allegations in 2024 ([Reuters](URL)) and was fined by regulators ([FT](URL))." Clearly distinguish allegations from convictions.]
 
 ## Adverse Findings
 

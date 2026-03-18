@@ -6,7 +6,7 @@
 
 ## Executive Summary
 
-[3-5 sentences synthesizing the answer to the research question with inline citations. Designed for readers who stop here.]
+[3-5 sentences synthesizing the answer to the research question with inline links, e.g. "Evidence suggests X ([Reuters](URL)), though critics argue Y ([Guardian](URL))." Designed for readers who stop here.]
 
 ## Key Takeaways
 

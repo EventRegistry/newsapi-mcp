@@ -5,7 +5,7 @@
 
 ## Summary
 
-[3-5 sentences synthesizing the supply chain risk picture with inline citations.]
+[3-5 sentences synthesizing the supply chain risk picture with inline links, e.g. "Port closures disrupted X shipments ([Reuters](URL)) while manufacturers scrambled for alternatives ([Bloomberg](URL))."]
 
 ## Active Disruptions
 
