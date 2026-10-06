@@ -1,5 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { parseArray, initClient, apiPost } from "../src/client.js";
+import {
+  parseArray,
+  initClient,
+  apiPost,
+  withAccessToken,
+} from "../src/client.js";
 import { ApiError } from "../src/types.js";
 
 describe("parseArray", () => {
@@ -251,5 +256,64 @@ describe("apiPost", () => {
 
     const result = await apiPost("/test", {});
     expect(result.tokenUsage).toBeUndefined();
+  });
+});
+
+describe("apiPost with an access token", () => {
+  let fetchSpy: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    fetchSpy = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({}),
+      headers: { get: () => null },
+    });
+    vi.stubGlobal("fetch", fetchSpy);
+    initClient("test-api-key");
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("sends the token as a bearer header and omits apiKey", async () => {
+    await withAccessToken("tok-1", () => apiPost("/test", { foo: "bar" }));
+
+    const init = fetchSpy.mock.calls[0][1];
+    expect(init.headers.Authorization).toBe("Bearer tok-1");
+    const body = JSON.parse(init.body);
+    expect(body).not.toHaveProperty("apiKey");
+    expect(body.foo).toBe("bar");
+  });
+
+  it("uses apiKey and no bearer header outside a token context", async () => {
+    await withAccessToken("tok-1", async () => {});
+    await apiPost("/test", {});
+
+    const init = fetchSpy.mock.calls[0][1];
+    expect(init.headers).not.toHaveProperty("Authorization");
+    expect(JSON.parse(init.body).apiKey).toBe("test-api-key");
+  });
+
+  it("keeps concurrent token contexts apart", async () => {
+    let release!: () => void;
+    const gate = new Promise<void>((r) => (release = r));
+    const a = withAccessToken("tok-a", async () => {
+      await gate;
+      return apiPost("/a", {});
+    });
+    const b = withAccessToken("tok-b", async () => {
+      release();
+      return apiPost("/b", {});
+    });
+    await Promise.all([a, b]);
+
+    const sent = Object.fromEntries(
+      fetchSpy.mock.calls.map(([url, init]) => [
+        url.split("/").pop(),
+        init.headers.Authorization,
+      ]),
+    );
+    expect(sent).toEqual({ a: "Bearer tok-a", b: "Bearer tok-b" });
   });
 });

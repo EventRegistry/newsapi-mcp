@@ -1,31 +1,39 @@
 #!/usr/bin/env node
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { initClient } from "./client.js";
-import { serverInstructions } from "./instructions.js";
-import { registerResources } from "./resources.js";
-import { allTools, ToolRegistry } from "./tools/index.js";
-import { VERSION } from "./version.js";
+import { initClient, initLogin } from "./client.js";
+import { createSession } from "./oauth.js";
+import { createServer } from "./server.js";
 
-const apiKey = process.env.NEWSAPI_KEY;
-if (!apiKey) {
-  console.error("NEWSAPI_KEY environment variable is required");
-  process.exit(1);
-}
-initClient(apiKey);
+const USAGE = `Usage: newsapi-mcp [login|logout]
 
-const server = new McpServer(
-  { name: "newsapi", version: VERSION },
-  { instructions: serverInstructions },
-);
-
-const registry = new ToolRegistry(allTools);
-registry.attach(server);
-registerResources(server);
+  (no command)  Run the MCP server over stdio. Uses NEWSAPI_KEY when set,
+                otherwise your Event Registry login (browser opens on first use).
+  login         Log in to Event Registry in the browser and store the tokens.
+  logout        Forget the stored login.`;
 
 async function main() {
-  const transport = new StdioServerTransport();
-  await server.connect(transport);
+  const [command] = process.argv.slice(2);
+  if (command === "login") {
+    await createSession().login();
+    console.error("Logged in to Event Registry.");
+    return;
+  }
+  if (command === "logout") {
+    await createSession().logout();
+    console.error("Logged out of Event Registry.");
+    return;
+  }
+  if (command !== undefined) {
+    console.error(USAGE);
+    process.exit(command === "--help" || command === "-h" ? 0 : 1);
+  }
+
+  const apiKey = process.env.NEWSAPI_KEY;
+  if (apiKey) initClient(apiKey);
+  else initLogin(createSession());
+
+  const server = createServer();
+  await server.connect(new StdioServerTransport());
 }
 
 main().catch((err) => {

@@ -141,10 +141,9 @@ export class ToolRegistry {
           }
 
           if (tokenUsage) {
-            text += tokenUsage.cached
-              ? "\n\n---\nTokens used: 0 (cached)"
-              : `\n\n---\nTokens used: ${tokenUsage.reqTokens}` +
-                ` | Remaining: ${tokenUsage.remaining}`;
+            text +=
+              `\n\n---\nTokens used: ${tokenUsage.reqTokens}` +
+              ` | Remaining: ${tokenUsage.remaining}`;
           }
 
           return {

@@ -36,11 +36,7 @@ import {
   getTopicPageArticles,
   getTopicPageEvents,
 } from "../src/tools/topic-pages.js";
-import {
-  suggest,
-  clearSuggestCache,
-  getSuggestCacheSize,
-} from "../src/tools/suggest.js";
+import { suggest } from "../src/tools/suggest.js";
 import { getApiUsage } from "../src/tools/usage.js";
 
 const mockedApiPost = vi.mocked(apiPost);
@@ -424,10 +420,6 @@ describe("suggest", () => {
     authors: "/suggestAuthorsFast",
   };
 
-  beforeEach(() => {
-    clearSuggestCache();
-  });
-
   it("requires type and prefix params", () => {
     expect(suggest.inputSchema.required).toEqual(["type", "prefix"]);
   });
@@ -452,74 +444,10 @@ describe("suggest", () => {
     });
   });
 
-  describe("caching", () => {
-    it("returns cached result on second call without API request", async () => {
-      // First call - hits API
-      await suggest.handler({ type: "concepts", prefix: "Tesla" });
-      expect(mockedApiPost).toHaveBeenCalledTimes(1);
-
-      // Second call - should use cache
-      await suggest.handler({ type: "concepts", prefix: "Tesla" });
-      expect(mockedApiPost).toHaveBeenCalledTimes(1); // Still 1, not 2
-    });
-
-    it("caches by type/prefix/lang combination", async () => {
-      await suggest.handler({ type: "concepts", prefix: "Tesla" });
-      await suggest.handler({ type: "concepts", prefix: "Tesla", lang: "deu" });
-      await suggest.handler({ type: "sources", prefix: "Tesla" });
-
-      // All three are different cache keys
-      expect(mockedApiPost).toHaveBeenCalledTimes(3);
-    });
-
-    it("cache key is case-insensitive for prefix", async () => {
-      await suggest.handler({ type: "concepts", prefix: "Tesla" });
-      await suggest.handler({ type: "concepts", prefix: "tesla" });
-      await suggest.handler({ type: "concepts", prefix: "TESLA" });
-
-      // All should hit same cache entry
-      expect(mockedApiPost).toHaveBeenCalledTimes(1);
-    });
-
-    it("returns same data from cache as from API", async () => {
-      const mockData = [{ uri: "test-uri", label: "Test" }];
-      mockedApiPost.mockResolvedValueOnce({ data: mockData });
-
-      const first = await suggest.handler({ type: "concepts", prefix: "Test" });
-      const second = await suggest.handler({
-        type: "concepts",
-        prefix: "Test",
-      });
-
-      expect(first.data).toEqual(mockData);
-      expect(second.data).toEqual(mockData);
-    });
-
-    it("tracks cache size correctly", async () => {
-      expect(getSuggestCacheSize()).toBe(0);
-
-      await suggest.handler({ type: "concepts", prefix: "One" });
-      expect(getSuggestCacheSize()).toBe(1);
-
-      await suggest.handler({ type: "concepts", prefix: "Two" });
-      expect(getSuggestCacheSize()).toBe(2);
-
-      // Same key, no size increase
-      await suggest.handler({ type: "concepts", prefix: "One" });
-      expect(getSuggestCacheSize()).toBe(2);
-    });
-
-    it("clearSuggestCache removes all entries", async () => {
-      await suggest.handler({ type: "concepts", prefix: "Test" });
-      expect(getSuggestCacheSize()).toBe(1);
-
-      clearSuggestCache();
-      expect(getSuggestCacheSize()).toBe(0);
-
-      // After clear, API should be called again
-      await suggest.handler({ type: "concepts", prefix: "Test" });
-      expect(mockedApiPost).toHaveBeenCalledTimes(2);
-    });
+  it("calls the API on every call", async () => {
+    await suggest.handler({ type: "concepts", prefix: "Tesla" });
+    await suggest.handler({ type: "concepts", prefix: "Tesla" });
+    expect(mockedApiPost).toHaveBeenCalledTimes(2);
   });
 });
 
