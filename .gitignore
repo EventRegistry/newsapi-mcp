@@ -146,5 +146,6 @@ vite.config.ts.timestamp-*
 docs/*
 !docs/adr/
 !docs/agents/
+!docs/deployment.md
 reports/
 tests_use_cases/
