@@ -27,7 +27,8 @@
   "homepage": "https://github.com/EventRegistry/newsapi-mcp#readme",
   "scripts": {
     "build": "tsc",
-    "build:bundle": "rm -rf dist && esbuild src/index.ts --bundle --platform=node --target=node22 --format=esm --outfile=dist/index.js",
+    "build:bundle": "rm -rf dist && esbuild src/index.ts --bundle --external:@napi-rs/keyring --platform=node --target=node22 --format=esm --outfile=dist/index.js",
+    "build:http": "esbuild src/http.ts --bundle --external:@napi-rs/keyring --platform=node --target=node22 --format=esm --outfile=dist/http.js \"--banner:js=import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);\"",
     "start": "node --env-file=.env dist/index.js",
     "dev": "tsx --env-file=.env src/index.ts",
     "test": "vitest run",
@@ -42,12 +43,18 @@
   "devDependencies": {
     "@eslint/js": "^9.39.2",
     "@modelcontextprotocol/sdk": "^1.26.0",
+    "@types/express": "^5.0.6",
     "@types/node": "^22.0.0",
     "esbuild": "^0.27.2",
     "eslint": "^9.39.2",
+    "express": "^5.2.1",
+    "jose": "^6.2.12",
     "tsx": "^4.19.0",
     "typescript": "^5.7.0",
     "typescript-eslint": "^8.54.0",
     "vitest": "^4.0.18"
+  },
+  "dependencies": {
+    "@napi-rs/keyring": "^2.1.0"
   }
 }

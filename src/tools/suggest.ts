@@ -1,4 +1,3 @@
-import { LRUCache } from "../cache.js";
 import { apiPost } from "../client.js";
 import type { ResponseFormatter, ToolDef } from "../types.js";
 import {
@@ -32,22 +31,6 @@ const SUGGEST_FORMATTERS: Record<string, ResponseFormatter> = {
   locations: formatSuggestLocations,
   authors: formatSuggestAuthors,
 };
-
-// Module-level cache: 1000 entries, 24h TTL
-const suggestCache = new LRUCache<unknown>(1000, 24);
-
-function cacheKey(type: string, prefix: string, lang: string): string {
-  return `${type}:${prefix.toLowerCase()}:${lang}`;
-}
-
-// Exported for testing
-export function clearSuggestCache(): void {
-  suggestCache.clear();
-}
-
-export function getSuggestCacheSize(): number {
-  return suggestCache.size;
-}
 
 export const suggest: ToolDef = {
   name: "suggest",
@@ -108,17 +91,7 @@ TIPS:
       );
     }
 
-    const key = cacheKey(type, prefix, lang);
-    const cached = suggestCache.get(key);
-    if (cached !== null) {
-      return {
-        data: cached,
-        tokenUsage: { reqTokens: 0, remaining: 0, cached: true },
-      };
-    }
-
     const { data, tokenUsage } = await apiPost(path, { prefix, lang });
-    suggestCache.set(key, data);
     return { data, tokenUsage: tokenUsage ?? { reqTokens: 0, remaining: 0 } };
   },
   formatter: (data, params) => {

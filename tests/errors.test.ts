@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { ApiError, classifyError } from "../src/types.js";
 import { formatErrorResponse, formatUnknownError } from "../src/errors.js";
 import { validateFieldGroups } from "../src/response-filter.js";
+import { withAccessToken } from "../src/client.js";
 
 // ---------- classifyError ----------
 
@@ -77,6 +78,62 @@ describe("ApiError", () => {
     const err = new ApiError(403, body);
     expect(err.status).toBe(403);
     expect(err.body).toBe(body);
+  });
+});
+
+// ---------- formatErrorResponse: hosted server login ----------
+
+describe("formatErrorResponse with an access token", () => {
+  const unlinked = new ApiError(401, {
+    error: "invalid_token",
+    error_description: "No Event Registry account is linked to this login",
+  });
+
+  it("tells the user to sign in at eventregistry.org when no account is linked", () => {
+    const msg = withAccessToken("tok", () => formatErrorResponse(unlinked));
+    expect(msg).toContain("https://eventregistry.org");
+    expect(msg).toContain("retry");
+    expect(msg).not.toContain("NEWSAPI_KEY");
+  });
+
+  it("tells the user the login expired on a plain 401", () => {
+    const msg = withAccessToken("tok", () =>
+      formatErrorResponse(new ApiError(401, "unauthorized")),
+    );
+    expect(msg).toContain("login has expired");
+    expect(msg).toContain("reconnect");
+    expect(msg).not.toContain("NEWSAPI_KEY");
+  });
+
+  it("does not ask to reconnect on a 403", () => {
+    const msg = withAccessToken("tok", () =>
+      formatErrorResponse(new ApiError(403, "forbidden")),
+    );
+    expect(msg).toContain("not allowed");
+    expect(msg).not.toContain("reconnect");
+    expect(msg).not.toContain("NEWSAPI_KEY");
+  });
+
+  it("includes the API's reason in the 403 message", () => {
+    const err = new ApiError(403, {
+      error: "insufficient_scope",
+      error_description: "Token lacks the required scope",
+    });
+    const msg = withAccessToken("tok", () => formatErrorResponse(err));
+    expect(msg).toContain("insufficient_scope: Token lacks the required scope");
+  });
+
+  it("includes a plain-text 403 reason as is", () => {
+    const msg = withAccessToken("tok", () =>
+      formatErrorResponse(new ApiError(403, "plan does not allow this")),
+    );
+    expect(msg).toContain("plan does not allow this");
+  });
+
+  it("keeps the API key guidance outside a token context", () => {
+    expect(formatErrorResponse(new ApiError(401, "unauthorized"))).toContain(
+      "NEWSAPI_KEY",
+    );
   });
 });
 

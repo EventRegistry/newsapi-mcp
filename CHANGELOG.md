@@ -1,5 +1,18 @@
 # Changelog
 
+## [Unreleased]
+
+### Features
+
+- **Hosted server** — New Streamable HTTP entry point (`src/http.ts`) for `https://mcp.newsapi.ai/mcp`: users log in with their Event Registry account through the MCP client's OAuth flow instead of pasting an API key. Stateless, verifies JWT access tokens against the issuer's JWKS (`iss`, `aud`, `exp`), serves protected-resource metadata, and runs each request on the caller's own token. Configured via `MCP_PUBLIC_URL`, `MCP_AUTH_ISSUER`, `PORT`
+- **Local server login** — `npx newsapi-mcp` without `NEWSAPI_KEY` logs in to Event Registry in the browser (authorization code + PKCE on a loopback redirect, ports 51337–51339), keeps the tokens in the OS credential store and refreshes them; `newsapi-mcp login` / `logout` manage the stored login. `NEWSAPI_KEY` still selects API-key mode
+- **Login error guidance** — Tools explain an unlinked Event Registry account (sign in once at eventregistry.org/login) and an expired login (reconnect, or `npx newsapi-mcp login` locally) instead of the API key message
+- **Docker image** — `Dockerfile` and `npm run build:http` build the hosted server; `GET /healthz` for health checks
+
+### Changes
+
+- **Suggest cache removed** — `suggest` calls the API every time; the cheap endpoints gained nothing from caching, and the "(cached)" token footer is gone
+
 ## [1.3.1] - 2026-03-18
 
 ### Features

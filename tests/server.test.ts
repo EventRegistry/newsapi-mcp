@@ -11,11 +11,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { initClient } from "../src/client.js";
-import { serverInstructions } from "../src/instructions.js";
-import { registerResources } from "../src/resources.js";
-import { allTools, ToolRegistry } from "../src/tools/index.js";
-import { VERSION } from "../src/version.js";
-import { clearSuggestCache } from "../src/tools/suggest.js";
+import { createServer } from "../src/server.js";
 
 // Mock fetch globally so no real HTTP requests are made
 const fetchSpy = vi.fn();
@@ -50,14 +46,7 @@ let server: McpServer;
 beforeAll(async () => {
   initClient("test-key");
 
-  server = new McpServer(
-    { name: "newsapi", version: VERSION },
-    { instructions: serverInstructions },
-  );
-
-  const registry = new ToolRegistry(allTools);
-  registry.attach(server);
-  registerResources(server);
+  server = createServer();
 
   // Connect via in-memory transport
   const [clientTransport, serverTransport] =
@@ -72,7 +61,6 @@ beforeAll(async () => {
 });
 
 beforeEach(() => {
-  clearSuggestCache();
 });
 
 afterAll(async () => {
@@ -240,35 +228,6 @@ describe("MCP server E2E", () => {
     const content = result.content[0] as { text: string };
     expect(content.text).toContain("Tokens used: 0 |");
     expect(content.text).toContain("Remaining: 499999");
-  });
-
-  it("shows cached token footer for suggest cache hit", async () => {
-    mockFetchOk(
-      [
-        {
-          uri: "http://en.wikipedia.org/wiki/CacheTest",
-          label: "CacheTest",
-          type: "org",
-        },
-      ],
-      { "req-tokens": "0", "x-ratelimit-remaining": "499999" },
-    );
-
-    // First call populates cache
-    await client.callTool({
-      name: "suggest",
-      arguments: { type: "concepts", prefix: "CacheFooterTest" },
-    });
-
-    // Second call hits cache
-    const result = await client.callTool({
-      name: "suggest",
-      arguments: { type: "concepts", prefix: "CacheFooterTest" },
-    });
-
-    const content = result.content[0] as { text: string };
-    expect(content.text).toContain("Tokens used: 0 (cached)");
-    expect(content.text).not.toContain("Remaining:");
   });
 
   it("shows zero-cost token footer for suggest even without headers", async () => {

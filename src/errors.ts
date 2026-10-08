@@ -1,3 +1,4 @@
+import { authMode, isUnlinkedAccount } from "./client.js";
 import { ApiError } from "./types.js";
 
 /** Known param values for common fields, used in invalid_param suggestions. */
@@ -98,6 +99,38 @@ function extractParamHint(body: unknown): string | undefined {
   return undefined;
 }
 
+/** The API's own reason for an error: OAuth error fields, else the raw body. */
+function apiReason(body: unknown): string {
+  if (typeof body === "object" && body !== null) {
+    const { error, error_description } = body as Record<string, unknown>;
+    const parts = [error, error_description].filter(
+      (p): p is string => typeof p === "string" && p !== "",
+    );
+    if (parts.length > 0) return parts.join(": ");
+    return JSON.stringify(body);
+  }
+  return typeof body === "string" ? body : "";
+}
+
+/** Auth guidance that fits how the request was authenticated. */
+function authErrorMessage(err: ApiError): string {
+  const mode = authMode();
+  if (mode === "apiKey") {
+    return "Authentication failed. Check NEWSAPI_KEY is valid.";
+  }
+  if (isUnlinkedAccount(err)) {
+    return "No Event Registry account is linked to this login. Sign in once at https://eventregistry.org/login with the same account, then retry the request.";
+  }
+  if (err.status === 403) {
+    const reason = apiReason(err.body);
+    return `Your Event Registry account is not allowed to make this request (HTTP 403${reason ? `: ${reason}` : ""}). Check its plan and permissions at https://eventregistry.org.`;
+  }
+  if (mode === "login") {
+    return "Your NewsAPI.ai login has expired or was revoked and could not be refreshed. Ask the user to run `npx newsapi-mcp login` to log in again, then retry the request.";
+  }
+  return "Your NewsAPI.ai login has expired or was revoked. Ask the user to reconnect the NewsAPI.ai server in their AI tool to log in again, then retry the request.";
+}
+
 /** Format a human- and LLM-readable error message with recovery guidance. */
 export function formatErrorResponse(err: ApiError): string {
   const parts: string[] = [];
@@ -107,7 +140,7 @@ export function formatErrorResponse(err: ApiError): string {
       parts.push("Rate limited (daily quota). Tokens refresh the next day.");
       break;
     case "auth_error":
-      parts.push("Authentication failed. Check NEWSAPI_KEY is valid.");
+      parts.push(authErrorMessage(err));
       break;
     case "not_found":
       parts.push("No results found. Try broader search terms or check URIs.");

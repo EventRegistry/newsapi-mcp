@@ -7,6 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ```bash
 npm run build          # TypeScript compilation (tsc)
 npm run build:bundle   # Production single-file bundle (esbuild → dist/index.js)
+npm run build:http     # Hosted server bundle (esbuild → dist/http.js, used by Dockerfile)
 npm run dev            # Dev mode with tsx hot reload
 npm test               # Run all tests (vitest)
 npm run test:watch     # Tests in watch mode
@@ -18,6 +19,11 @@ CI runs on [ubuntu, windows, macos] × [node 20, 22]. Publishing uses `npm publi
 ## Architecture
 
 MCP server for NewsAPI.ai (Event Registry). Provides 8 tools for searching news articles, events, and sources.
+
+Two entry points share `createServer()` from `src/server.ts`:
+
+- **Local server** — `src/index.ts`, stdio. Logs in to Event Registry through a loopback browser flow (`src/oauth.ts`, ADR-0001) unless `NEWSAPI_KEY` selects API-key mode; `login`/`logout` subcommands manage the stored tokens. Published to npm.
+- **Hosted server** — `src/http.ts`, stateless Streamable HTTP (fresh `McpServer` per request, ADR-0002), login run by the MCP client (ADR-0001). Verifies JWT access tokens, then runs the request inside `withAccessToken()` so `client.ts` sends `Authorization: Bearer` instead of the API key. Shipped as a Docker image, not in the npm package.
 
 ### Request Flow
 
@@ -33,7 +39,9 @@ MCP Client → McpServer (SDK) → ToolRegistry handler → apiPost() → NewsAP
 
 ### Key Modules
 
-- **`src/client.ts`** — HTTP client. `apiPost()` for main API. Auto-injects API key.
+- **`src/client.ts`** — HTTP client. `apiPost()` for main API. Injects the API key, the local login's bearer token (renewed once and retried on 401), or the hosted caller's bearer token when inside `withAccessToken()` (AsyncLocalStorage). `authMode()` tells the error formatter which guidance to give.
+- **`src/oauth.ts`** — Local login: `OAuthSession` (PKCE code flow on fixed loopback ports, single-flight refresh with rotation), token stores (`@napi-rs/keyring`, file fallback), OpenID discovery shared with `http.ts`.
+- **`src/http.ts`** — Hosted server: express app, protected-resource metadata, `requireBearerAuth` with a `jose` JWT verifier, `/healthz`. Config from `MCP_PUBLIC_URL`, `MCP_AUTH_ISSUER`, `PORT`.
 - **`src/tools/registry.ts`** — `ToolRegistry` class. Registers all tools at startup. `buildZodShape()` converts JSON Schema → Zod for MCP SDK registration.
 - **`src/response-filter.ts`** — Token optimization. `includeFields` param maps to API include params + post-response field stripping. `filterResponse()` preserves pagination metadata.
 - **`src/formatters.ts`** — Converts JSON responses to compact text. All tools with formatters output human-readable numbered text.
@@ -45,7 +53,7 @@ Search tools use these defaults when params are not explicitly set: `articlesCou
 
 ### Testing Patterns
 
-Tests mock `fetch` globally via `vi.stubGlobal("fetch", fetchSpy)`. Server integration tests use `InMemoryTransport.createLinkedPair()` to create connected MCP client/server pairs without network.
+Tests mock `fetch` globally via `vi.stubGlobal("fetch", fetchSpy)`. Server integration tests use `InMemoryTransport.createLinkedPair()` to create connected MCP client/server pairs without network. Hosted server tests (`tests/http.test.ts`) listen on a local port, keep the real `fetch` for it, and sign tokens with a locally generated key checked through a local JWKS. Login tests (`tests/oauth.test.ts`) inject a fake issuer `fetch`, an in-memory store and a "browser" that hits the real loopback callback.
 
 ## Codebase Conventions
 
@@ -54,3 +62,17 @@ Tests mock `fetch` globally via `vi.stubGlobal("fetch", fetchSpy)`. Server integ
 - `contentFilterProps` in articles.ts is shared across article and event search tools
 - The linter auto-formats on save (may adjust ternary formatting etc.)
 - Single-file distribution via esbuild — `prepublishOnly` runs `build:bundle`
+
+## Agent skills
+
+### Issue tracker
+
+Issues and specs live as local markdown files under `.scratch/`. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Default five-role vocabulary (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: one `CONTEXT.md` and `docs/adr/` at the repo root. See `docs/agents/domain.md`.
