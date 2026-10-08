@@ -30,4 +30,14 @@ login or key and can read full text there anyway.
 
 - Nothing is enforced. A client that ignores `audience` shows the raw result,
   and a user who asks can still get the model to repeat it.
-- Whether a client hides `["assistant"]` content has to be checked per client.
+- As of 2026-10-08 no checked client hides `["assistant"]` content; every
+  block is shown to the user and sent to the model. The annotation stays as a
+  spec-correct hint for clients that may honour it later.
+
+  | Client | Finding | Evidence |
+  |---|---|---|
+  | Claude Code 2.1.294 | shows it | binary holds only the SDK schema; [claude-code#72239](https://github.com/anthropics/claude-code/issues/72239) closed as not planned |
+  | Claude Desktop 2.26454.2 | shows it | local bundle holds only the SDK schema; chat UI is the claude.ai web view |
+  | Claude.ai | shows it | [claude-ai-mcp#242](https://github.com/anthropics/claude-ai-mcp/issues/242): full results rendered, no opt-out |
+  | Codex (main, 2026-10-08) | shows it | result content is raw JSON; the TUI renderer ignores annotations |
+  | Cursor | likely shows it | docs describe expandable full responses, never annotations; not tested locally |

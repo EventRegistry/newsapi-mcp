@@ -161,6 +161,7 @@ export class ToolRegistry {
                 {
                   type: "text" as const,
                   text: `<source_material>\n${material}\n</source_material>\n\n${REPORTING_REMINDER}`,
+                  // Hint only: no known client hides it from the user (ADR-0003).
                   annotations: { audience: ["assistant" as const] },
                 },
               ],
