@@ -6,7 +6,9 @@ import {
   formatSuggestSources,
   formatSuggestCategories,
   formatSuggestAuthors,
+  formatSuggestEventTypes,
   formatArticleResults,
+  formatMentionResults,
   formatArticleDetails,
   formatEventResults,
   formatEventDetails,
@@ -1075,5 +1077,97 @@ describe("formatEventResults for breaking events", () => {
     expect(result).toContain("1. [2025-01-01] Quake hits coast (40 articles)");
     expect(result).toContain("Breaking score: 0.83");
     expect(result).toContain("Use breakingEventsPage: 2 for more.");
+  });
+});
+
+describe("formatSuggestEventTypes", () => {
+  it("renders label and uri per row", () => {
+    const data = [
+      { uri: "et/business/layoffs", label: "et/business/layoffs" },
+      { uri: "et/business/hiring", label: { eng: "Hiring" } },
+    ];
+    expect(formatSuggestEventTypes(data, {})).toBe(
+      "1. et/business/layoffs\n   et/business/layoffs\n\n2. Hiring\n   et/business/hiring",
+    );
+  });
+
+  it("handles an empty array", () => {
+    expect(formatSuggestEventTypes([], {})).toBe("No results found.");
+  });
+});
+
+describe("formatMentionResults", () => {
+  const base = {
+    uri: "m1",
+    dateTime: "2025-03-04T08:00:00Z",
+    sentence: "Acme will cut 500 jobs in May.",
+    eventType: "et/business/layoffs",
+    articleUri: "a1",
+    articleUrl: "https://ex.com/a1",
+    articleTitle: "Acme announces layoffs",
+    sentenceSentiment: -0.35,
+    factLevel: "forecast",
+    source: { uri: "ex.com", title: "Example News" },
+  };
+
+  it("renders the minimal fields and the paging footer", () => {
+    const data = {
+      mentions: { results: [base], totalResults: 250, page: 1, pages: 3 },
+    };
+    const out = formatMentionResults(data, {});
+    expect(out).toContain(
+      '1. [2025-03-04] et/business/layoffs - Example News\n   "Acme will cut 500 jobs in May."\n   Article: Acme announces layoffs\n   URL: https://ex.com/a1\n   URI: m1 (article a1)\n   Sentiment: -0.35\n   Fact level: forecast',
+    );
+    expect(out).toContain(
+      "1 results (250 total) Page 1 of 3. Use mentionsPage: 2 for more.",
+    );
+  });
+
+  it("renders slots, categories, frameworks and metadata", () => {
+    const data = {
+      mentions: {
+        results: [
+          {
+            ...base,
+            eventType: { uri: "et/business/layoffs", label: "Layoffs" },
+            slots: [
+              { uri: "acme", label: "Acme", type: "org" },
+              { label: "46%", type: "percent" },
+              { label: "46%", type: "percent" },
+              { uri: "may", label: { eng: "May" } },
+            ],
+            categories: [{ uri: "dmoz/Business", label: "Business" }],
+            frameworks: {
+              sdg: { uri: "sdg/8", label: "Decent work" },
+              esg: { uri: "esg/social", label: "social" },
+            },
+            lang: "eng",
+            relevance: 12,
+            sentenceIndex: 1,
+            isDuplicate: false,
+            articleSentiment: -0.1,
+            articleImageUrl: "https://ex.com/i.jpg",
+          },
+        ],
+      },
+    };
+    const out = formatMentionResults(data, {});
+    expect(out).toContain("1. [2025-03-04] Layoffs - Example News");
+    expect(out).toContain("   Entities: Acme [org], 46% [percent], May");
+    expect(out).toContain("   Categories: Business");
+    expect(out).toContain("   Frameworks: Decent work, social");
+    expect(out).toContain(
+      "   lang: eng | relevance: 12 | sentenceIndex: 1 | isDuplicate: false | articleSentiment: -0.1",
+    );
+    expect(out).toContain("   Image: https://ex.com/i.jpg");
+  });
+
+  it("reports an empty list", () => {
+    expect(formatMentionResults({ mentions: { results: [] } }, {})).toBe(
+      "No mentions found.",
+    );
+    expect(formatMentionResults({ error: "bad" }, {})).toContain(
+      '"error": "bad"',
+    );
   });
 });

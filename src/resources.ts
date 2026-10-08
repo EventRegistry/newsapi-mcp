@@ -56,7 +56,13 @@ Both search tools accept resultType. The default returns a page of results; an a
 - sentimentAggr: tone distribution
 - locAggr: where it happens; langAggr (articles only): which languages
 Example: search_articles({conceptUri: "<uri>", dateStart: "2025-01-01", resultType: "timeAggr"})
+search_mentions takes the same aggregates plus eventTypeAggr (count per event type).
 Paging, sorting, includeFields and articleBodyLen do not apply to aggregates.
+
+### search_mentions
+Sentences from articles that state a specific event type: a relation such as an acquisition, layoffs, a product launch, a recall or a natural disaster, about 100 types in all. Resolve the type first with suggest({type: "eventTypes", prefix: "acquisition"}), then filter with eventTypeUri plus conceptUri, sourceUri, dates, lang and sentiment. Each mention carries the sentence, its event type, sentiment, a link to the article and, with includeFields: "slots", the entities involved. Mention-only filters: industryUri, sdgUri, sasbUri, esgUri, factLevel ("fact", "opinion", "forecast"), minSentenceIndex / maxSentenceIndex, showDuplicates. Paging uses mentionsPage / mentionsCount (default 100).
+Example: search_mentions({eventTypeUri: "<uri>", conceptUri: "<uri>", dateStart: "2025-01-01", includeFields: "slots"})
+Use it when the question names a kind of happening; use search_articles for general coverage of a topic.
 
 ### get_breaking_events
 Events that are very recent, heavily covered and still accelerating, each with a breaking score. Takes no query; use it for "what is happening right now". breakingEventsMinBreakingScore (default 0.2) trims weaker stories.
@@ -78,6 +84,7 @@ Request additional data beyond the minimal set:
 - location: geographic data
 - social: share counts
 - metadata: relevance scores, language, timestamps
+- slots / frameworks (search_mentions only): entities in the sentence; SDG, ESG and SASB tags of the event type
 - event: eventUri linking articles to events
 - full: all available fields
 

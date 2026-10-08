@@ -36,6 +36,7 @@ import {
   getEventDetails,
   getBreakingEvents,
 } from "../src/tools/events.js";
+import { searchMentions } from "../src/tools/mentions.js";
 import {
   getTopicPageArticles,
   getTopicPageEvents,
@@ -439,6 +440,18 @@ describe("suggest", () => {
     });
   }
 
+  it('type="eventTypes" calls the event type endpoint with the prefix only', async () => {
+    await suggest.handler({
+      type: "eventTypes",
+      prefix: "layoff",
+      lang: "deu",
+    });
+
+    expect(mockedApiPost).toHaveBeenCalledWith("/eventType/suggestEventTypes", {
+      prefix: "layoff",
+    });
+  });
+
   it("passes custom lang parameter", async () => {
     await suggest.handler({ type: "concepts", prefix: "Test", lang: "deu" });
 
@@ -631,5 +644,149 @@ describe("getBreakingEvents", () => {
     expect(evt.title).toBe("Quake");
     expect(evt.socialScore).toBeUndefined();
     expect(wrapper.totalResults).toBe(1);
+  });
+});
+
+// ---------- Mentions ----------
+
+describe("searchMentions", () => {
+  it("sends the mention filters, default count and include flags", async () => {
+    const response = {
+      mentions: {
+        results: [
+          {
+            uri: "m1",
+            dateTime: "2025-01-01T10:00:00Z",
+            sentence: "Acme cut 500 jobs.",
+            eventType: { uri: "et/business/layoffs", label: "Layoffs" },
+            articleUri: "a1",
+            articleUrl: "https://ex.com/a1",
+            articleTitle: "Acme layoffs",
+            sentenceSentiment: -0.4,
+            relevance: 12,
+            source: { uri: "ex.com", title: "Example", dataType: "news" },
+            slots: [
+              {
+                uri: "acme",
+                label: "Acme",
+                text: "Acme Inc",
+                type: "org",
+                core: true,
+              },
+              { uri: "", label: "", text: "46%", type: "percent" },
+            ],
+          },
+        ],
+        totalResults: 1,
+        page: 1,
+        pages: 1,
+      },
+    };
+    mockedApiPost.mockResolvedValueOnce({
+      data: response,
+      tokenUsage: { reqTokens: 1, remaining: 9 },
+    });
+
+    const result = await searchMentions.handler({
+      eventTypeUri: "et/business/layoffs, et/business/hiring",
+      conceptUri: "http://en.wikipedia.org/wiki/Acme",
+      factLevel: "fact,forecast",
+      maxSentenceIndex: 1,
+      includeFields: "slots",
+    });
+
+    const [path, body] = mockedApiPost.mock.calls[0];
+    expect(path).toBe("/eventType/mention");
+    expect(body).toEqual({
+      action: "getMentions",
+      eventTypeUri: ["et/business/layoffs", "et/business/hiring"],
+      conceptUri: ["http://en.wikipedia.org/wiki/Acme"],
+      factLevel: ["fact", "forecast"],
+      maxSentenceIndex: 1,
+      mentionsCount: 100,
+      resultType: "mentions",
+      includeMentionSlots: true,
+    });
+    const wrapper = (result.data as Record<string, unknown>).mentions as Record<
+      string,
+      unknown
+    >;
+    const [m] = wrapper.results as Record<string, unknown>[];
+    expect(m.sentence).toBe("Acme cut 500 jobs.");
+    expect(m.relevance).toBeUndefined();
+    expect(m.eventType).toBe("et/business/layoffs");
+    expect(m.source).toEqual({ title: "Example", uri: "ex.com" });
+    expect(m.slots).toEqual([
+      { uri: "acme", label: "Acme", type: "org" },
+      { label: "46%", type: "percent" },
+    ]);
+    expect(wrapper.totalResults).toBe(1);
+  });
+
+  it("passes paging, sorting and the full include set through", async () => {
+    await searchMentions.handler({
+      keyword: "merger",
+      mentionsPage: 2,
+      mentionsCount: 20,
+      mentionsSortBy: "rel",
+      mentionsSortByAsc: true,
+      showDuplicates: true,
+      includeFields: "full",
+    });
+
+    const [, body] = mockedApiPost.mock.calls[0];
+    expect(body).toEqual({
+      action: "getMentions",
+      keyword: ["merger"],
+      mentionsPage: 2,
+      mentionsCount: 20,
+      mentionsSortBy: "rel",
+      mentionsSortByAsc: true,
+      showDuplicates: true,
+      resultType: "mentions",
+      includeMentionSlots: true,
+      includeMentionCategories: true,
+      includeMentionFrameworks: true,
+    });
+  });
+
+  it("sends filters and resultType only for an aggregate", async () => {
+    const aggregate = { eventTypeAggr: { results: [] } };
+    mockedApiPost.mockResolvedValueOnce({ data: aggregate });
+
+    const result = await searchMentions.handler({
+      conceptUri: "c1",
+      resultType: "eventTypeAggr",
+      mentionsCount: 10,
+      mentionsPage: 3,
+      includeFields: "slots",
+    });
+
+    const [path, body] = mockedApiPost.mock.calls[0];
+    expect(path).toBe("/eventType/mention");
+    expect(body).toEqual({
+      action: "getMentions",
+      conceptUri: ["c1"],
+      resultType: "eventTypeAggr",
+    });
+    expect(result.data).toBe(aggregate);
+  });
+
+  it("does not expose filters the endpoint lacks", () => {
+    const props = searchMentions.inputSchema.properties as Record<
+      string,
+      unknown
+    >;
+    for (const k of [
+      "forceMaxDataTimeWindow",
+      "keywordLoc",
+      "authorUri",
+      "dateMentionStart",
+      "articleBodyLen",
+    ]) {
+      expect(props[k]).toBeUndefined();
+    }
+    expect(props.eventTypeUri).toBeDefined();
+    expect(props.keyword).toBeDefined();
   });
 });

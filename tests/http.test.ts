@@ -182,7 +182,7 @@ describe("hosted server MCP over HTTP", () => {
   it("lists tools with a valid token", async () => {
     const client = await connect(await sign());
     const { tools } = await client.listTools();
-    expect(tools).toHaveLength(9);
+    expect(tools).toHaveLength(10);
     await client.close();
   });
 

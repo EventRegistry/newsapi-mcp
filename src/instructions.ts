@@ -3,7 +3,7 @@
  * Provides high-level guidance on how to use the NewsAPI MCP server.
  */
 
-export const serverInstructions = `NewsAPI MCP server provides access to Event Registry's global news database with 9 tools for searching articles, events, and entity lookup.
+export const serverInstructions = `NewsAPI MCP server provides access to Event Registry's global news database with 10 tools for searching articles, events, mentions, and entity lookup.
 
 ## Workflow: suggest → scan → triage → retrieve
 
@@ -26,8 +26,11 @@ Pass selected URIs to get_article_details (up to 100 per call). Add includeField
 
 The same pattern applies to events: scan with search_events → triage → get_event_details with selected URIs.
 
+### Mentions — sentences about a kind of happening
+When the question names a kind of happening (acquisitions, layoffs, product launches, recalls, lawsuits, disasters) rather than a topic, use search_mentions: resolve the event type with suggest({type: "eventTypes", prefix: "layoff"}) and pass eventTypeUri with the usual filters. Each result is one sentence with its entities and a link to the article, so no article scan is needed.
+
 ### Aggregates — numbers instead of lists
-For quantitative questions (volume over time, who covers it, which entities, tone) set resultType on search_articles or search_events to an aggregate: "timeAggr", "sourceAggr", "conceptAggr", "categoryAggr", "keywordAggr", "sentimentAggr", "locAggr", "authorAggr" ("langAggr" for articles). One call summarises every match; no scan needed.
+For quantitative questions (volume over time, who covers it, which entities, tone) set resultType on search_articles or search_events to an aggregate: "timeAggr", "sourceAggr", "conceptAggr", "categoryAggr", "keywordAggr", "sentimentAggr", "locAggr", "authorAggr" ("langAggr" for articles). search_mentions takes the same aggregates plus "eventTypeAggr". One call summarises every match; no scan needed.
 
 ### When to simplify
 - Quick lookups (known URI): go directly to get_article_details

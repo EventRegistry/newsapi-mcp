@@ -73,8 +73,9 @@ describe("MCP server E2E", () => {
     const result = await client.listTools();
     const names = result.tools.map((t) => t.name).sort();
 
-    expect(names).toHaveLength(9);
+    expect(names).toHaveLength(10);
     expect(names).toContain("get_breaking_events");
+    expect(names).toContain("search_mentions");
     expect(names).toContain("search_articles");
     expect(names).toContain("search_events");
     expect(names).toContain("suggest");
@@ -217,6 +218,44 @@ describe("MCP server E2E", () => {
     const content = result.content[0] as { text: string };
     expect(content.text).toContain("1. 2025-01-01 — 12");
     expect(content.text).toContain("2. 2025-01-02 — 7");
+    expect(content.text).toContain("Tokens used: 1");
+  });
+
+  it("returns mentions as numbered sentences with the token footer", async () => {
+    mockFetchOk({
+      mentions: {
+        results: [
+          {
+            uri: "m1",
+            dateTime: "2025-01-01T10:00:00Z",
+            sentence: "Acme cut 500 jobs.",
+            eventType: "et/business/layoffs",
+            articleUri: "a1",
+            articleUrl: "https://ex.com/a1",
+            articleTitle: "Acme layoffs",
+            source: { uri: "ex.com", title: "Example" },
+          },
+        ],
+        totalResults: 1,
+        page: 1,
+        pages: 1,
+      },
+    });
+
+    const result = await client.callTool({
+      name: "search_mentions",
+      arguments: { eventTypeUri: "et/business/layoffs", keyword: "Acme" },
+    });
+
+    const sent = JSON.parse(fetchSpy.mock.lastCall![1].body as string);
+    expect(sent.resultType).toBe("mentions");
+    expect(sent.eventTypeUri).toEqual(["et/business/layoffs"]);
+    expect(sent.mentionsCount).toBe(100);
+    const content = result.content[0] as { text: string };
+    expect(content.text).toContain(
+      "1. [2025-01-01] et/business/layoffs - Example",
+    );
+    expect(content.text).toContain('"Acme cut 500 jobs."');
     expect(content.text).toContain("Tokens used: 1");
   });
 

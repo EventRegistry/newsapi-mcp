@@ -2,7 +2,7 @@
 name: news
 description: Research news topics using NewsAPI tools. Use when the user asks about current events, news analysis, source comparison, topic monitoring, due diligence, company intelligence, supply chain risk, or geopolitical risk.
 user-invocable: true
-allowed-tools: mcp__newsapi__suggest, mcp__newsapi__search_articles, mcp__newsapi__search_events, mcp__newsapi__get_breaking_events, mcp__newsapi__get_article_details, mcp__newsapi__get_event_details, mcp__newsapi__get_topic_page_articles, mcp__newsapi__get_topic_page_events, mcp__newsapi__get_api_usage
+allowed-tools: mcp__newsapi__suggest, mcp__newsapi__search_articles, mcp__newsapi__search_events, mcp__newsapi__get_breaking_events, mcp__newsapi__search_mentions, mcp__newsapi__get_article_details, mcp__newsapi__get_event_details, mcp__newsapi__get_topic_page_articles, mcp__newsapi__get_topic_page_events, mcp__newsapi__get_api_usage
 ---
 
 # News Research Skill

@@ -4,6 +4,7 @@ import {
   formatSuggestAuthors,
   formatSuggestCategories,
   formatSuggestConcepts,
+  formatSuggestEventTypes,
   formatSuggestLocations,
   formatSuggestSources,
 } from "../formatters.js";
@@ -14,6 +15,7 @@ const SUGGEST_TYPES = [
   "sources",
   "locations",
   "authors",
+  "eventTypes",
 ] as const;
 
 const SUGGEST_PATHS: Record<string, string> = {
@@ -22,7 +24,11 @@ const SUGGEST_PATHS: Record<string, string> = {
   sources: "/suggestSourcesFast",
   locations: "/suggestLocationsFast",
   authors: "/suggestAuthorsFast",
+  eventTypes: "/eventType/suggestEventTypes",
 };
+
+/** Lookups that take a prefix only, no language. */
+const PREFIX_ONLY = new Set(["eventTypes"]);
 
 const SUGGEST_FORMATTERS: Record<string, ResponseFormatter> = {
   concepts: formatSuggestConcepts,
@@ -30,6 +36,7 @@ const SUGGEST_FORMATTERS: Record<string, ResponseFormatter> = {
   sources: formatSuggestSources,
   locations: formatSuggestLocations,
   authors: formatSuggestAuthors,
+  eventTypes: formatSuggestEventTypes,
 };
 
 export const suggest: ToolDef = {
@@ -42,6 +49,7 @@ TYPES:
 - "sources": news outlets (Reuters, BBC) → for sourceUri
 - "locations": countries, cities, regions → for locationUri or sourceLocationUri
 - "authors": journalists → for authorUri
+- "eventTypes": kinds of happenings (acquisition, layoffs, product launch) → for eventTypeUri in search_mentions only
 
 WORKFLOW: suggest(type, prefix) → get URI → pass to search_articles or search_events.
 EXAMPLE: suggest({type: "concepts", prefix: "Tesla"}) → search_articles({conceptUri: "<uri>"})
@@ -64,7 +72,7 @@ TIPS:
       type: {
         type: "string",
         description:
-          'Entity type to look up: "concepts" (people, orgs, things), "categories" (news topics), "sources" (news outlets), "locations" (countries, cities), "authors" (journalists).',
+          'Entity type to look up: "concepts" (people, orgs, things), "categories" (news topics), "sources" (news outlets), "locations" (countries, cities), "authors" (journalists), "eventTypes" (kinds of happenings, for search_mentions).',
         enum: [...SUGGEST_TYPES],
       },
       prefix: {
@@ -91,7 +99,8 @@ TIPS:
       );
     }
 
-    const { data, tokenUsage } = await apiPost(path, { prefix, lang });
+    const body = PREFIX_ONLY.has(type) ? { prefix } : { prefix, lang };
+    const { data, tokenUsage } = await apiPost(path, body);
     return { data, tokenUsage: tokenUsage ?? { reqTokens: 0, remaining: 0 } };
   },
   formatter: (data, params) => {
