@@ -158,7 +158,7 @@ export function createHttpApp(options: {
         });
         return;
       }
-      const server = createServer();
+      const server = createServer({ hosted: true });
       const transport = new StreamableHTTPServerTransport({
         sessionIdGenerator: undefined,
       });

@@ -36,6 +36,16 @@ _Avoid_: connected account
 A static secret tied to an Event Registry account; the local server's alternative to a login.
 _Avoid_: token, access token
 
+## Reporting
+
+**Source material**:
+Tool output the model reads to write its report but the user is not meant to see: article bodies, metadata and intermediate results.
+_Avoid_: raw data, context
+
+**Report**:
+The model's answer to the user: key points in its own words, each with a link to its article.
+_Avoid_: summary, output
+
 ## Distribution
 
 **News skill**:
