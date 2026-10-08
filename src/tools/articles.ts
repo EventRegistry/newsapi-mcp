@@ -23,6 +23,7 @@ const AGGREGATE_DESCRIPTIONS: Record<string, string> = {
   categoryAggr: "top categories",
   sentimentAggr: "sentiment distribution",
   langAggr: "count per language",
+  eventTypeAggr: "count per event type",
 };
 
 /** Schema for resultType: the list (default) or one aggregate over all matches. */
@@ -279,6 +280,17 @@ export function buildFilterBody(
     "ignoreLocationUri",
     "ignoreLang",
     "sourceGroupUri",
+    "eventTypeUri",
+    "industryUri",
+    "sdgUri",
+    "sasbUri",
+    "esgUri",
+    "factLevel",
+    "ignoreEventTypeUri",
+    "ignoreIndustryUri",
+    "ignoreSdgUri",
+    "ignoreSasbUri",
+    "ignoreEsgUri",
   ];
   for (const [k, v] of Object.entries(params)) {
     if (v === undefined || v === null) continue;

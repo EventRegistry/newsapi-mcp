@@ -3,7 +3,9 @@ import {
   parseFieldGroups,
   getArticleIncludeParams,
   getEventIncludeParams,
+  getMentionIncludeParams,
   filterArticle,
+  filterMention,
   filterEvent,
   filterResponse,
 } from "../src/response-filter.js";
@@ -461,5 +463,108 @@ describe("filterResponse", () => {
     expect(evt.socialScore).toBeUndefined();
     expect(evt.concepts).toEqual([{ uri: "c1", label: "C", type: "org" }]);
     expect(wrapper.page).toBe(1);
+  });
+});
+
+// ---------- mentions ----------
+
+describe("getMentionIncludeParams", () => {
+  it("maps the mention groups to include flags", () => {
+    expect(getMentionIncludeParams(new Set())).toEqual({});
+    expect(getMentionIncludeParams(new Set(["slots", "metadata"]))).toEqual({
+      includeMentionSlots: true,
+    });
+    expect(getMentionIncludeParams(new Set(["full"]))).toEqual({
+      includeMentionSlots: true,
+      includeMentionCategories: true,
+      includeMentionFrameworks: true,
+    });
+  });
+});
+
+describe("filterMention", () => {
+  const mention = {
+    uri: "m1",
+    date: "2025-01-01",
+    time: "10:00:00",
+    dateTime: "2025-01-01T10:00:00Z",
+    relevance: 3,
+    sentence: "S.",
+    eventType: { uri: "et/x", label: "X" },
+    sentenceSentiment: 0.2,
+    articleSentiment: 0.1,
+    factLevel: "fact",
+    articleUri: "a1",
+    articleUrl: "u",
+    articleTitle: "T",
+    articleImageUrl: "img",
+    lang: "eng",
+    sentenceIndex: 2,
+    isDuplicate: false,
+    source: {
+      uri: "s",
+      title: "S",
+      dataType: "news",
+      ranking: { importanceRank: 1 },
+    },
+    slots: [
+      { uri: "c", label: { eng: "C", deu: "K" }, text: "c", type: "org" },
+      { uri: "", label: "", text: "U.S.", type: "gpe" },
+    ],
+    categories: [{ uri: "cat", label: "Cat", wgt: 9 }],
+    frameworks: { esg: { uri: "esg/social", label: "social" } },
+  };
+
+  it("keeps the minimal set and trims the source", () => {
+    const result = filterMention(mention, new Set());
+    expect(result).toEqual({
+      uri: "m1",
+      dateTime: "2025-01-01T10:00:00Z",
+      sentence: "S.",
+      eventType: "et/x",
+      sentenceSentiment: 0.2,
+      factLevel: "fact",
+      articleUri: "a1",
+      articleUrl: "u",
+      articleTitle: "T",
+      source: { title: "S", uri: "s" },
+    });
+  });
+
+  it("adds group fields and trims slots and categories", () => {
+    const result = filterMention(
+      mention,
+      new Set(["slots", "categories", "frameworks", "metadata"]),
+    );
+    expect(result.slots).toEqual([
+      { uri: "c", label: "C", type: "org" },
+      { label: "U.S.", type: "gpe" },
+    ]);
+    expect(result.categories).toEqual([{ uri: "cat", label: "Cat" }]);
+    expect(result.frameworks).toEqual({
+      esg: { uri: "esg/social", label: "social" },
+    });
+    expect(result.relevance).toBe(3);
+    expect(result.lang).toBe("eng");
+    expect(result.articleImageUrl).toBe("img");
+    expect(result.time).toBe("10:00:00");
+  });
+
+  it("returns everything with full", () => {
+    expect(filterMention(mention, new Set(["full"]))).toBe(mention);
+  });
+
+  it("filters the mentions wrapper through filterResponse", () => {
+    const result = filterResponse(
+      { mentions: { results: [mention], totalResults: 1, page: 2, pages: 2 } },
+      { resultType: "mentions", groups: new Set() },
+    ) as Record<string, unknown>;
+    const wrapper = result.mentions as Record<string, unknown>;
+    const [m] = wrapper.results as Record<string, unknown>[];
+    expect(m.relevance).toBeUndefined();
+    expect(m.eventType).toBe("et/x");
+    expect(m.sentence).toBe("S.");
+    expect(wrapper.page).toBe(2);
+    expect(wrapper.pages).toBe(2);
   });
 });

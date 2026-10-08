@@ -87,6 +87,36 @@ export const formatSuggestAuthors: ResponseFormatter = (data) => {
     .join("\n\n");
 };
 
+/** Format event type suggest results as numbered text. */
+export const formatSuggestEventTypes: ResponseFormatter = (data) => {
+  if (!Array.isArray(data) || data.length === 0) return "No results found.";
+  return data
+    .map((item, i) => {
+      const rec = item as Record<string, unknown>;
+      return `${i + 1}. ${extractLabel(rec)}\n   ${rec.uri || ""}`;
+    })
+    .join("\n\n");
+};
+
+/** The "N results (M total) Page X of Y" line closing every paged list. */
+function paginationFooter(
+  wrapper: Record<string, unknown> | undefined,
+  shown: number,
+  pageParam: string,
+): string {
+  const pages = wrapper?.pages as number | undefined;
+  const page = wrapper?.page as number | undefined;
+  const totalResults = wrapper?.totalResults as number | undefined;
+  const parts = [`${shown} results`];
+  if (totalResults != null) parts.push(`(${totalResults} total)`);
+  if (pages && pages > 1 && page) {
+    parts.push(
+      `Page ${page} of ${pages}. Use ${pageParam}: ${page + 1} for more.`,
+    );
+  }
+  return `---\n${parts.join(" ")}`;
+}
+
 /** Render optional includeFields data as indented metadata lines for articles. */
 function formatArticleExtras(art: Record<string, unknown>): string {
   const lines: string[] = [];
@@ -195,21 +225,86 @@ export const formatArticleResults: ResponseFormatter = (data) => {
     return `${i + 1}. [${date}] ${title} - ${source}${url}${uri}${formatArticleExtras(art)}\n\n${body}`;
   });
 
-  // Pagination footer
-  const pages = articles?.pages as number | undefined;
-  const page = articles?.page as number | undefined;
-  const totalResults = articles?.totalResults as number | undefined;
-  const countParts: string[] = [];
-  countParts.push(`${results.length} results`);
-  if (totalResults != null) countParts.push(`(${totalResults} total)`);
-  if (pages && pages > 1 && page) {
-    countParts.push(
-      `Page ${page} of ${pages}. Use articlesPage: ${page + 1} for more.`,
-    );
-  }
-  lines.push(`---\n${countParts.join(" ")}`);
+  lines.push(paginationFooter(articles, results.length, "articlesPage"));
   return lines.join("\n\n---\n\n");
 };
+
+/** Format mention search results: one sentence per entry with its event type and article. */
+export const formatMentionResults: ResponseFormatter = (data) => {
+  const mentions = (data as Record<string, unknown>)?.mentions as
+    Record<string, unknown> | undefined;
+  if (!mentions || typeof mentions !== "object")
+    return JSON.stringify(data, null, 2);
+  const results = mentions.results as Record<string, unknown>[] | undefined;
+  if (!results?.length) return "No mentions found.";
+
+  const lines = results.map((m, i) => {
+    const date = (m.dateTime as string | undefined)?.split("T")[0] || "Unknown";
+    const source =
+      (m.source as Record<string, unknown> | undefined)?.title || "Unknown";
+    const eventType =
+      typeof m.eventType === "object" && m.eventType
+        ? extractLabel(m.eventType as Record<string, unknown>)
+        : m.eventType || "?";
+    const head = `${i + 1}. [${date}] ${eventType} - ${source}`;
+    const detail = [`   "${m.sentence || ""}"`];
+    if (m.articleTitle) detail.push(`   Article: ${m.articleTitle}`);
+    if (m.articleUrl) detail.push(`   URL: ${m.articleUrl}`);
+    if (m.uri) {
+      const art = m.articleUri ? ` (article ${m.articleUri})` : "";
+      detail.push(`   URI: ${m.uri}${art}`);
+    }
+    return `${head}\n${detail.join("\n")}${formatMentionExtras(m)}`;
+  });
+
+  lines.push(paginationFooter(mentions, results.length, "mentionsPage"));
+  return lines.join("\n\n---\n\n");
+};
+
+/** Render sentiment, fact level and optional includeFields data for a mention. */
+function formatMentionExtras(m: Record<string, unknown>): string {
+  const lines: string[] = [];
+  if (m.sentenceSentiment != null)
+    lines.push(`   Sentiment: ${m.sentenceSentiment}`);
+  if (m.factLevel) lines.push(`   Fact level: ${m.factLevel}`);
+  if (Array.isArray(m.slots) && m.slots.length > 0) {
+    const items = (m.slots as Record<string, unknown>[]).map((s) => {
+      const label =
+        (s.label && typeof s.label === "object" ? extractLabel(s) : s.label) ||
+        s.text ||
+        s.uri ||
+        "?";
+      return s.type ? `${label} [${s.type}]` : String(label);
+    });
+    lines.push(`   Entities: ${[...new Set(items)].join(", ")}`);
+  }
+  if (Array.isArray(m.categories) && m.categories.length > 0) {
+    const items = (m.categories as Record<string, unknown>[]).map(
+      (c) => extractLabel(c) || String(c.uri || "?"),
+    );
+    lines.push(`   Categories: ${items.join(", ")}`);
+  }
+  if (m.frameworks && typeof m.frameworks === "object") {
+    const items = Object.values(m.frameworks as Record<string, unknown>)
+      .filter((f) => f && typeof f === "object")
+      .map((f) => extractLabel(f as Record<string, unknown>));
+    if (items.length > 0) lines.push(`   Frameworks: ${items.join(", ")}`);
+  }
+  const metaKeys = [
+    "lang",
+    "relevance",
+    "sentenceIndex",
+    "isDuplicate",
+    "articleSentiment",
+    "eventTypeSentiment",
+  ];
+  const metaParts = metaKeys
+    .filter((k) => m[k] != null)
+    .map((k) => `${k}: ${m[k]}`);
+  if (metaParts.length > 0) lines.push(`   ${metaParts.join(" | ")}`);
+  if (m.articleImageUrl) lines.push(`   Image: ${m.articleImageUrl}`);
+  return lines.length > 0 ? "\n" + lines.join("\n") : "";
+}
 
 /** Format event search results with full summary. */
 export const formatEventResults: ResponseFormatter = (data) => {
@@ -239,19 +334,7 @@ export const formatEventResults: ResponseFormatter = (data) => {
     return `${i + 1}. [${date}] ${title} (${count} articles)${uri}${formatEventExtras(evt)}\n\n${summary}`;
   });
 
-  // Pagination footer
-  const pages = events?.pages as number | undefined;
-  const page = events?.page as number | undefined;
-  const totalResults = events?.totalResults as number | undefined;
-  const countParts: string[] = [];
-  countParts.push(`${results.length} results`);
-  if (totalResults != null) countParts.push(`(${totalResults} total)`);
-  if (pages && pages > 1 && page) {
-    countParts.push(
-      `Page ${page} of ${pages}. Use ${pageParam}: ${page + 1} for more.`,
-    );
-  }
-  lines.push(`---\n${countParts.join(" ")}`);
+  lines.push(paginationFooter(events, results.length, pageParam));
   return lines.join("\n\n---\n\n");
 };
 
