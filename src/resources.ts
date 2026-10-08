@@ -4,6 +4,7 @@
  */
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { REPORTING_RULES } from "./instructions.js";
 
 // ============================================================================
 // Guide Resource (~800 words)
@@ -371,7 +372,10 @@ Range: -1 (very negative) to +1 (very positive)
 // Resource Registration
 // ============================================================================
 
-export function registerResources(server: McpServer): void {
+export function registerResources(server: McpServer, hosted = false): void {
+  const guide = hosted
+    ? `${GUIDE_CONTENT}\n\n${REPORTING_RULES}`
+    : GUIDE_CONTENT;
   server.registerResource(
     "guide",
     "newsapi://guide",
@@ -381,7 +385,7 @@ export function registerResources(server: McpServer): void {
     },
     async () => ({
       contents: [
-        { uri: "newsapi://guide", text: GUIDE_CONTENT, mimeType: "text/plain" },
+        { uri: "newsapi://guide", text: guide, mimeType: "text/plain" },
       ],
     }),
   );

@@ -3,6 +3,7 @@ import { ApiError } from "../types.js";
 import type { ApiResponse, ToolDef } from "../types.js";
 import { formatErrorResponse, formatUnknownError } from "../errors.js";
 import { validateFieldGroups } from "../response-filter.js";
+import { REPORTING_REMINDER } from "../instructions.js";
 import { z } from "zod";
 
 /** Build a zod shape from a ToolDef's JSON schema properties. */
@@ -86,7 +87,11 @@ export class ToolRegistry {
   private allTools: ToolDef[] = [];
   private server: McpServer | null = null;
 
-  constructor(tools: ToolDef[]) {
+  /** `hosted` marks results as source material for the model (ADR-0003). */
+  constructor(
+    tools: ToolDef[],
+    private hosted = false,
+  ) {
     this.allTools = tools;
   }
 
@@ -102,7 +107,9 @@ export class ToolRegistry {
     this.server.registerTool(
       tool.name,
       {
-        description: tool.description,
+        description: this.hosted
+          ? `${tool.description}\n\n${REPORTING_REMINDER}`
+          : tool.description,
         inputSchema: z.object(shape),
       },
       async (params) => {
@@ -144,6 +151,20 @@ export class ToolRegistry {
             text +=
               `\n\n---\nTokens used: ${tokenUsage.reqTokens}` +
               ` | Remaining: ${tokenUsage.remaining}`;
+          }
+
+          if (this.hosted) {
+            // Article text must not close the block before the reminder.
+            const material = text.replaceAll("</source_material>", "");
+            return {
+              content: [
+                {
+                  type: "text" as const,
+                  text: `<source_material>\n${material}\n</source_material>\n\n${REPORTING_REMINDER}`,
+                  annotations: { audience: ["assistant" as const] },
+                },
+              ],
+            };
           }
 
           return {
