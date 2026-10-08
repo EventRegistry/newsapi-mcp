@@ -166,6 +166,8 @@ function formatEventExtras(evt: Record<string, unknown>): string {
   }
   if (evt.socialScore != null)
     lines.push(`   Social score: ${evt.socialScore}`);
+  if (evt.breakingScore != null)
+    lines.push(`   Breaking score: ${evt.breakingScore}`);
   const metaKeys = ["wgt", "relevance"];
   const metaParts = metaKeys
     .filter((k) => evt[k] != null)
@@ -177,8 +179,7 @@ function formatEventExtras(evt: Record<string, unknown>): string {
 /** Format article search results as numbered list with full body. */
 export const formatArticleResults: ResponseFormatter = (data) => {
   const articles = (data as Record<string, unknown>)?.articles as
-    | Record<string, unknown>
-    | undefined;
+    Record<string, unknown> | undefined;
   const results = articles?.results as Record<string, unknown>[] | undefined;
   if (!results?.length) return "No articles found.";
 
@@ -212,9 +213,11 @@ export const formatArticleResults: ResponseFormatter = (data) => {
 
 /** Format event search results with full summary. */
 export const formatEventResults: ResponseFormatter = (data) => {
-  const events = (data as Record<string, unknown>)?.events as
-    | Record<string, unknown>
-    | undefined;
+  const resp = data as Record<string, unknown> | undefined;
+  const breaking = resp?.breakingEvents !== undefined;
+  const events = (breaking ? resp?.breakingEvents : resp?.events) as
+    Record<string, unknown> | undefined;
+  const pageParam = breaking ? "breakingEventsPage" : "eventsPage";
   const results = events?.results as Record<string, unknown>[] | undefined;
   if (!results?.length) return "No events found.";
 
@@ -224,7 +227,7 @@ export const formatEventResults: ResponseFormatter = (data) => {
       typeof titleField === "string"
         ? titleField
         : (titleField as Record<string, unknown> | undefined)?.eng ||
-        "Untitled";
+          "Untitled";
     const summaryField = evt.summary;
     const summary =
       typeof summaryField === "string"
@@ -245,7 +248,7 @@ export const formatEventResults: ResponseFormatter = (data) => {
   if (totalResults != null) countParts.push(`(${totalResults} total)`);
   if (pages && pages > 1 && page) {
     countParts.push(
-      `Page ${page} of ${pages}. Use eventsPage: ${page + 1} for more.`,
+      `Page ${page} of ${pages}. Use ${pageParam}: ${page + 1} for more.`,
     );
   }
   lines.push(`---\n${countParts.join(" ")}`);
@@ -304,7 +307,7 @@ export const formatEventDetails: ResponseFormatter = (data) => {
       typeof titleField === "string"
         ? titleField
         : (titleField as Record<string, unknown> | undefined)?.eng ||
-        "Untitled";
+          "Untitled";
     const summaryField = evt.summary;
     const summary =
       typeof summaryField === "string"
@@ -317,6 +320,96 @@ export const formatEventDetails: ResponseFormatter = (data) => {
   });
 
   return lines.join("\n\n---\n\n");
+};
+
+/** The human-readable name of an aggregate row, whichever aggregate kind it comes from. */
+function aggregateRowLabel(row: Record<string, unknown>): string {
+  for (const key of ["date", "keyword", "lang", "sentiment"]) {
+    const v = row[key];
+    if (v != null && typeof v !== "object") return String(v);
+  }
+  const nested = aggregateRowEntity(row) ?? row;
+  const label = extractLabel(nested);
+  const named =
+    label && label !== "Unknown" ? label : String(nested.uri || "?");
+  return typeof nested.type === "string" ? `${named} [${nested.type}]` : named;
+}
+
+/** The entity object a row wraps (source, author, location), if any. */
+function aggregateRowEntity(
+  row: Record<string, unknown>,
+): Record<string, unknown> | undefined {
+  for (const key of ["source", "author", "location"]) {
+    const nested = row[key];
+    if (nested && typeof nested === "object") {
+      return nested as Record<string, unknown>;
+    }
+  }
+  return undefined;
+}
+
+/** Fields that describe a row rather than measure it. */
+const AGGREGATE_LABEL_KEYS = new Set(["sentiment", "lat", "long"]);
+
+// sourceAggr rows nest { counts: { frequency: <in this query>, total: <overall> } }.
+const AGGREGATE_COUNT_KEYS = ["count", "frequency", "weight", "score", "wgt"];
+
+/** The numeric measure of an aggregate row: a known count field, else its first number. */
+function aggregateRowValue(row: Record<string, unknown>): string {
+  const candidates = [row, row.counts, aggregateRowEntity(row)].filter(
+    (o): o is Record<string, unknown> => !!o && typeof o === "object",
+  );
+  for (const obj of candidates) {
+    for (const key of AGGREGATE_COUNT_KEYS) {
+      if (typeof obj[key] === "number") return ` — ${roundNumber(obj[key])}`;
+    }
+  }
+  for (const [key, v] of Object.entries(row)) {
+    if (typeof v === "number" && !AGGREGATE_LABEL_KEYS.has(key)) {
+      return ` — ${roundNumber(v)}`;
+    }
+  }
+  return "";
+}
+
+function roundNumber(n: number): string {
+  return Number.isInteger(n) ? String(n) : n.toFixed(2);
+}
+
+/** sentimentAggr is a histogram of 20 bare counts over [-1, 1]; label each bucket. */
+function sentimentBucketLabel(i: number, total: number): string {
+  const width = 2 / total;
+  const from = -1 + i * width;
+  return `${from.toFixed(1)} to ${(from + width).toFixed(1)}`;
+}
+
+/** Format an aggregate response ({ <resultType>: { results: [...] } }) as numbered rows. */
+export const formatAggregate: ResponseFormatter = (data, params) => {
+  const aggr = (data as Record<string, unknown> | undefined)?.[
+    String(params.resultType)
+  ];
+  if (!aggr || typeof aggr !== "object") return JSON.stringify(data, null, 2);
+  const entries = Object.entries(aggr as Record<string, unknown>);
+  const lists = entries.filter(([, v]) => Array.isArray(v));
+  if (lists.length === 0) return JSON.stringify(data, null, 2);
+
+  // Scalars (totals, averages) head the output; each list is a numbered section.
+  const header = entries
+    .filter(([, v]) => v === null || typeof v !== "object")
+    .map(([k, v]) => `${k}: ${v}`);
+  const sections = lists.map(([key, rows]) => {
+    const items = (rows as unknown[]).map((row, i, all) => {
+      if (typeof row === "number" && params.resultType === "sentimentAggr") {
+        return `${i + 1}. ${sentimentBucketLabel(i, all.length)} — ${row}`;
+      }
+      if (!row || typeof row !== "object") return `${i + 1}. ${String(row)}`;
+      const rec = row as Record<string, unknown>;
+      return `${i + 1}. ${aggregateRowLabel(rec)}${aggregateRowValue(rec)}`;
+    });
+    const body = items.length > 0 ? items.join("\n") : "No results found.";
+    return key === "results" ? body : `${key}:\n${body}`;
+  });
+  return [...header, ...sections].join("\n\n");
 };
 
 /** Format API usage as key-value pairs. */

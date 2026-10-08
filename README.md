@@ -254,8 +254,9 @@ Pull articles or events from saved [Topic Pages](https://newsapi.ai) on NewsAPI.
 | Tool | Description |
 |------|-------------|
 | `suggest` | Look up URIs for entities by name. Required before searching with URI filters. |
-| `search_articles` | Search articles by concepts, sources, categories, dates, language, sentiment. |
+| `search_articles` | Search articles by concepts, sources, categories, dates, language, sentiment. Both search tools also return aggregates (`resultType`: coverage over time, top sources, top entities, sentiment). |
 | `search_events` | Search events (clusters of related articles about the same happening). |
+| `get_breaking_events` | List the events breaking right now, ranked by breaking score. |
 | `get_topic_page_articles` | Get articles from a pre-configured topic page on NewsAPI.ai. |
 | `get_topic_page_events` | Get events from a pre-configured topic page on NewsAPI.ai. |
 | `get_api_usage` | Check token usage and plan details for the current API key. |

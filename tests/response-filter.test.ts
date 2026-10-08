@@ -425,4 +425,41 @@ describe("filterResponse", () => {
     expect(results[0].totalArticleCount).toBe(50);
     expect(results[0].articleCounts).toBeUndefined();
   });
+
+  it("filters breaking events like events and keeps breakingScore", () => {
+    const response = {
+      breakingEvents: {
+        results: [
+          {
+            uri: "evt-1",
+            title: { eng: "Event" },
+            eventDate: "2024-01-01",
+            summary: { eng: "Summary" },
+            totalArticleCount: 50,
+            breakingScore: 0.7,
+            socialScore: 100,
+            concepts: [
+              { uri: "c1", label: { eng: "C" }, type: "org", score: 5 },
+            ],
+          },
+        ],
+        totalResults: 1,
+        page: 1,
+      },
+    };
+
+    const result = filterResponse(response, {
+      resultType: "breakingEvents",
+      groups: new Set(["concepts"]),
+    }) as Record<string, unknown>;
+
+    const wrapper = result.breakingEvents as Record<string, unknown>;
+    const [evt] = wrapper.results as Record<string, unknown>[];
+    expect(evt.uri).toBe("evt-1");
+    expect(evt.title).toBe("Event");
+    expect(evt.breakingScore).toBe(0.7);
+    expect(evt.socialScore).toBeUndefined();
+    expect(evt.concepts).toEqual([{ uri: "c1", label: "C", type: "org" }]);
+    expect(wrapper.page).toBe(1);
+  });
 });

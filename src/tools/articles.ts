@@ -1,12 +1,69 @@
 import { apiPost, parseArray } from "../client.js";
 import { ApiError } from "../types.js";
-import type { ToolDef } from "../types.js";
+import type { ResponseFormatter, ToolDef } from "../types.js";
 import {
   parseFieldGroups,
   getArticleIncludeParams,
   filterResponse,
 } from "../response-filter.js";
-import { formatArticleResults, formatArticleDetails } from "../formatters.js";
+import {
+  formatAggregate,
+  formatArticleResults,
+  formatArticleDetails,
+} from "../formatters.js";
+
+/** What each aggregate resultType summarises, for the schema description. */
+const AGGREGATE_DESCRIPTIONS: Record<string, string> = {
+  timeAggr: "count per day",
+  sourceAggr: "top sources",
+  authorAggr: "top authors",
+  keywordAggr: "top keywords",
+  locAggr: "top locations",
+  conceptAggr: "top entities",
+  categoryAggr: "top categories",
+  sentimentAggr: "sentiment distribution",
+  langAggr: "count per language",
+};
+
+/** Schema for resultType: the list (default) or one aggregate over all matches. */
+export function resultTypeProp(
+  listType: string,
+  aggregates: readonly string[],
+): Record<string, unknown> {
+  const kinds = aggregates
+    .map((a) => `"${a}" (${AGGREGATE_DESCRIPTIONS[a]})`)
+    .join(", ");
+  return {
+    resultType: {
+      type: "string",
+      description: `"${listType}" (default) returns a page of ${listType}. An aggregate summarises ALL matching ${listType} in one cheap call: ${kinds}. Use an aggregate for quantitative questions (volume over time, who covers it, tone) instead of paging through results. Paging, sorting, includeFields and articleBodyLen do not apply to aggregates.`,
+      enum: [listType, ...aggregates],
+    },
+  };
+}
+
+/** Request body for an aggregate: the filters only, no paging, sorting or field selection. */
+export function buildAggregateBody(
+  params: Record<string, unknown>,
+  resultType: string,
+  listParams: readonly string[],
+): Record<string, unknown> {
+  const body = buildFilterBody(params);
+  for (const k of listParams) delete body[k];
+  body.resultType = resultType;
+  return body;
+}
+
+/** Pick the list formatter or the aggregate formatter from the resultType param. */
+export function formatByResultType(
+  listType: string,
+  listFormatter: ResponseFormatter,
+): ResponseFormatter {
+  return (data, params) =>
+    params.resultType && params.resultType !== listType
+      ? formatAggregate(data, params)
+      : listFormatter(data, params);
+}
 
 /** Shared content filter properties. Some props (e.g. sourceRankPercentile) are article-only and stripped by events handler. */
 export const contentFilterProps: Record<string, unknown> = {
@@ -245,6 +302,25 @@ export function buildFilterBody(
   return body;
 }
 
+const ARTICLE_AGGREGATES = [
+  "timeAggr",
+  "sourceAggr",
+  "authorAggr",
+  "keywordAggr",
+  "locAggr",
+  "conceptAggr",
+  "categoryAggr",
+  "sentimentAggr",
+  "langAggr",
+] as const;
+
+const ARTICLE_LIST_PARAMS = [
+  "articlesPage",
+  "articlesCount",
+  "articlesSortBy",
+  "articlesSortByAsc",
+] as const;
+
 export const searchArticles: ToolDef = {
   name: "search_articles",
   description: `Search news articles by concepts, sources, categories, dates, language, and sentiment. Returns up to 100 articles per call.
@@ -259,6 +335,7 @@ NOT THIS when you need high-level event summaries — use search_events instead.
     properties: {
       ...contentFilterProps,
       ...responseControlProps,
+      ...resultTypeProp("articles", ARTICLE_AGGREGATES),
       isDuplicateFilter: {
         type: "string",
         description:
@@ -304,6 +381,13 @@ NOT THIS when you need high-level event summaries — use search_events instead.
     },
   },
   handler: async (params) => {
+    const resultType = (params.resultType as string) || "articles";
+    if (resultType !== "articles") {
+      const body = buildAggregateBody(params, resultType, ARTICLE_LIST_PARAMS);
+      if (params.dataType) body.dataType = parseArray(params.dataType);
+      return apiPost("/article/getArticles", body);
+    }
+
     params.articlesCount ??= 100;
     const groups = parseFieldGroups(params.includeFields as string | undefined);
     const bodyLen = (params.articleBodyLen as number) ?? 1000;
@@ -326,7 +410,7 @@ NOT THIS when you need high-level event summaries — use search_events instead.
       tokenUsage,
     };
   },
-  formatter: formatArticleResults,
+  formatter: formatByResultType("articles", formatArticleResults),
 };
 
 export const getArticleDetails: ToolDef = {

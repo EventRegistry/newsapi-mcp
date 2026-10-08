@@ -148,4 +148,4 @@ docs/*
 !docs/agents/
 !docs/deployment.md
 reports/
-tests_use_cases/
+tests_use_cases/.scratch/

@@ -48,6 +48,19 @@ Supports the same filters as search_articles:
 - **search_articles**: when you need full article text, specific source coverage, or individual stories
 - **search_events**: when you need an overview, want deduplicated results, or the user asks "what's happening with X"
 
+### Aggregates
+Both search tools accept resultType. The default returns a page of results; an aggregate summarises all matches in one call and costs one search action:
+- timeAggr: count per day (coverage over time)
+- sourceAggr / authorAggr: who publishes most
+- conceptAggr / categoryAggr / keywordAggr: what the coverage is about
+- sentimentAggr: tone distribution
+- locAggr: where it happens; langAggr (articles only): which languages
+Example: search_articles({conceptUri: "<uri>", dateStart: "2025-01-01", resultType: "timeAggr"})
+Paging, sorting, includeFields and articleBodyLen do not apply to aggregates.
+
+### get_breaking_events
+Events that are very recent, heavily covered and still accelerating, each with a breaking score. Takes no query; use it for "what is happening right now". breakingEventsMinBreakingScore (default 0.2) trims weaker stories.
+
 ## Response Control
 
 ### Default Values
