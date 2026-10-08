@@ -73,7 +73,8 @@ describe("MCP server E2E", () => {
     const result = await client.listTools();
     const names = result.tools.map((t) => t.name).sort();
 
-    expect(names).toHaveLength(8);
+    expect(names).toHaveLength(9);
+    expect(names).toContain("get_breaking_events");
     expect(names).toContain("search_articles");
     expect(names).toContain("search_events");
     expect(names).toContain("suggest");
@@ -193,6 +194,30 @@ describe("MCP server E2E", () => {
     const content = result.content[0] as { text: string };
     expect(content.text).toContain("Network/unexpected error");
     expect(content.text).toContain("fetch failed");
+  });
+
+  it("returns an aggregate as numbered rows with the token footer", async () => {
+    mockFetchOk({
+      timeAggr: {
+        results: [
+          { date: "2025-01-01", count: 12 },
+          { date: "2025-01-02", count: 7 },
+        ],
+      },
+    });
+
+    const result = await client.callTool({
+      name: "search_articles",
+      arguments: { keyword: "AI", resultType: "timeAggr" },
+    });
+
+    const sent = JSON.parse(fetchSpy.mock.lastCall![1].body as string);
+    expect(sent.resultType).toBe("timeAggr");
+    expect(sent.articlesCount).toBeUndefined();
+    const content = result.content[0] as { text: string };
+    expect(content.text).toContain("1. 2025-01-01 — 12");
+    expect(content.text).toContain("2. 2025-01-02 — 7");
+    expect(content.text).toContain("Tokens used: 1");
   });
 
   it("appends token footer to search_articles response", async () => {

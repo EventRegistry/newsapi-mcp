@@ -3,7 +3,7 @@
  * Provides high-level guidance on how to use the NewsAPI MCP server.
  */
 
-export const serverInstructions = `NewsAPI MCP server provides access to Event Registry's global news database with 8 tools for searching articles, events, and entity lookup.
+export const serverInstructions = `NewsAPI MCP server provides access to Event Registry's global news database with 9 tools for searching articles, events, and entity lookup.
 
 ## Workflow: suggest → scan → triage → retrieve
 
@@ -26,8 +26,12 @@ Pass selected URIs to get_article_details (up to 100 per call). Add includeField
 
 The same pattern applies to events: scan with search_events → triage → get_event_details with selected URIs.
 
+### Aggregates — numbers instead of lists
+For quantitative questions (volume over time, who covers it, which entities, tone) set resultType on search_articles or search_events to an aggregate: "timeAggr", "sourceAggr", "conceptAggr", "categoryAggr", "keywordAggr", "sentimentAggr", "locAggr", "authorAggr" ("langAggr" for articles). One call summarises every match; no scan needed.
+
 ### When to simplify
 - Quick lookups (known URI): go directly to get_article_details
+- What is happening right now, no topic given: get_breaking_events
 - Topic page monitoring: use get_topic_page_articles
 - Simple questions needing few results: search_articles with articlesCount: 10 (skip triage)
 

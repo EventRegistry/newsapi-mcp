@@ -304,7 +304,7 @@ export function filterEvent(
   return result;
 }
 
-export type ResultType = "articles" | "events";
+export type ResultType = "articles" | "events" | "breakingEvents";
 
 export interface FilterOptions {
   resultType: ResultType;
@@ -350,6 +350,11 @@ export function filterResponse(
           return filterArticle(obj, groups, bodyLen);
         case "events":
           return filterEvent(obj, groups);
+        case "breakingEvents":
+          return {
+            ...filterEvent(obj, groups),
+            breakingScore: obj.breakingScore,
+          };
         default:
           return obj;
       }

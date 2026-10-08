@@ -18,7 +18,7 @@ CI runs on [ubuntu, windows, macos] × [node 20, 22]. Publishing uses `npm publi
 
 ## Architecture
 
-MCP server for NewsAPI.ai (Event Registry). Provides 8 tools for searching news articles, events, and sources.
+MCP server for NewsAPI.ai (Event Registry). Provides 9 tools for searching news articles, events, and sources.
 
 Two entry points share `createServer()` from `src/server.ts`:
 

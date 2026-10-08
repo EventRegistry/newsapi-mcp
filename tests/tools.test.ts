@@ -31,7 +31,11 @@ import {
   buildFilterBody,
 } from "../src/tools/articles.js";
 import { ApiError } from "../src/types.js";
-import { searchEvents, getEventDetails } from "../src/tools/events.js";
+import {
+  searchEvents,
+  getEventDetails,
+  getBreakingEvents,
+} from "../src/tools/events.js";
 import {
   getTopicPageArticles,
   getTopicPageEvents,
@@ -503,5 +507,129 @@ describe("buildFilterBody", () => {
     expect(body.includeFields).toBeUndefined();
     expect(body.articleBodyLen).toBeUndefined();
     expect(body.keyword).toBeDefined();
+  });
+});
+
+// ---------- Aggregates ----------
+
+describe("aggregate resultType", () => {
+  it("search_articles sends filters and resultType only, returns data unfiltered", async () => {
+    const aggregate = {
+      timeAggr: { results: [{ date: "2025-01-01", count: 3 }] },
+    };
+    mockedApiPost.mockResolvedValueOnce({ data: aggregate });
+
+    const result = await searchArticles.handler({
+      keyword: "Tesla",
+      dateStart: "2025-01-01",
+      resultType: "timeAggr",
+      articlesCount: 10,
+      articlesPage: 2,
+      articlesSortBy: "rel",
+      includeFields: "concepts",
+      articleBodyLen: 0,
+    });
+
+    const [path, body] = mockedApiPost.mock.calls[0];
+    expect(path).toBe("/article/getArticles");
+    expect(body).toEqual({
+      keyword: ["Tesla"],
+      dateStart: "2025-01-01",
+      resultType: "timeAggr",
+    });
+    expect(result.data).toBe(aggregate);
+  });
+
+  it("search_events sends filters and resultType only, with event param names", async () => {
+    await searchEvents.handler({
+      keyword: "earthquake",
+      minSentiment: -0.5,
+      startSourceRankPercentile: 0,
+      resultType: "sourceAggr",
+      eventsCount: 10,
+      eventsPage: 2,
+      eventsSortBy: "size",
+      includeFields: "concepts",
+    });
+
+    const [path, body] = mockedApiPost.mock.calls[0];
+    expect(path).toBe("/event/getEvents");
+    expect(body).toEqual({
+      keyword: ["earthquake"],
+      minSentimentEvent: -0.5,
+      resultType: "sourceAggr",
+    });
+  });
+
+  it("the default resultType keeps the list request unchanged", async () => {
+    await searchArticles.handler({ keyword: "Tesla", resultType: "articles" });
+
+    const body = mockedApiPost.mock.calls[0][1];
+    expect(body.resultType).toBe("articles");
+    expect(body.articlesCount).toBe(100);
+    expect(body.articleBodyLen).toBe(1000);
+  });
+});
+
+// ---------- Breaking events ----------
+
+describe("getBreakingEvents", () => {
+  it("calls the endpoint with defaults and event include params", async () => {
+    await getBreakingEvents.handler({});
+
+    expect(mockedApiPost).toHaveBeenCalledWith("/event/getBreakingEvents", {
+      breakingEventsCount: 50,
+      breakingEventsPage: 1,
+      breakingEventsMinBreakingScore: 0.2,
+      includeEventSummary: true,
+      includeEventArticleCounts: true,
+    });
+  });
+
+  it("passes count, page, score and includeFields through", async () => {
+    await getBreakingEvents.handler({
+      breakingEventsCount: 10,
+      breakingEventsPage: 3,
+      breakingEventsMinBreakingScore: 0.5,
+      includeFields: "concepts",
+    });
+
+    const body = mockedApiPost.mock.calls[0][1];
+    expect(body.breakingEventsCount).toBe(10);
+    expect(body.breakingEventsPage).toBe(3);
+    expect(body.breakingEventsMinBreakingScore).toBe(0.5);
+    expect(body.includeEventConcepts).toBe(true);
+    expect(body.includeFields).toBeUndefined();
+  });
+
+  it("filters the breakingEvents wrapper and keeps the breaking score", async () => {
+    mockedApiPost.mockResolvedValueOnce({
+      data: {
+        breakingEvents: {
+          results: [
+            {
+              uri: "eng-1",
+              title: { eng: "Quake" },
+              eventDate: "2025-01-01",
+              summary: { eng: "S" },
+              totalArticleCount: 40,
+              breakingScore: 0.8,
+              socialScore: 5,
+            },
+          ],
+          totalResults: 1,
+        },
+      },
+    });
+
+    const result = await getBreakingEvents.handler({});
+
+    const wrapper = (result.data as Record<string, unknown>)
+      .breakingEvents as Record<string, unknown>;
+    const [evt] = wrapper.results as Record<string, unknown>[];
+    expect(evt.breakingScore).toBe(0.8);
+    expect(evt.title).toBe("Quake");
+    expect(evt.socialScore).toBeUndefined();
+    expect(wrapper.totalResults).toBe(1);
   });
 });
