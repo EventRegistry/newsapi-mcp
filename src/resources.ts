@@ -89,7 +89,7 @@ Request additional data beyond the minimal set:
 - full: all available fields
 
 ### Token Optimization Tips
-1. Always use scan→triage→retrieve for comprehensive queries: scan with articlesCount: 100, articleBodyLen: 0, then retrieve only relevant articles via get_article_details
+1. Always use scan→triage→retrieve for comprehensive queries: scan with articlesCount: 100, articleBodyLen: 0 (one row per article: # | uri | date | source | title; no URL), then retrieve only relevant articles via get_article_details
 2. Use isDuplicateFilter: "skipDuplicates" in scan steps to remove wire syndication duplicates — this is the #1 triage efficiency improvement
 3. Use forceMaxDataTimeWindow: 7 for "recent news" queries
 4. In the retrieve step, request specific includeFields — avoid "full" unless you need everything
@@ -98,12 +98,36 @@ Request additional data beyond the minimal set:
 ## Advanced Patterns
 
 ### Combining Filters
-Multiple URIs can be comma-separated:
+Multiple URIs can be comma-separated (concepts are ANDed by default, set conceptOper: "or" for any-of; categories, sources, languages are ORed):
 search_articles({
   conceptUri: "uri1,uri2",
   categoryUri: "dmoz/Business",
   lang: "eng,deu"
 })
+Exclude with ignoreConceptUri, ignoreKeyword, ignoreSourceUri, ignoreLang.
+
+### Boolean keyword expressions
+One keyword string may be a boolean expression; the server switches keywordSearchMode to "exact" automatically:
+search_articles({conceptUri: "<tesla>", keyword: "(recall OR lawsuit) NOT Musk", keywordLoc: "title"})
+Operators: AND, OR, NOT, parentheses, "quoted phrase", NEAR/n (within n words, any order), NEXT/n (in order). Precedence: NEAR/NEXT > NOT > AND > OR.
+
+### The query parameter
+Use it only when the logic needs an OR across different fields or two independent OR-groups:
+search_articles({
+  query: {"$query": {"$and": [
+    {"$or": [{"conceptUri": "<AI Act>"}, {"keyword": "Digital Services Act"}]},
+    {"conceptUri": {"$or": ["<Meta>", "<Google>"]}}
+  ], "$not": {"conceptUri": "<TikTok>"}}},
+  lang: "eng", forceMaxDataTimeWindow: 31, articleBodyLen: 0
+})
+Rules: "$and"/"$or" hold a list of nodes; a leaf is an object of filter keys (several keys = AND); a value may be a string or {"$or": [...]}; "$not" sits next to "$and"/"$or" and holds one node (use {"$or": [...]} to exclude several). Flat params given with query are merged into it: filter keys are ANDed as one more leaf, ignore* become "$not", isDuplicateFilter/dataType/sentiment/rank go to "$filter".
+
+### Cost of a search (API tokens)
+| Search | last 31 days | 32–365 days | no date filter |
+| articles (any articlesCount, any body length) | 1 | 5–10 | 65 |
+| events | 5 | 20+ | 260 |
+| aggregates | 5 | — | 130 |
+get_article_details costs 1 per call (up to 100 URIs); suggest is free. Without a date filter the server searches the last 31 days and notes it under the result.
 
 ### Date Ranges
 Use dateStart and dateEnd in YYYY-MM-DD format:
@@ -113,20 +137,13 @@ search_articles({
   dateEnd: "2025-01-31"
 })
 
-### Sentiment Analysis
-Filter by article sentiment (-1 negative to +1 positive):
+### Rare filters: the options object
+Sentiment, source rank, authors, locations, source groups, extra exclusions and date mentions sit under options:
 search_articles({
   conceptUri: "<uri>",
-  minSentiment: 0.3
+  options: { minSentiment: 0.3, endSourceRankPercentile: 30 }
 })
-
-### Source Quality Filtering
-Filter by source importance percentile (0-100, lower = more important):
-search_articles({
-  conceptUri: "<uri>",
-  startSourceRankPercentile: 0,
-  endSourceRankPercentile: 30
-})
+Sentiment runs -1 (negative) to +1 (positive); source rank percentile 0 is the most important source, so endSourceRankPercentile: 30 keeps the top 30%.
 
 ## Error Recovery
 

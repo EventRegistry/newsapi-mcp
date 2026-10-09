@@ -9,13 +9,13 @@ export const serverInstructions = `NewsAPI MCP server provides access to Event R
 
 ### Step 1: Suggest — resolve names to URIs
 suggest({type: "concepts", prefix: "Tesla"}) → get conceptUri
-Always resolve entity names before searching. Keyword search is a fallback.
+Always resolve entity names before searching; keyword search is a fallback. Keep the prefix short (1-3 words), use English names (also for places), prefer established concepts over year-specific ones ("Olympic Games", not "2026 Olympics"); if a concept finds nothing, try a broader one or a keyword.
 
 ### Step 2: Scan — retrieve titles only
-Fetch up to 100 articles with articleBodyLen: 0 and isDuplicateFilter: "skipDuplicates". Returns only titles, dates, sources, and URIs — very token-efficient.
+Fetch up to 100 articles with articleBodyLen: 0 and isDuplicateFilter: "skipDuplicates". Each article is one row: # | uri | date | source | title — very token-efficient. Scan rows carry no URL; get_article_details returns the URL with the text, so every cited article must go through step 4.
 
 ### Step 3: Triage — assess relevance
-Read the titles from step 2. Select the articles relevant to the user's question by their URIs. If too few relevant results, paginate (articlesPage: 2) and repeat step 2.
+Read the titles from step 2. Select the articles relevant to the user's question by their URIs. If too few relevant results, tighten the filter (keywordLoc: "title", a boolean keyword, articlesSortBy: "rel") before paginating; fetch at most one more page unless the user asks for exhaustive coverage.
 
 ### Step 4: Retrieve — get full details
 Pass selected URIs to get_article_details (up to 100 per call). Add includeFields only for data you need.
@@ -31,6 +31,14 @@ When the question names a kind of happening (acquisitions, layoffs, product laun
 
 ### Aggregates — numbers instead of lists
 For quantitative questions (volume over time, who covers it, which entities, tone) set resultType on search_articles or search_events to an aggregate: "timeAggr", "sourceAggr", "conceptAggr", "categoryAggr", "keywordAggr", "sentimentAggr", "locAggr", "authorAggr" ("langAggr" for articles). search_mentions takes the same aggregates plus "eventTypeAggr". One call summarises every match; no scan needed.
+
+### Building the filter
+- Default: conceptUri (ANDed; conceptOper: "or" for any-of) + optional keyword (exact phrase in the body; keywordLoc: "title" for headlines) + lang + a date window. Exclusions: ignoreConceptUri, ignoreKeyword, ignoreSourceUri. Sources from a country: sourceLocationUri, not sourceUri.
+- Scans: isDuplicateFilter: "skipDuplicates" removes wire copies. Sorting by socialScore surfaces low-authority sources; pair it with options.endSourceRankPercentile.
+- Text logic in ONE keyword string: "Tesla AND (recall OR lawsuit) NOT Musk" (AND, OR, NOT, NEAR/n, NEXT/n, parentheses, quotes). Detected automatically; do not comma-separate inside it.
+- OR across different fields (concept OR keyword OR category) or two ANDed OR-groups: use the query param; flat params you add alongside are merged with it. See the param description for the grammar and examples.
+- Rare filters (sentiment, source rank, authors, locations, source groups, extra exclusions) are under options: {...}.
+- Dates and cost: a search within the last 31 days costs 1 API token (articles) or 5 (events) regardless of articlesCount; 32–365 days costs 5–10×, no date filter 65×. Without a date filter the server searches the last 31 days and says so. Set dateStart/dateEnd only when older news is asked for.
 
 ### When to simplify
 - Quick lookups (known URI): go directly to get_article_details

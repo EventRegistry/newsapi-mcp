@@ -41,49 +41,24 @@ const SUGGEST_FORMATTERS: Record<string, ResponseFormatter> = {
 
 export const suggest: ToolDef = {
   name: "suggest",
-  description: `Look up URIs for entities by name. You MUST resolve names to URIs before using them in search filters.
-
-TYPES:
-- "concepts": people, orgs, locations, things → for conceptUri
-- "categories": news topics (business, tech, sports) → for categoryUri
-- "sources": news outlets (Reuters, BBC) → for sourceUri
-- "locations": countries, cities, regions → for locationUri or sourceLocationUri
-- "authors": journalists → for authorUri
-- "eventTypes": kinds of happenings (acquisition, layoffs, product launch) → for eventTypeUri in search_mentions only
-
-WORKFLOW: suggest(type, prefix) → get URI → pass to search_articles or search_events.
-EXAMPLE: suggest({type: "concepts", prefix: "Tesla"}) → search_articles({conceptUri: "<uri>"})
-
-Prefer "concepts" as the default type. Use specific types when entity type is unambiguous (e.g., journalist name → "authors").
-
-TIPS:
-- Keep prefix SHORT (1-3 words). The API does prefix matching, not full-text search.
-  Good: "Tesla", "Angela Merkel" | Bad: "Tesla electric vehicle company"
-- For non-English entities, search in English first. Only try the native language if English returns no results.
-  Example: For Slovenian company "Krka", first search with lang="eng", then try lang="slv" if needed.
-- For locations, ALWAYS use English names regardless of target language.
-  Good: "Germany", "Slovenia" | Bad: "Deutschland", "Slovenija"
-- Prefer WELL-ESTABLISHED concepts over year-specific or recent event editions.
-  Good: "Winter Olympic Games", "FIFA World Cup" | Bad: "2026 Winter Olympics", "2026 FIFA World Cup"
-  If a specific concept returns no results, try a broader parent concept or use keyword search instead.`,
+  description: `Resolve a name to the URI the search filters need (free). Types: concepts (people, orgs, things → conceptUri), categories, sources, locations (→ locationUri / sourceLocationUri), authors, eventTypes (→ eventTypeUri, search_mentions only). Keep the prefix short (1-3 words), use English names, prefer established concepts ("Olympic Games", not "2026 Olympics").
+Example: suggest({type: "concepts", prefix: "Tesla"})`,
   inputSchema: {
     type: "object",
     properties: {
       type: {
         type: "string",
-        description:
-          'Entity type to look up: "concepts" (people, orgs, things), "categories" (news topics), "sources" (news outlets), "locations" (countries, cities), "authors" (journalists), "eventTypes" (kinds of happenings, for search_mentions).',
+        description: "What to look up.",
         enum: [...SUGGEST_TYPES],
       },
       prefix: {
         type: "string",
-        description:
-          "Short name or prefix to search for (1-3 words). Shorter prefixes work better than long descriptions.",
+        description: "Name or prefix, 1-3 words.",
       },
       lang: {
         type: "string",
         description:
-          'Language code for results (e.g. "eng", "deu", "fra", "slv"). Defaults to "eng". For non-English entities, try English first, then native language if needed. For locations, always use English names.',
+          'Language of the name, default "eng"; try the native language only if English finds nothing.',
       },
     },
     required: ["type", "prefix"],

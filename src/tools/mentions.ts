@@ -1,9 +1,11 @@
 import { apiPost } from "../client.js";
 import type { ToolDef } from "../types.js";
+import { buildSearchBody, queryProp } from "../query.js";
 import {
   contentFilterProps,
+  RARE_FILTER_KEYS,
   buildAggregateBody,
-  buildFilterBody,
+  flattenOptions,
   formatByResultType,
   resultTypeProp,
 } from "./articles.js";
@@ -27,6 +29,7 @@ const SHARED_FILTER_KEYS = [
   "dateStart",
   "dateEnd",
   "keywordOper",
+  "keywordSearchMode",
   "conceptOper",
   "categoryOper",
   "minSentiment",
@@ -43,16 +46,48 @@ const SHARED_FILTER_KEYS = [
   "ignoreLang",
 ] as const;
 
+const rareShared = new Set<string>(RARE_FILTER_KEYS);
 const sharedFilterProps = Object.fromEntries(
-  SHARED_FILTER_KEYS.map((k) => [k, contentFilterProps[k]]),
+  SHARED_FILTER_KEYS.filter((k) => !rareShared.has(k)).map((k) => [
+    k,
+    contentFilterProps[k],
+  ]),
+);
+const sharedRareProps = Object.fromEntries(
+  SHARED_FILTER_KEYS.filter((k) => rareShared.has(k)).map((k) => [
+    k,
+    contentFilterProps[k],
+  ]),
 );
 
 const mentionFilterProps: Record<string, unknown> = {
   eventTypeUri: {
     type: "string",
     description:
-      'Event type URI(s) the sentence expresses (comma-separated), e.g. an acquisition, layoffs, a product launch. Use suggest(type: "eventTypes") to look up URIs. Multiple values are OR-ed.',
+      "Event type URI(s) from suggest(type: \"eventTypes\"), comma-separated (OR).",
   },
+  factLevel: {
+    type: "string",
+    description:
+      'How factual the sentence is (comma-separated): "fact", "opinion", "forecast".',
+  },
+};
+
+const MENTION_AGGREGATES = [
+  "timeAggr",
+  "sourceAggr",
+  "keywordAggr",
+  "locAggr",
+  "conceptAggr",
+  "eventTypeAggr",
+  "categoryAggr",
+  "sentimentAggr",
+  "langAggr",
+] as const;
+
+/** The mentions endpoint routes on an action field, unlike the article and event endpoints. */
+/** Mention-only filters most searches never need. */
+const mentionRareProps: Record<string, unknown> = {
   industryUri: {
     type: "string",
     description:
@@ -72,17 +107,6 @@ const mentionFilterProps: Record<string, unknown> = {
     type: "string",
     description:
       'ESG pillar(s) the event type belongs to (comma-separated): "esg/environment", "esg/social", "esg/governance".',
-  },
-  factLevel: {
-    type: "string",
-    description:
-      'How factual the sentence is (comma-separated): "fact", "opinion", "forecast".',
-  },
-  keywordSearchMode: {
-    type: "string",
-    description:
-      'How keyword is matched: "phrase" (exact phrase, default), "exact" (boolean query with AND, OR, NOT, NEAR, NEXT), "simple" (relevance-based, not all terms required).',
-    enum: ["phrase", "exact", "simple"],
   },
   minSentenceIndex: {
     type: "integer",
@@ -123,21 +147,11 @@ const mentionFilterProps: Record<string, unknown> = {
   },
 };
 
-const MENTION_AGGREGATES = [
-  "timeAggr",
-  "sourceAggr",
-  "keywordAggr",
-  "locAggr",
-  "conceptAggr",
-  "eventTypeAggr",
-  "categoryAggr",
-  "sentimentAggr",
-  "langAggr",
-] as const;
-
-/** The mentions endpoint routes on an action field, unlike the article and event endpoints. */
 const MENTIONS_PATH = "/eventType/mention";
 const MENTIONS_ACTION = "getMentions";
+
+// The mentions endpoint has no forceMaxDataTimeWindow; bound the window by date.
+const MENTION_SEARCH_OPTIONS = { dateDefault: "dateStart" as const };
 
 const MENTION_LIST_PARAMS = [
   "mentionsPage",
@@ -148,13 +162,8 @@ const MENTION_LIST_PARAMS = [
 
 export const searchMentions: ToolDef = {
   name: "search_mentions",
-  description: `Search individual sentences that state a specific kind of happening (an event type): acquisitions, layoffs, product launches, recalls, lawsuits, natural disasters and ~100 more. Each result is one sentence with its event type, the entities involved, sentiment and a link to the article. Returns up to 100 mentions per call.
-
-WORKFLOW: suggest({type: "eventTypes", prefix: "layoff"}) → eventTypeUri, then combine with conceptUri, sourceUri, dates and so on.
-EXAMPLE: search_mentions({eventTypeUri: "<uri>", conceptUri: "<uri>", dateStart: "2025-01-01"})
-
-USE THIS WHEN the question names a kind of happening or a relation between entities ("which companies announced layoffs", "deals involving X") — one call replaces scanning and reading article bodies.
-NOT THIS for general coverage of a topic — use search_articles or search_events.`,
+  description: `Search sentences that state a kind of happening (acquisition, layoffs, product launch, recall, lawsuit, disaster; ~100 event types): each result is one sentence with its entities, sentiment and article link (100 per call). Resolve the type with suggest(type: "eventTypes") first. Use when the question names a kind of happening; search_articles for general coverage.
+Example: search_mentions({eventTypeUri: "<uri>", conceptUri: "<uri>", dateStart: "2025-01-01"})`,
   inputSchema: {
     type: "object",
     properties: {
@@ -189,28 +198,39 @@ NOT THIS for general coverage of a topic — use search_articles or search_event
           "sourceAlexaCountryRank",
         ],
       },
-      mentionsSortByAsc: {
-        type: "boolean",
-        description: "Ascending sort order. Default: false.",
-      },
-      query: {
-        type: ["object", "string"],
+      ...queryProp("mentions"),
+      options: {
+        type: "object",
         description:
-          "Advanced Query Language object for complex boolean logic. See API docs. Overrides simple filter params when provided.",
+          "Rare filters as a nested object (sentiment, source rank, industry/SDG/SASB/ESG tags, sentence position, duplicates).",
+        properties: {
+          ...sharedRareProps,
+          ...mentionRareProps,
+          mentionsSortByAsc: {
+            type: "boolean",
+            description: "Ascending sort order. Default: false.",
+          },
+        },
       },
     },
   },
-  handler: async (params) => {
+  handler: async (raw) => {
+    const params = flattenOptions(raw);
     const resultType = (params.resultType as string) || "mentions";
     if (resultType !== "mentions") {
-      const body = buildAggregateBody(params, resultType, MENTION_LIST_PARAMS);
+      const { body, notes } = buildAggregateBody(
+        params,
+        resultType,
+        MENTION_LIST_PARAMS,
+        MENTION_SEARCH_OPTIONS,
+      );
       body.action = MENTIONS_ACTION;
-      return apiPost(MENTIONS_PATH, body);
+      return { ...(await apiPost(MENTIONS_PATH, body)), notes };
     }
 
     params.mentionsCount ??= 100;
     const groups = parseFieldGroups(params.includeFields as string | undefined);
-    const body = buildFilterBody(params);
+    const { body, notes } = buildSearchBody(params, MENTION_SEARCH_OPTIONS);
     body.action = MENTIONS_ACTION;
     body.resultType = "mentions";
     Object.assign(body, getMentionIncludeParams(groups));
@@ -219,6 +239,7 @@ NOT THIS for general coverage of a topic — use search_articles or search_event
     return {
       data: filterResponse(data, { resultType: "mentions", groups }),
       tokenUsage,
+      notes,
     };
   },
   formatter: formatByResultType("mentions", formatMentionResults),

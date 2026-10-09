@@ -1,12 +1,14 @@
 import { apiPost, parseArray } from "../client.js";
 import { ApiError } from "../types.js";
 import type { ToolDef } from "../types.js";
+import { buildSearchBody, queryProp } from "../query.js";
 import {
-  contentFilterProps,
+  coreFilterProps,
   buildAggregateBody,
-  buildFilterBody,
+  flattenOptions,
   formatByResultType,
   includeFieldsProp,
+  optionsProp,
   resultTypeProp,
 } from "./articles.js";
 import {
@@ -50,36 +52,17 @@ function adaptEventFilters(body: Record<string, unknown>): void {
 
 export const searchEvents: ToolDef = {
   name: "search_events",
-  description: `Search events (clusters of related articles about the same real-world happening). Returns up to 50 events per call. Events deduplicate coverage — one entry per story instead of per article.
-
-WORKFLOW: Use suggest tool first to resolve names to URIs, then search with conceptUri.
-EXAMPLE: search_events({conceptUri: "<uri>", dateStart: "2025-01-01"})
-
-USE THIS WHEN you need a high-level overview of what happened (event summaries, article counts). Use eventsSortBy: "size" for the biggest stories, or minArticlesInEvent to filter by significance.
-NOT THIS when you need full article text — use search_articles instead.`,
+  description: `Search events: clusters of articles about one happening, each with a summary and article count (50 per call, 5 API tokens within 31 days). Use for an overview of what happened; search_articles for full text. Same filters, keyword syntax and query as search_articles.
+Example: search_events({conceptUri: "<uri>", forceMaxDataTimeWindow: 31, eventsSortBy: "size", eventsCount: 20})`,
   inputSchema: {
     type: "object",
     properties: {
-      ...contentFilterProps,
+      ...coreFilterProps,
       ...includeFieldsProp,
       ...resultTypeProp("events", EVENT_AGGREGATES),
       minArticlesInEvent: {
         type: "integer",
         description: "Minimum number of articles in the event.",
-      },
-      maxArticlesInEvent: {
-        type: "integer",
-        description: "Maximum number of articles in the event.",
-      },
-      reportingDateStart: {
-        type: "string",
-        description:
-          "Filter by average article publishing date >= this (YYYY-MM-DD).",
-      },
-      reportingDateEnd: {
-        type: "string",
-        description:
-          "Filter by average article publishing date <= this (YYYY-MM-DD).",
       },
       eventsPage: {
         type: "integer",
@@ -96,29 +79,49 @@ NOT THIS when you need full article text — use search_articles instead.`,
           'Sort by: "date", "rel", "size", "socialScore". Default: "date".',
         enum: ["date", "rel", "size", "socialScore"],
       },
-      eventsSortByAsc: {
-        type: "boolean",
-        description: "Ascending sort order. Default: false.",
-      },
-      query: {
-        type: ["object", "string"],
-        description:
-          "Advanced Query Language object for complex boolean logic.",
-      },
+      ...queryProp("events"),
+      ...optionsProp(
+        {
+          maxArticlesInEvent: {
+            type: "integer",
+            description: "Maximum number of articles in the event.",
+          },
+          reportingDateStart: {
+            type: "string",
+            description:
+              "Average article publishing date >= this (YYYY-MM-DD).",
+          },
+          reportingDateEnd: {
+            type: "string",
+            description:
+              "Average article publishing date <= this (YYYY-MM-DD).",
+          },
+          eventsSortByAsc: {
+            type: "boolean",
+            description: "Ascending sort order. Default: false.",
+          },
+        },
+        ["startSourceRankPercentile", "endSourceRankPercentile"],
+      ),
     },
   },
-  handler: async (params) => {
+  handler: async (raw) => {
+    const params = flattenOptions(raw);
     const resultType = (params.resultType as string) || "events";
     if (resultType !== "events") {
-      const body = buildAggregateBody(params, resultType, EVENT_LIST_PARAMS);
+      const { body, notes } = buildAggregateBody(
+        params,
+        resultType,
+        EVENT_LIST_PARAMS,
+      );
       adaptEventFilters(body);
-      return apiPost("/event/getEvents", body);
+      return { ...(await apiPost("/event/getEvents", body)), notes };
     }
 
     params.eventsCount ??= 50;
     const groups = parseFieldGroups(params.includeFields as string | undefined);
 
-    const body = buildFilterBody(params);
+    const { body, notes } = buildSearchBody(params);
     body.resultType = "events";
     adaptEventFilters(body);
     Object.assign(body, getEventIncludeParams(groups));
@@ -127,6 +130,7 @@ NOT THIS when you need full article text — use search_articles instead.`,
     return {
       data: filterResponse(data, { resultType: "events", groups }),
       tokenUsage,
+      notes,
     };
   },
   formatter: formatByResultType("events", formatEventResults),

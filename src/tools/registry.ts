@@ -8,9 +8,19 @@ import { z } from "zod";
 
 /** Build a zod shape from a ToolDef's JSON schema properties. */
 function buildZodShape(tool: ToolDef): Record<string, z.ZodTypeAny> {
+  return shapeFromProps(
+    tool.inputSchema.properties,
+    tool.inputSchema.required ?? [],
+  );
+}
+
+/** Convert a JSON Schema `properties` map (nested objects included) to a zod shape. */
+function shapeFromProps(
+  props: Record<string, unknown>,
+  requiredKeys: readonly string[],
+): Record<string, z.ZodTypeAny> {
   const shape: Record<string, z.ZodTypeAny> = {};
-  const props = tool.inputSchema.properties;
-  const required = new Set(tool.inputSchema.required ?? []);
+  const required = new Set(requiredKeys);
 
   for (const [key, schemaDef] of Object.entries(props)) {
     const def = schemaDef as Record<string, unknown>;
@@ -40,6 +50,13 @@ function buildZodShape(tool: ToolDef): Record<string, z.ZodTypeAny> {
         field = z.number();
       } else if (typeDef === "boolean") {
         field = z.boolean();
+      } else if (typeDef === "object" && def.properties) {
+        field = z.object(
+          shapeFromProps(
+            def.properties as Record<string, unknown>,
+            (def.required as string[]) ?? [],
+          ),
+        );
       } else if (Array.isArray(typeDef) && typeDef.includes("object")) {
         field = z.any();
       } else {
@@ -119,7 +136,7 @@ export class ToolRegistry {
             ? validateFieldGroups(params.includeFields as string | undefined)
             : [];
 
-          const { data, tokenUsage } = (await handler(
+          const { data, tokenUsage, notes } = (await handler(
             params as unknown as Record<string, unknown>,
           )) as ApiResponse;
 
@@ -129,6 +146,9 @@ export class ToolRegistry {
 
           if (fieldWarnings.length > 0) {
             text += "\n\n⚠ " + fieldWarnings.join("\n⚠ ");
+          }
+          if (notes?.length) {
+            text += "\n" + notes.map((n) => `Note: ${n}`).join("\n");
           }
 
           // Truncate oversized responses before appending token footer

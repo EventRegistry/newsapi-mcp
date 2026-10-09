@@ -493,11 +493,14 @@ describe("getApiUsage", () => {
 describe("buildFilterBody", () => {
   it("parses string query as JSON", () => {
     const body = buildFilterBody({ query: '{"$query":{"keyword":"AI"}}' });
-    expect(body.query).toEqual({ $query: { keyword: "AI" } });
+    expect(body.query).toEqual({
+      $query: { keyword: "AI" },
+      $filter: { forceMaxDataTimeWindow: "31" },
+    });
   });
 
   it("passes object query through directly", () => {
-    const queryObj = { $query: { keyword: "AI" } };
+    const queryObj = { $query: { keyword: "AI", dateStart: "2025-01-01" } };
     const body = buildFilterBody({ query: queryObj });
     expect(body.query).toEqual(queryObj);
   });
@@ -556,6 +559,7 @@ describe("aggregate resultType", () => {
   it("search_events sends filters and resultType only, with event param names", async () => {
     await searchEvents.handler({
       keyword: "earthquake",
+      dateStart: "2025-01-01",
       minSentiment: -0.5,
       startSourceRankPercentile: 0,
       resultType: "sourceAggr",
@@ -569,6 +573,7 @@ describe("aggregate resultType", () => {
     expect(path).toBe("/event/getEvents");
     expect(body).toEqual({
       keyword: ["earthquake"],
+      dateStart: "2025-01-01",
       minSentimentEvent: -0.5,
       resultType: "sourceAggr",
     });
@@ -690,6 +695,7 @@ describe("searchMentions", () => {
     const result = await searchMentions.handler({
       eventTypeUri: "et/business/layoffs, et/business/hiring",
       conceptUri: "http://en.wikipedia.org/wiki/Acme",
+      dateStart: "2025-01-01",
       factLevel: "fact,forecast",
       maxSentenceIndex: 1,
       includeFields: "slots",
@@ -699,6 +705,7 @@ describe("searchMentions", () => {
     expect(path).toBe("/eventType/mention");
     expect(body).toEqual({
       action: "getMentions",
+      dateStart: "2025-01-01",
       eventTypeUri: ["et/business/layoffs", "et/business/hiring"],
       conceptUri: ["http://en.wikipedia.org/wiki/Acme"],
       factLevel: ["fact", "forecast"],
@@ -726,6 +733,7 @@ describe("searchMentions", () => {
   it("passes paging, sorting and the full include set through", async () => {
     await searchMentions.handler({
       keyword: "merger",
+      dateStart: "2025-01-01",
       mentionsPage: 2,
       mentionsCount: 20,
       mentionsSortBy: "rel",
@@ -738,6 +746,7 @@ describe("searchMentions", () => {
     expect(body).toEqual({
       action: "getMentions",
       keyword: ["merger"],
+      dateStart: "2025-01-01",
       mentionsPage: 2,
       mentionsCount: 20,
       mentionsSortBy: "rel",
@@ -756,6 +765,7 @@ describe("searchMentions", () => {
 
     const result = await searchMentions.handler({
       conceptUri: "c1",
+      dateStart: "2025-01-01",
       resultType: "eventTypeAggr",
       mentionsCount: 10,
       mentionsPage: 3,
@@ -767,6 +777,7 @@ describe("searchMentions", () => {
     expect(body).toEqual({
       action: "getMentions",
       conceptUri: ["c1"],
+      dateStart: "2025-01-01",
       resultType: "eventTypeAggr",
     });
     expect(result.data).toBe(aggregate);
