@@ -2,9 +2,8 @@
 
 The hosted server (`src/http.ts`) serves the same tools as the npm package over
 MCP's Streamable HTTP transport. It ships as a Docker image built from this
-repo, keeps no sessions ([ADR-0002](adr/0002-stateless-hosted-server.md)), and
-lets the MCP client log the user in at Event Registry's auth server
-([ADR-0001](adr/0001-login-through-event-registry.md)). The server only
+repo, keeps no sessions, and lets the MCP client log the user in at Event
+Registry's auth server. The server only
 verifies each request's access token and forwards it to NewsAPI.ai.
 
 ## Prerequisites

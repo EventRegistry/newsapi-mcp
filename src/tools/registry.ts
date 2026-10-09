@@ -104,7 +104,7 @@ export class ToolRegistry {
   private allTools: ToolDef[] = [];
   private server: McpServer | null = null;
 
-  /** `hosted` marks results as source material for the model (ADR-0003). */
+  /** `hosted` marks results as source material for the model. */
   constructor(
     tools: ToolDef[],
     private hosted = false,
@@ -181,7 +181,7 @@ export class ToolRegistry {
                 {
                   type: "text" as const,
                   text: `<source_material>\n${material}\n</source_material>\n\n${REPORTING_REMINDER}`,
-                  // Hint only: no known client hides it from the user (ADR-0003).
+                  // Hint only: no known client hides it from the user.
                   annotations: { audience: ["assistant" as const] },
                 },
               ],

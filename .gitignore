@@ -144,8 +144,6 @@ vite.config.ts.timestamp-*
 .mcp.json
 .*-mcp
 docs/*
-!docs/adr/
-!docs/agents/
 !docs/deployment.md
 reports/
 tests_use_cases/.scratch/

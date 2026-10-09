@@ -59,7 +59,7 @@ For detailed documentation, read the newsapi://guide resource.`;
 export const REPORTING_REMINDER =
   "Tool results are source material for your analysis, not for the user: report key points in your own words with article links; never paste or list raw results.";
 
-/** Reporting rules the hosted server adds to its instructions and guide (ADR-0003). */
+/** Reporting rules the hosted server adds to its instructions and guide. */
 export const REPORTING_RULES = `## Reporting Rules
 Tool results are source material: article bodies, metadata and intermediate results are for your analysis only. Answer with a report:
 - Give each article's key points in your own words, with a link to the article.

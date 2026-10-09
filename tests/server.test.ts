@@ -407,7 +407,7 @@ describe("MCP server E2E", () => {
   });
 });
 
-describe("Hosted server (ADR-0003)", () => {
+describe("Hosted server", () => {
   let hostedClient: Client;
   let hostedServer: McpServer;
 

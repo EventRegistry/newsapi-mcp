@@ -5,7 +5,7 @@ import { allTools, ToolRegistry } from "./tools/index.js";
 import { VERSION } from "./version.js";
 
 export interface ServerOptions {
-  /** Mark tool results as source material for the model (ADR-0003). */
+  /** Mark tool results as source material for the model. */
   hosted?: boolean;
 }
 

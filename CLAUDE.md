@@ -22,8 +22,8 @@ MCP server for NewsAPI.ai (Event Registry). Provides 8 tools: one `search` tool 
 
 Two entry points share `createServer()` from `src/server.ts`:
 
-- **Local server** — `src/index.ts`, stdio. Logs in to Event Registry through a loopback browser flow (`src/oauth.ts`, ADR-0001) unless `NEWSAPI_KEY` selects API-key mode; `login`/`logout` subcommands manage the stored tokens. Published to npm.
-- **Hosted server** — `src/http.ts`, stateless Streamable HTTP (fresh `McpServer` per request, ADR-0002), login run by the MCP client (ADR-0001). Verifies JWT access tokens, then runs the request inside `withAccessToken()` so `client.ts` sends `Authorization: Bearer` instead of the API key. Shipped as a Docker image, not in the npm package.
+- **Local server** — `src/index.ts`, stdio. Logs in to Event Registry through a loopback browser flow (`src/oauth.ts`) unless `NEWSAPI_KEY` selects API-key mode; `login`/`logout` subcommands manage the stored tokens. Published to npm.
+- **Hosted server** — `src/http.ts`, stateless Streamable HTTP (fresh `McpServer` per request), login run by the MCP client. Verifies JWT access tokens, then runs the request inside `withAccessToken()` so `client.ts` sends `Authorization: Bearer` instead of the API key. Shipped as a Docker image, not in the npm package.
 
 ### Request Flow
 
@@ -64,17 +64,3 @@ Tests mock `fetch` globally via `vi.stubGlobal("fetch", fetchSpy)`. Server integ
 - `contentFilterProps` in articles.ts holds every shared filter; `coreFilterProps` are exposed at the top level of `search` and the rare ones (`RARE_FILTER_KEYS`) go under its `options` object, flattened by `flattenOptions`
 - The linter auto-formats on save (may adjust ternary formatting etc.)
 - Single-file distribution via esbuild — `prepublishOnly` runs `build:bundle`
-
-## Agent skills
-
-### Issue tracker
-
-Issues and specs live as local markdown files under `.scratch/`. See `docs/agents/issue-tracker.md`.
-
-### Triage labels
-
-Default five-role vocabulary (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See `docs/agents/triage-labels.md`.
-
-### Domain docs
-
-Single-context: one `CONTEXT.md` and `docs/adr/` at the repo root. See `docs/agents/domain.md`.

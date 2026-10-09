@@ -149,7 +149,7 @@ export function createHttpApp(options: {
     mcpPath,
     requireBearerAuth({ verifier, resourceMetadataUrl }),
     async (req: Request, res: Response) => {
-      // Stateless (ADR-0002): no sessions, so no GET stream and no DELETE.
+      // Stateless: no sessions, so no GET stream and no DELETE.
       if (req.method !== "POST") {
         res.status(405).set("Allow", "POST").json({
           jsonrpc: "2.0",
