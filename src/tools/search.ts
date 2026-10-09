@@ -36,6 +36,8 @@ export interface SearchKind {
   /** Endpoint-specific body adjustments after the shared builder ran. */
   adapt?: (body: Record<string, unknown>, params: Record<string, unknown>) => void;
   includeParams: (groups: Set<string>) => Record<string, boolean>;
+  /** Reorder a fetched page before it is filtered (the API cannot sort on every field). */
+  reorder?: (data: unknown, body: Record<string, unknown>) => void;
   formatter: ResponseFormatter;
 }
 
@@ -182,7 +184,7 @@ Example: search({kind: "articles", conceptUri: "<uri>", forceMaxDataTimeWindow: 
       },
       sortBy: {
         type: "string",
-        description: `${perKind(sortValues, (s) => s.sortBy)}. Default: "date".`,
+        description: `${perKind(sortValues, (s) => s.sortBy)}. Default: "date" (articles: by publish time, newest first).`,
         enum: sortValues,
       },
       ...queryProp(),
@@ -255,6 +257,7 @@ Example: search({kind: "articles", conceptUri: "<uri>", forceMaxDataTimeWindow: 
     Object.assign(body, spec.includeParams(groups));
 
     const { data, tokenUsage } = await apiPost(spec.path, body);
+    spec.reorder?.(data, body);
     const cost = costNote(kind, tokenUsage?.reqTokens);
     if (cost) notes.push(cost);
     if (bodyLen !== undefined && bodyLen > 0) {

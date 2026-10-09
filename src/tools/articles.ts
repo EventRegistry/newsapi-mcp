@@ -248,6 +248,22 @@ export function buildFilterBody(
 }
 
 /** search({kind: "articles"}): individual articles with text. */
+/** The API's "date" sort uses crawl time; order the page by publish time instead. */
+function sortByPublishTime(
+  data: unknown,
+  body: Record<string, unknown>,
+): void {
+  if ((body.articlesSortBy ?? "date") !== "date") return;
+  const results = (
+    data as { articles?: { results?: { dateTimePub?: string }[] } }
+  )?.articles?.results;
+  if (!Array.isArray(results)) return;
+  const sign = body.articlesSortByAsc === true ? 1 : -1;
+  results.sort(
+    (a, b) => sign * (a.dateTimePub ?? "").localeCompare(b.dateTimePub ?? ""),
+  );
+}
+
 export const articlesKind: SearchKind = {
   path: "/article/getArticles",
   aggregates: [
@@ -288,6 +304,7 @@ export const articlesKind: SearchKind = {
     },
   },
   unsupported: [],
+  reorder: sortByPublishTime,
   bodyLen: (params) => (params.articleBodyLen as number) ?? 1000,
   adapt: (body, params) => {
     if (params.dataType) body.dataType = parseArray(params.dataType);

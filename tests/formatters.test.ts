@@ -237,7 +237,7 @@ describe("formatArticleResults", () => {
 
     const result = formatArticleResults(data, {});
 
-    expect(result).toContain("[2024-01-15]");
+    expect(result).toContain("[2024-01-15 10:00]");
     expect(result).toContain("Test Article");
     expect(result).toContain("Test Source");
     expect(result).toContain("Article body content here.");
@@ -590,7 +590,7 @@ describe("formatArticleDetails", () => {
 
     const result = formatArticleDetails(data, {});
 
-    expect(result).toContain("[2024-03-10]");
+    expect(result).toContain("[2024-03-10 08:00]");
     expect(result).toContain("Detail Article");
     expect(result).toContain("Detail Source");
     expect(result).toContain("Detailed body content.");
@@ -622,9 +622,9 @@ describe("formatArticleDetails", () => {
 
     const result = formatArticleDetails(data, {});
 
-    expect(result).toContain("1. [2024-01-01] First");
+    expect(result).toContain("1. [2024-01-01 00:00] First");
     expect(result).toContain("URI: uri1");
-    expect(result).toContain("2. [2024-01-02] Second");
+    expect(result).toContain("2. [2024-01-02 00:00] Second");
     expect(result).toContain("URI: uri2");
     expect(result).toContain("---");
   });
@@ -1116,7 +1116,7 @@ describe("formatMentionResults", () => {
     };
     const out = formatMentionResults(data, {});
     expect(out).toContain(
-      '1. [2025-03-04] et/business/layoffs - Example News\n   "Acme will cut 500 jobs in May."\n   Article: Acme announces layoffs\n   URL: https://ex.com/a1\n   URI: m1 (article a1)\n   Sentiment: -0.35\n   Fact level: forecast',
+      '1. [2025-03-04 08:00] et/business/layoffs - Example News\n   "Acme will cut 500 jobs in May."\n   Article: Acme announces layoffs\n   URL: https://ex.com/a1\n   URI: m1 (article a1)\n   Sentiment: -0.35\n   Fact level: forecast',
     );
     expect(out).toContain(
       "1 results (250 total) Page 1 of 3. Use page: 2 for more.",
@@ -1152,7 +1152,7 @@ describe("formatMentionResults", () => {
       },
     };
     const out = formatMentionResults(data, {});
-    expect(out).toContain("1. [2025-03-04] Layoffs - Example News");
+    expect(out).toContain("1. [2025-03-04 08:00] Layoffs - Example News");
     expect(out).toContain("   Entities: Acme [org], 46% [percent], May");
     expect(out).toContain("   Categories: Business");
     expect(out).toContain("   Frameworks: Decent work, social");

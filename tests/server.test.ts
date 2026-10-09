@@ -251,7 +251,7 @@ describe("MCP server E2E", () => {
     expect(sent.mentionsCount).toBe(50);
     const content = result.content[0] as { text: string };
     expect(content.text).toContain(
-      "1. [2025-01-01] et/business/layoffs - Example",
+      "1. [2025-01-01 10:00] et/business/layoffs - Example",
     );
     expect(content.text).toContain('"Acme cut 500 jobs."');
     expect(content.text).toContain("Tokens used: 1");

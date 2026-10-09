@@ -98,7 +98,7 @@ describe("formatArticleResults scan rows", () => {
     };
     const out = formatArticleResults(data, { articleBodyLen: 0 });
     expect(out).toContain("# | uri | date | source | title");
-    expect(out).toContain("1 | 123 | 2025-03-04 | S | T");
+    expect(out).toContain("1 | 123 | 2025-03-04 10:00 | S | T");
     expect(out).not.toContain("https://ex.com/t");
     expect(out).toContain("Page 1 of 3");
     expect(out).not.toContain("URL:");

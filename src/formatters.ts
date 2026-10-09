@@ -206,14 +206,19 @@ function formatEventExtras(evt: Record<string, unknown>): string {
   return lines.length > 0 ? "\n" + lines.join("\n") : "";
 }
 
+/** "2026-10-09T14:32:00Z" → "2026-10-09 14:32" so same-day articles stay orderable. */
+function formatDateTime(value: unknown): string {
+  if (typeof value !== "string" || !value) return "Unknown";
+  return value.replace("T", " ").slice(0, 16);
+}
+
 /** One row per article for a scan (no bodies): index, uri, date, source, title. URLs come with the details. */
 function formatArticleRows(
   results: Record<string, unknown>[],
   wrapper: Record<string, unknown> | undefined,
 ): string {
   const rows = results.map((art, i) => {
-    const date =
-      (art.dateTimePub as string | undefined)?.split("T")[0] || "Unknown";
+    const date = formatDateTime(art.dateTimePub);
     const source =
       (art.source as Record<string, unknown> | undefined)?.title || "Unknown";
     const extras = formatArticleExtras(art).replace(/\n\s+/g, " · ").trim();
@@ -237,8 +242,7 @@ export const formatArticleResults: ResponseFormatter = (data, params) => {
 
   const lines = results.map((art, i) => {
     const title = art.title || "Untitled";
-    const date =
-      (art.dateTimePub as string | undefined)?.split("T")[0] || "Unknown";
+    const date = formatDateTime(art.dateTimePub);
     const source =
       (art.source as Record<string, unknown> | undefined)?.title || "Unknown";
     const body = (art.body as string) || "";
@@ -248,7 +252,11 @@ export const formatArticleResults: ResponseFormatter = (data, params) => {
   });
 
   lines.push(
-    paginationFooter(articles, results.length, params?.kind ? "page" : "articlesPage"),
+    paginationFooter(
+      articles,
+      results.length,
+      params?.kind ? "page" : "articlesPage",
+    ),
   );
   return lines.join("\n\n---\n\n");
 };
@@ -263,7 +271,7 @@ export const formatMentionResults: ResponseFormatter = (data) => {
   if (!results?.length) return "No mentions found.";
 
   const lines = results.map((m, i) => {
-    const date = (m.dateTime as string | undefined)?.split("T")[0] || "Unknown";
+    const date = formatDateTime(m.dateTime);
     const source =
       (m.source as Record<string, unknown> | undefined)?.title || "Unknown";
     const eventType =
@@ -376,8 +384,7 @@ export const formatArticleDetails: ResponseFormatter = (data) => {
     const obj = value as Record<string, unknown> | undefined;
     if (!obj || typeof obj !== "object") return `${i + 1}. (unavailable)`;
     const art = (obj.info as Record<string, unknown>) ?? obj;
-    const date =
-      (art.dateTimePub as string | undefined)?.split("T")[0] || "Unknown";
+    const date = formatDateTime(art.dateTimePub);
     const source =
       (art.source as Record<string, unknown> | undefined)?.title || "Unknown";
     const title = art.title || "Untitled";

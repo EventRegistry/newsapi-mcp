@@ -59,6 +59,50 @@ describe("search articles", () => {
     );
   });
 
+  const page = (pubs: string[]) => ({
+    data: {
+      articles: {
+        results: pubs.map((dateTimePub, i) => ({ uri: `u${i}`, dateTimePub })),
+      },
+    },
+  });
+  const uris = (data: unknown) =>
+    (data as { articles: { results: { uri: string }[] } }).articles.results.map(
+      (a) => a.uri,
+    );
+
+  it("orders a date-sorted page by publish time, newest first", async () => {
+    mockedApiPost.mockResolvedValueOnce(
+      page(["2026-10-09T12:35Z", "2026-10-09T12:31Z", "2026-10-09T12:40Z"]),
+    );
+    const { data } = await search.handler({ kind: "articles", keyword: "x" });
+    expect(uris(data)).toEqual(["u2", "u0", "u1"]);
+  });
+
+  it("orders a date-sorted page oldest first when sortByAsc is set", async () => {
+    mockedApiPost.mockResolvedValueOnce(
+      page(["2026-10-09T12:35Z", "2026-10-09T12:31Z"]),
+    );
+    const { data } = await search.handler({
+      kind: "articles",
+      keyword: "x",
+      options: { sortByAsc: true },
+    });
+    expect(uris(data)).toEqual(["u1", "u0"]);
+  });
+
+  it("keeps the API order for a relevance sort", async () => {
+    mockedApiPost.mockResolvedValueOnce(
+      page(["2026-10-09T12:31Z", "2026-10-09T12:35Z"]),
+    );
+    const { data } = await search.handler({
+      kind: "articles",
+      keyword: "x",
+      sortBy: "rel",
+    });
+    expect(uris(data)).toEqual(["u0", "u1"]);
+  });
+
   it("passes includeFields as API include params", async () => {
     await search.handler({ kind: "articles",
       keyword: "Tesla",
