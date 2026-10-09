@@ -73,11 +73,9 @@ describe("MCP server E2E", () => {
     const result = await client.listTools();
     const names = result.tools.map((t) => t.name).sort();
 
-    expect(names).toHaveLength(10);
+    expect(names).toHaveLength(8);
     expect(names).toContain("get_breaking_events");
-    expect(names).toContain("search_mentions");
-    expect(names).toContain("search_articles");
-    expect(names).toContain("search_events");
+    expect(names).toContain("search");
     expect(names).toContain("suggest");
     expect(names).toContain("get_api_usage");
     expect(names).toContain("get_article_details");
@@ -107,12 +105,12 @@ describe("MCP server E2E", () => {
     expect(content.text).toContain("http://en.wikipedia.org/wiki/Tesla");
   });
 
-  it("calls search_articles with keyword", async () => {
+  it("calls search with keyword", async () => {
     mockFetchOk({ articles: { results: [] } });
 
     const result = await client.callTool({
-      name: "search_articles",
-      arguments: { keyword: "AI" },
+      name: "search",
+      arguments: { kind: "articles", keyword: "AI" },
     });
 
     expect(result.content).toHaveLength(1);
@@ -145,8 +143,8 @@ describe("MCP server E2E", () => {
     mockFetchError(429, '"quota exceeded"');
 
     const result = await client.callTool({
-      name: "search_articles",
-      arguments: { keyword: "test" },
+      name: "search",
+      arguments: { kind: "articles", keyword: "test" },
     });
 
     expect(result.isError).toBe(true);
@@ -159,8 +157,8 @@ describe("MCP server E2E", () => {
     mockFetchError(400, '{"error":"invalid lang value"}');
 
     const result = await client.callTool({
-      name: "search_articles",
-      arguments: { keyword: "test" },
+      name: "search",
+      arguments: { kind: "articles", keyword: "test" },
     });
 
     expect(result.isError).toBe(true);
@@ -173,8 +171,8 @@ describe("MCP server E2E", () => {
     mockFetchOk({ articles: { results: [] } });
 
     const result = await client.callTool({
-      name: "search_articles",
-      arguments: { keyword: "AI", includeFields: "sentiment,bogus" },
+      name: "search",
+      arguments: { kind: "articles", keyword: "AI", includeFields: "sentiment,bogus" },
     });
 
     expect(result.isError).toBeUndefined();
@@ -208,8 +206,8 @@ describe("MCP server E2E", () => {
     });
 
     const result = await client.callTool({
-      name: "search_articles",
-      arguments: { keyword: "AI", resultType: "timeAggr" },
+      name: "search",
+      arguments: { kind: "articles", keyword: "AI", resultType: "timeAggr" },
     });
 
     const sent = JSON.parse(fetchSpy.mock.lastCall![1].body as string);
@@ -243,14 +241,14 @@ describe("MCP server E2E", () => {
     });
 
     const result = await client.callTool({
-      name: "search_mentions",
-      arguments: { eventTypeUri: "et/business/layoffs", keyword: "Acme" },
+      name: "search",
+      arguments: { kind: "mentions", eventTypeUri: "et/business/layoffs", keyword: "Acme" },
     });
 
     const sent = JSON.parse(fetchSpy.mock.lastCall![1].body as string);
     expect(sent.resultType).toBe("mentions");
     expect(sent.eventTypeUri).toEqual(["et/business/layoffs"]);
-    expect(sent.mentionsCount).toBe(100);
+    expect(sent.mentionsCount).toBe(50);
     const content = result.content[0] as { text: string };
     expect(content.text).toContain(
       "1. [2025-01-01] et/business/layoffs - Example",
@@ -259,12 +257,12 @@ describe("MCP server E2E", () => {
     expect(content.text).toContain("Tokens used: 1");
   });
 
-  it("appends token footer to search_articles response", async () => {
+  it("appends token footer to search response", async () => {
     mockFetchOk({ articles: { results: [] } });
 
     const result = await client.callTool({
-      name: "search_articles",
-      arguments: { keyword: "AI" },
+      name: "search",
+      arguments: { kind: "articles", keyword: "AI" },
     });
 
     const content = result.content[0] as { text: string };
@@ -320,8 +318,8 @@ describe("MCP server E2E", () => {
     mockFetchOk({ articles: { results: [] } }, {});
 
     const result = await client.callTool({
-      name: "search_articles",
-      arguments: { keyword: "no-headers" },
+      name: "search",
+      arguments: { kind: "articles", keyword: "no-headers" },
     });
 
     const content = result.content[0] as { text: string };
@@ -340,14 +338,14 @@ describe("MCP server E2E", () => {
     mockFetchOk({ articles: { results: articles } });
 
     const result = await client.callTool({
-      name: "search_articles",
-      arguments: { keyword: "test", articleBodyLen: -1 },
+      name: "search",
+      arguments: { kind: "articles", keyword: "test", articleBodyLen: -1 },
     });
 
     const content = result.content[0] as { text: string };
     // Response should be truncated and within limit
     expect(content.text).toContain("Response truncated to fit context window");
-    expect(content.text.length).toBeLessThan(110_000);
+    expect(content.text.length).toBeLessThan(60_000);
     // Token footer should still be present after truncation
     expect(content.text).toContain("Tokens used:");
     expect(content.text).toContain("Remaining:");
@@ -357,12 +355,12 @@ describe("MCP server E2E", () => {
     expect(truncIdx).toBeLessThan(footerIdx);
   });
 
-  it("sends includeEventArticleCounts for search_events", async () => {
+  it("sends includeEventArticleCounts for events", async () => {
     mockFetchOk({ events: { results: [] } });
 
     await client.callTool({
-      name: "search_events",
-      arguments: { keyword: "AI" },
+      name: "search",
+      arguments: { kind: "events", keyword: "AI" },
     });
 
     const lastCall = fetchSpy.mock.calls[fetchSpy.mock.calls.length - 1];
@@ -433,8 +431,8 @@ describe("Hosted server (ADR-0003)", () => {
     mockFetchOk({ articles: { results: [] } });
 
     const result = await hostedClient.callTool({
-      name: "search_articles",
-      arguments: { keyword: "AI" },
+      name: "search",
+      arguments: { kind: "articles", keyword: "AI" },
     });
 
     expect(result.content).toHaveLength(1);
@@ -459,8 +457,8 @@ describe("Hosted server (ADR-0003)", () => {
     });
 
     const result = await hostedClient.callTool({
-      name: "search_articles",
-      arguments: { keyword: "AI" },
+      name: "search",
+      arguments: { kind: "articles", keyword: "AI" },
     });
 
     const { text } = result.content[0] as { text: string };
@@ -507,8 +505,8 @@ describe("Hosted server (ADR-0003)", () => {
     mockFetchOk({ articles: { results: [] } });
 
     const result = await client.callTool({
-      name: "search_articles",
-      arguments: { keyword: "AI" },
+      name: "search",
+      arguments: { kind: "articles", keyword: "AI" },
     });
     const content = result.content[0] as {
       text: string;

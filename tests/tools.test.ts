@@ -25,18 +25,10 @@ vi.mock("../src/client.js", () => ({
 }));
 
 import { apiPost } from "../src/client.js";
-import {
-  searchArticles,
-  getArticleDetails,
-  buildFilterBody,
-} from "../src/tools/articles.js";
+import { search } from "../src/tools/search.js";
+import { getArticleDetails, buildFilterBody } from "../src/tools/articles.js";
 import { ApiError } from "../src/types.js";
-import {
-  searchEvents,
-  getEventDetails,
-  getBreakingEvents,
-} from "../src/tools/events.js";
-import { searchMentions } from "../src/tools/mentions.js";
+import { getEventDetails, getBreakingEvents } from "../src/tools/events.js";
 import {
   getTopicPageArticles,
   getTopicPageEvents,
@@ -52,23 +44,23 @@ beforeEach(() => {
 
 // ---------- Articles ----------
 
-describe("searchArticles", () => {
+describe("search articles", () => {
   it("calls correct endpoint with resultType, articleBodyLen, and default count", async () => {
-    await searchArticles.handler({ keyword: "Tesla" });
+    await search.handler({ kind: "articles", keyword: "Tesla" });
 
     expect(mockedApiPost).toHaveBeenCalledWith(
       "/article/getArticles",
       expect.objectContaining({
         resultType: "articles",
         articleBodyLen: 1000,
-        articlesCount: 100,
+        articlesCount: 50,
         keyword: ["Tesla"],
       }),
     );
   });
 
   it("passes includeFields as API include params", async () => {
-    await searchArticles.handler({
+    await search.handler({ kind: "articles",
       keyword: "Tesla",
       includeFields: "concepts,sentiment",
     });
@@ -80,14 +72,14 @@ describe("searchArticles", () => {
   });
 
   it("expands dataType array field", async () => {
-    await searchArticles.handler({ dataType: "news,pr" });
+    await search.handler({ kind: "articles", dataType: "news,pr" });
 
     const body = mockedApiPost.mock.calls[0][1];
     expect(body.dataType).toEqual(["news", "pr"]);
   });
 
   it("passes pagination params through", async () => {
-    await searchArticles.handler({ articlesPage: 2, articlesCount: 50 });
+    await search.handler({ kind: "articles", page: 2, count: 50 });
 
     const body = mockedApiPost.mock.calls[0][1];
     expect(body.articlesPage).toBe(2);
@@ -95,7 +87,7 @@ describe("searchArticles", () => {
   });
 
   it("passes dateMentionStart/dateMentionEnd through as strings", async () => {
-    await searchArticles.handler({
+    await search.handler({ kind: "articles",
       keyword: "election",
       dateMentionStart: "2025-06-01",
       dateMentionEnd: "2025-06-30",
@@ -134,9 +126,9 @@ describe("getArticleDetails", () => {
 
 // ---------- Events ----------
 
-describe("searchEvents", () => {
+describe("search events", () => {
   it("calls correct endpoint with resultType, includeEventSummary, and default count", async () => {
-    await searchEvents.handler({ keyword: "earthquake" });
+    await search.handler({ kind: "events", keyword: "earthquake" });
 
     expect(mockedApiPost).toHaveBeenCalledWith(
       "/event/getEvents",
@@ -150,7 +142,7 @@ describe("searchEvents", () => {
   });
 
   it("passes event-specific params through", async () => {
-    await searchEvents.handler({
+    await search.handler({ kind: "events",
       minArticlesInEvent: 10,
       reportingDateStart: "2024-01-01",
     });
@@ -161,7 +153,7 @@ describe("searchEvents", () => {
   });
 
   it("renames minSentiment/maxSentiment to event-specific param names", async () => {
-    await searchEvents.handler({
+    await search.handler({ kind: "events",
       keyword: "earthquake",
       minSentiment: -0.5,
       maxSentiment: 0.8,
@@ -174,16 +166,15 @@ describe("searchEvents", () => {
     expect(body.maxSentiment).toBeUndefined();
   });
 
-  it("strips article-only source rank params", async () => {
-    await searchEvents.handler({
-      keyword: "earthquake",
-      startSourceRankPercentile: 0,
-      endSourceRankPercentile: 50,
-    });
-
-    const body = mockedApiPost.mock.calls[0][1];
-    expect(body.startSourceRankPercentile).toBeUndefined();
-    expect(body.endSourceRankPercentile).toBeUndefined();
+  it("rejects the article-only source rank params", async () => {
+    await expect(
+      search.handler({
+        kind: "events",
+        keyword: "earthquake",
+        startSourceRankPercentile: 0,
+      }),
+    ).rejects.toThrow(/startSourceRankPercentile.*applies to kind/);
+    expect(mockedApiPost).not.toHaveBeenCalled();
   });
 });
 
@@ -255,8 +246,8 @@ describe("getEventDetails", () => {
 // ---------- Ignore / Negative Filters ----------
 
 describe("ignore params", () => {
-  it("searchArticles expands ignore* params as arrays", async () => {
-    await searchArticles.handler({
+  it("articles expands ignore* params as arrays", async () => {
+    await search.handler({ kind: "articles",
       keyword: "AI",
       ignoreConceptUri: "uri1,uri2",
       ignoreSourceUri: "src1",
@@ -269,8 +260,8 @@ describe("ignore params", () => {
     expect(body.ignoreLang).toEqual(["deu", "fra"]);
   });
 
-  it("searchEvents expands ignore* params as arrays", async () => {
-    await searchEvents.handler({
+  it("events expands ignore* params as arrays", async () => {
+    await search.handler({ kind: "events",
       keyword: "earthquake",
       ignoreKeyword: "tsunami,flood",
       ignoreCategoryUri: "cat1",
@@ -282,7 +273,7 @@ describe("ignore params", () => {
   });
 
   it("passes ignoreKeywordLoc as scalar string", async () => {
-    await searchArticles.handler({
+    await search.handler({ kind: "articles",
       keyword: "AI",
       ignoreKeyword: "spam",
       ignoreKeywordLoc: "title",
@@ -291,8 +282,8 @@ describe("ignore params", () => {
     expect(body.ignoreKeywordLoc).toBe("title");
   });
 
-  it("searchArticles passes sourceGroupUri and operator params", async () => {
-    await searchArticles.handler({
+  it("articles passes sourceGroupUri and operator params", async () => {
+    await search.handler({ kind: "articles",
       keyword: "AI",
       sourceGroupUri: "group1,group2",
       conceptOper: "or",
@@ -306,9 +297,9 @@ describe("ignore params", () => {
   });
 });
 
-describe("searchEvents operators and sourceGroupUri", () => {
+describe("search events operators and sourceGroupUri", () => {
   it("passes operator and sourceGroupUri params through", async () => {
-    await searchEvents.handler({
+    await search.handler({ kind: "events",
       keyword: "earthquake",
       sourceGroupUri: "group1",
       conceptOper: "or",
@@ -386,25 +377,25 @@ describe("getTopicPageEvents", () => {
 // ---------- Default Values ----------
 
 describe("default values", () => {
-  it("searchArticles sends articlesCount: 100 and articleBodyLen: 1000 by default", async () => {
-    await searchArticles.handler({ keyword: "AI" });
+  it("articles sends articlesCount: 50 and articleBodyLen: 1000 by default", async () => {
+    await search.handler({ kind: "articles", keyword: "AI" });
 
     const body = mockedApiPost.mock.calls[0][1];
-    expect(body.articlesCount).toBe(100);
+    expect(body.articlesCount).toBe(50);
     expect(body.articleBodyLen).toBe(1000);
   });
 
-  it("searchEvents sends eventsCount: 50 by default", async () => {
-    await searchEvents.handler({ keyword: "earthquake" });
+  it("events sends eventsCount: 50 by default", async () => {
+    await search.handler({ kind: "events", keyword: "earthquake" });
 
     const body = mockedApiPost.mock.calls[0][1];
     expect(body.eventsCount).toBe(50);
   });
 
   it("explicit params override defaults", async () => {
-    await searchArticles.handler({
+    await search.handler({ kind: "articles",
       keyword: "AI",
-      articlesCount: 10,
+      count: 10,
       articleBodyLen: 200,
     });
 
@@ -493,11 +484,14 @@ describe("getApiUsage", () => {
 describe("buildFilterBody", () => {
   it("parses string query as JSON", () => {
     const body = buildFilterBody({ query: '{"$query":{"keyword":"AI"}}' });
-    expect(body.query).toEqual({ $query: { keyword: "AI" } });
+    expect(body.query).toEqual({
+      $query: { keyword: "AI" },
+      $filter: { forceMaxDataTimeWindow: "31" },
+    });
   });
 
   it("passes object query through directly", () => {
-    const queryObj = { $query: { keyword: "AI" } };
+    const queryObj = { $query: { keyword: "AI", dateStart: "2025-01-01" } };
     const body = buildFilterBody({ query: queryObj });
     expect(body.query).toEqual(queryObj);
   });
@@ -526,19 +520,19 @@ describe("buildFilterBody", () => {
 // ---------- Aggregates ----------
 
 describe("aggregate resultType", () => {
-  it("search_articles sends filters and resultType only, returns data unfiltered", async () => {
+  it("articles send filters and resultType only, returns data unfiltered", async () => {
     const aggregate = {
       timeAggr: { results: [{ date: "2025-01-01", count: 3 }] },
     };
     mockedApiPost.mockResolvedValueOnce({ data: aggregate });
 
-    const result = await searchArticles.handler({
+    const result = await search.handler({ kind: "articles",
       keyword: "Tesla",
       dateStart: "2025-01-01",
       resultType: "timeAggr",
-      articlesCount: 10,
-      articlesPage: 2,
-      articlesSortBy: "rel",
+      count: 10,
+      page: 2,
+      sortBy: "rel",
       includeFields: "concepts",
       articleBodyLen: 0,
     });
@@ -553,15 +547,15 @@ describe("aggregate resultType", () => {
     expect(result.data).toBe(aggregate);
   });
 
-  it("search_events sends filters and resultType only, with event param names", async () => {
-    await searchEvents.handler({
+  it("events send filters and resultType only, with event param names", async () => {
+    await search.handler({ kind: "events",
       keyword: "earthquake",
+      dateStart: "2025-01-01",
       minSentiment: -0.5,
-      startSourceRankPercentile: 0,
       resultType: "sourceAggr",
-      eventsCount: 10,
-      eventsPage: 2,
-      eventsSortBy: "size",
+      count: 10,
+      page: 2,
+      sortBy: "size",
       includeFields: "concepts",
     });
 
@@ -569,17 +563,18 @@ describe("aggregate resultType", () => {
     expect(path).toBe("/event/getEvents");
     expect(body).toEqual({
       keyword: ["earthquake"],
+      dateStart: "2025-01-01",
       minSentimentEvent: -0.5,
       resultType: "sourceAggr",
     });
   });
 
   it("the default resultType keeps the list request unchanged", async () => {
-    await searchArticles.handler({ keyword: "Tesla", resultType: "articles" });
+    await search.handler({ kind: "articles", keyword: "Tesla", resultType: "articles" });
 
     const body = mockedApiPost.mock.calls[0][1];
     expect(body.resultType).toBe("articles");
-    expect(body.articlesCount).toBe(100);
+    expect(body.articlesCount).toBe(50);
     expect(body.articleBodyLen).toBe(1000);
   });
 });
@@ -649,7 +644,7 @@ describe("getBreakingEvents", () => {
 
 // ---------- Mentions ----------
 
-describe("searchMentions", () => {
+describe("search mentions", () => {
   it("sends the mention filters, default count and include flags", async () => {
     const response = {
       mentions: {
@@ -687,9 +682,10 @@ describe("searchMentions", () => {
       tokenUsage: { reqTokens: 1, remaining: 9 },
     });
 
-    const result = await searchMentions.handler({
+    const result = await search.handler({ kind: "mentions",
       eventTypeUri: "et/business/layoffs, et/business/hiring",
       conceptUri: "http://en.wikipedia.org/wiki/Acme",
+      dateStart: "2025-01-01",
       factLevel: "fact,forecast",
       maxSentenceIndex: 1,
       includeFields: "slots",
@@ -699,11 +695,12 @@ describe("searchMentions", () => {
     expect(path).toBe("/eventType/mention");
     expect(body).toEqual({
       action: "getMentions",
+      dateStart: "2025-01-01",
       eventTypeUri: ["et/business/layoffs", "et/business/hiring"],
       conceptUri: ["http://en.wikipedia.org/wiki/Acme"],
       factLevel: ["fact", "forecast"],
       maxSentenceIndex: 1,
-      mentionsCount: 100,
+      mentionsCount: 50,
       resultType: "mentions",
       includeMentionSlots: true,
     });
@@ -724,12 +721,13 @@ describe("searchMentions", () => {
   });
 
   it("passes paging, sorting and the full include set through", async () => {
-    await searchMentions.handler({
+    await search.handler({ kind: "mentions",
       keyword: "merger",
-      mentionsPage: 2,
-      mentionsCount: 20,
-      mentionsSortBy: "rel",
-      mentionsSortByAsc: true,
+      dateStart: "2025-01-01",
+      page: 2,
+      count: 20,
+      sortBy: "rel",
+      sortByAsc: true,
       showDuplicates: true,
       includeFields: "full",
     });
@@ -738,6 +736,7 @@ describe("searchMentions", () => {
     expect(body).toEqual({
       action: "getMentions",
       keyword: ["merger"],
+      dateStart: "2025-01-01",
       mentionsPage: 2,
       mentionsCount: 20,
       mentionsSortBy: "rel",
@@ -754,11 +753,12 @@ describe("searchMentions", () => {
     const aggregate = { eventTypeAggr: { results: [] } };
     mockedApiPost.mockResolvedValueOnce({ data: aggregate });
 
-    const result = await searchMentions.handler({
+    const result = await search.handler({ kind: "mentions",
       conceptUri: "c1",
+      dateStart: "2025-01-01",
       resultType: "eventTypeAggr",
-      mentionsCount: 10,
-      mentionsPage: 3,
+      count: 10,
+      page: 3,
       includeFields: "slots",
     });
 
@@ -767,26 +767,57 @@ describe("searchMentions", () => {
     expect(body).toEqual({
       action: "getMentions",
       conceptUri: ["c1"],
+      dateStart: "2025-01-01",
       resultType: "eventTypeAggr",
     });
     expect(result.data).toBe(aggregate);
   });
 
-  it("does not expose filters the endpoint lacks", () => {
-    const props = searchMentions.inputSchema.properties as Record<
-      string,
-      unknown
-    >;
-    for (const k of [
-      "forceMaxDataTimeWindow",
-      "keywordLoc",
-      "authorUri",
-      "dateMentionStart",
-      "articleBodyLen",
-    ]) {
-      expect(props[k]).toBeUndefined();
+  it("rejects filters the endpoint lacks and tags them in the schema", async () => {
+    for (const k of ["forceMaxDataTimeWindow", "keywordLoc", "articleBodyLen"]) {
+      await expect(
+        search.handler({ kind: "mentions", eventTypeUri: "et/x", [k]: 1 }),
+      ).rejects.toThrow(new RegExp(`${k}.*applies to kind`));
     }
-    expect(props.eventTypeUri).toBeDefined();
-    expect(props.keyword).toBeDefined();
+    expect(mockedApiPost).not.toHaveBeenCalled();
+    const props = search.inputSchema.properties as Record<
+      string,
+      { description: string }
+    >;
+    expect(props.forceMaxDataTimeWindow.description).toMatch(
+      /^articles\/events only\./,
+    );
+    expect(props.eventTypeUri.description).toMatch(/^mentions only\./);
+    expect(props.keyword.description).not.toMatch(/only\./);
+  });
+
+  it("rejects an unknown kind, a foreign sortBy and a foreign aggregate", async () => {
+    await expect(search.handler({ kind: "sources" })).rejects.toThrow(
+      /kind must be one of/,
+    );
+    await expect(
+      search.handler({ kind: "articles", sortBy: "size" }),
+    ).rejects.toThrow(/sortBy .*size.* is not available for kind .*articles/);
+    await expect(
+      search.handler({ kind: "events", resultType: "langAggr" }),
+    ).rejects.toThrow(/resultType .*langAggr.* is not available for kind .*events/);
+    expect(mockedApiPost).not.toHaveBeenCalled();
+  });
+
+  it("explains searches that cost more than one API token", async () => {
+    mockedApiPost.mockResolvedValueOnce({ data: {}, tokenUsage: { reqTokens: 5, remaining: 1 } });
+    const ev = await search.handler({ kind: "events", keyword: "x" });
+    expect(ev.notes?.join()).toMatch(/Event searches cost 5 API tokens/);
+    mockedApiPost.mockResolvedValueOnce({ data: {}, tokenUsage: { reqTokens: 10, remaining: 1 } });
+    const old = await search.handler({ kind: "articles", keyword: "x", dateStart: "2025-01-01" });
+    expect(old.notes?.join()).toMatch(/cost 10 API tokens.*more than 31 days/);
+    mockedApiPost.mockResolvedValueOnce({ data: {}, tokenUsage: { reqTokens: 1, remaining: 1 } });
+    const cheap = await search.handler({ kind: "articles", keyword: "x" });
+    expect(cheap.notes?.join()).not.toMatch(/This search cost|Event searches cost/);
+  });
+
+  it("caps count at the kind's maximum", async () => {
+    await search.handler({ kind: "events", keyword: "x", count: 100 });
+    expect(mockedApiPost.mock.calls[0][1].eventsCount).toBe(50);
   });
 });

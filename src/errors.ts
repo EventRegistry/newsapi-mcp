@@ -164,6 +164,11 @@ export function formatErrorResponse(err: ApiError): string {
             : "";
       parts.push(`Invalid request (HTTP 400): ${detail}`);
 
+      if (/query|positive conditions|\$and|\$or|\$not/i.test(detail)) {
+        parts.push(
+          'Advanced query shape: {"$query": {"$and" | "$or": [leaf | nested, ...], "$not": leaf | nested}}. A leaf is an object of filter keys (conceptUri, keyword, categoryUri, sourceUri, lang, dateStart, dateEnd...); several keys in one leaf are ANDed; a value may be {"$or": [...]}. "$not" must sit next to "$and"/"$or", never alone. Flat params given alongside query are merged by the server, so prefer flat params plus ignore* unless an OR spans different fields.',
+        );
+      }
       const param = extractParamHint(err.body);
       if (param && KNOWN_PARAM_VALUES[param]) {
         parts.push(

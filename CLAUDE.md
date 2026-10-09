@@ -18,7 +18,7 @@ CI runs on [ubuntu, windows, macos] × [node 20, 22]. Publishing uses `npm publi
 
 ## Architecture
 
-MCP server for NewsAPI.ai (Event Registry). Provides 10 tools for searching news articles, events, mentions, and sources.
+MCP server for NewsAPI.ai (Event Registry). Provides 8 tools: one `search` tool (`kind`: articles, events, mentions), detail lookups, topic pages, suggest and usage.
 
 Two entry points share `createServer()` from `src/server.ts`:
 
@@ -42,14 +42,16 @@ MCP Client → McpServer (SDK) → ToolRegistry handler → apiPost() → NewsAP
 - **`src/client.ts`** — HTTP client. `apiPost()` for main API. Injects the API key, the local login's bearer token (renewed once and retried on 401), or the hosted caller's bearer token when inside `withAccessToken()` (AsyncLocalStorage). `authMode()` tells the error formatter which guidance to give.
 - **`src/oauth.ts`** — Local login: `OAuthSession` (PKCE code flow on fixed loopback ports, single-flight refresh with rotation), token stores (`@napi-rs/keyring`, file fallback), OpenID discovery shared with `http.ts`.
 - **`src/http.ts`** — Hosted server: express app, protected-resource metadata, `requireBearerAuth` with a `jose` JWT verifier, `/healthz`. Config from `MCP_PUBLIC_URL`, `MCP_AUTH_ISSUER`, `PORT`.
+- **`src/query.ts`** — Search request builder shared by the search tools: expands comma lists, folds flat filters into an advanced `query` (`$and` leaf, `ignore*` → `$not`, `$filter`), normalises arrays to `{"$or"}`, auto-detects boolean keyword strings (`keywordSearchMode: exact`) and applies the 31-day default window; returns `notes` the registry prints under the result.
 - **`src/tools/registry.ts`** — `ToolRegistry` class. Registers all tools at startup. `buildZodShape()` converts JSON Schema → Zod for MCP SDK registration.
 - **`src/response-filter.ts`** — Token optimization. `includeFields` param maps to API include params + post-response field stripping. `filterResponse()` preserves pagination metadata.
 - **`src/formatters.ts`** — Converts JSON responses to compact text. All tools with formatters output human-readable numbered text.
+- **`src/tools/search.ts`** — The `search` tool: assembles the schema from the shared filters plus each kind's `SearchKind` config (`articlesKind`, `eventsKind`, `mentionsKind` in their own files), tags kind-only params in their descriptions, maps the generic `page`/`count`/`sortBy` to the API's per-kind names and rejects params the chosen kind does not accept.
 - **`src/tools/*.ts`** — Tool definitions as `ToolDef` objects with `name`, `description`, `schema` (JSON Schema), `handler`, and optional `formatter`.
 
 ### Default Values
 
-Search tools use these defaults when params are not explicitly set: `articlesCount=100`, `eventsCount=50`, `articleBodyLen=1000`. Set `articleBodyLen: -1` for full text, `0` to exclude body.
+The search tool defaults to `count=50` (scans ask for 100; events max 50), `articleBodyLen=1000`, and a 31-day window (`forceMaxDataTimeWindow=31`, or `dateStart` for mentions) when no date filter is given. Set `articleBodyLen: -1` for full text, `0` to exclude body (scan mode: one compact row per article).
 
 ### Testing Patterns
 
@@ -59,7 +61,7 @@ Tests mock `fetch` globally via `vi.stubGlobal("fetch", fetchSpy)`. Server integ
 
 - `ToolDef` is the canonical tool definition type — tools export arrays of `ToolDef` objects
 - All tools with formatters output human-readable text (numbered lists with URIs)
-- `contentFilterProps` in articles.ts is shared across article and event search tools
+- `contentFilterProps` in articles.ts holds every shared filter; `coreFilterProps` are exposed at the top level of `search` and the rare ones (`RARE_FILTER_KEYS`) go under its `options` object, flattened by `flattenOptions`
 - The linter auto-formats on save (may adjust ternary formatting etc.)
 - Single-file distribution via esbuild — `prepublishOnly` runs `build:bundle`
 

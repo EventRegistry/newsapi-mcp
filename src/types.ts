@@ -14,6 +14,8 @@ export interface TokenUsage {
 export interface ApiResponse {
   data: unknown;
   tokenUsage?: TokenUsage;
+  /** Remarks about defaults the server applied, shown under the result. */
+  notes?: string[];
 }
 
 /** Tool definition for MCP registration. */

@@ -2,7 +2,7 @@
 name: news
 description: Research news topics using NewsAPI tools. Use when the user asks about current events, news analysis, source comparison, topic monitoring, due diligence, company intelligence, supply chain risk, or geopolitical risk.
 user-invocable: true
-allowed-tools: mcp__newsapi__suggest, mcp__newsapi__search_articles, mcp__newsapi__search_events, mcp__newsapi__get_breaking_events, mcp__newsapi__search_mentions, mcp__newsapi__get_article_details, mcp__newsapi__get_event_details, mcp__newsapi__get_topic_page_articles, mcp__newsapi__get_topic_page_events, mcp__newsapi__get_api_usage
+allowed-tools: mcp__newsapi__suggest, mcp__newsapi__search, mcp__newsapi__get_breaking_events, mcp__newsapi__get_article_details, mcp__newsapi__get_event_details, mcp__newsapi__get_topic_page_articles, mcp__newsapi__get_topic_page_events, mcp__newsapi__get_api_usage
 ---
 
 # News Research Skill
@@ -27,7 +27,7 @@ Research news topics end-to-end using the NewsAPI MCP server. This skill orchest
 Always resolve entity names before searching. Keyword search is a fallback.
 
 ### Step 2: Scan — retrieve titles only
-`search_articles({conceptUri: "<uri>", articlesCount: 100, articleBodyLen: 0, isDuplicateFilter: "skipDuplicates"})`
+`search({kind: "articles", conceptUri: "<uri>", count: 100, articleBodyLen: 0, isDuplicateFilter: "skipDuplicates"})`
 Fetch up to 100 articles with NO bodies — returns only titles, dates, sources, and URIs. Very token-efficient. Use `isDuplicateFilter: "skipDuplicates"` to remove wire syndication noise.
 
 ### Step 3: Triage — assess relevance
@@ -37,16 +37,16 @@ Read the titles from step 2. Select the articles relevant to the user's question
 `get_article_details({articleUri: ["<uri1>", "<uri2>", "<uri3>", ...]})`
 Pass up to 100 URIs per call. If you have more than 100 relevant articles, batch them into multiple calls of 100 URIs each. Add `includeFields` only for data you need.
 
-### Choosing search_articles vs search_events
-- **search_articles** → individual articles, full text, specific sources
-- **search_events** → high-level overview, deduplicated event clusters, "what's happening with X"
+### Choosing the search kind
+- **kind: "articles"** → individual articles, full text, specific sources
+- **kind: "events"** → high-level overview, deduplicated event clusters, "what's happening with X"
 
-The same pattern applies to events: scan with `search_events` → triage → `get_event_details` with selected URIs.
+The same pattern applies to events: scan with `search({kind: "events"})` → triage → `get_event_details` with selected URIs.
 
 ### When to simplify
 - Quick lookups (known URI): go directly to `get_article_details`
 - Topic page monitoring: use `get_topic_page_articles`
-- Simple questions needing few results: `search_articles` with `articlesCount: 10` (skip triage)
+- Simple questions needing few results: `search({kind: "articles", count: 10})` (skip triage)
 
 ## Citation Format
 
@@ -104,10 +104,10 @@ Question
 Use when the user wants a high-level summary of what's happening with a topic.
 
 1. `suggest({type: "concepts", prefix: "<topic>"})` — resolve URI
-2. `search_events({conceptUri: "<uri>", forceMaxDataTimeWindow: 31, eventsCount: 50, eventsSortBy: "date"})` — scan events
+2. `search({kind: "events", conceptUri: "<uri>", forceMaxDataTimeWindow: 31, count: 50, sortBy: "date"})` — scan events
 3. Triage — select relevant event URIs from titles/summaries
 4. `get_event_details({eventUri: ["<uri1>", "<uri2>", ...], includeFields: "concepts,categories"})` — retrieve details
-5. For each key event, fetch article URLs: `get_event_details({eventUri: "<uri>", resultType: "articles", articlesCount: 10, articlesArticleBodyLen: 0})` — returns articles with URLs directly, no need for `search_articles` or `get_article_details`
+5. For each key event, fetch article URLs: `get_event_details({eventUri: "<uri>", resultType: "articles", articlesCount: 10, articlesArticleBodyLen: 0})` — returns articles with URLs directly, no need for `search` or `get_article_details`
 6. Use the article URLs from step 5 to provide inline citation links for each event's claims
 7. Present findings using the **findings template**
 
@@ -116,7 +116,7 @@ Use when the user wants a high-level summary of what's happening with a topic.
 Use when the user needs full article text, quotes, or detailed coverage.
 
 1. `suggest({type: "concepts", prefix: "<topic>"})` — resolve URI
-2. `search_articles({conceptUri: "<uri>", articlesCount: 100, articleBodyLen: 0, isDuplicateFilter: "skipDuplicates"})` — scan titles
+2. `search({kind: "articles", conceptUri: "<uri>", count: 100, articleBodyLen: 0, isDuplicateFilter: "skipDuplicates"})` — scan titles
 3. Triage — select relevant article URIs
 4. `get_article_details({articleUri: ["<uri1>", "<uri2>", ...], includeFields: "sentiment"})` — retrieve full text
 5. Present findings using the **findings template**
@@ -128,8 +128,8 @@ Use when comparing how different outlets cover the same topic.
 1. `suggest({type: "concepts", prefix: "<topic>"})` — resolve topic URI
 2. `suggest({type: "sources", prefix: "<source A>"})` — resolve source A URI
 3. `suggest({type: "sources", prefix: "<source B>"})` — resolve source B URI
-4. `search_articles({conceptUri: "<topic-uri>", sourceUri: "<sourceA-uri>", articlesCount: 50, articleBodyLen: 0, isDuplicateFilter: "skipDuplicates"})` — scan source A
-5. `search_articles({conceptUri: "<topic-uri>", sourceUri: "<sourceB-uri>", articlesCount: 50, articleBodyLen: 0, isDuplicateFilter: "skipDuplicates"})` — scan source B
+4. `search({kind: "articles", conceptUri: "<topic-uri>", sourceUri: "<sourceA-uri>", count: 50, articleBodyLen: 0, isDuplicateFilter: "skipDuplicates"})` — scan source A
+5. `search({kind: "articles", conceptUri: "<topic-uri>", sourceUri: "<sourceB-uri>", count: 50, articleBodyLen: 0, isDuplicateFilter: "skipDuplicates"})` — scan source B
 6. Triage — pick representative articles from each source
 7. `get_article_details({articleUri: ["<a1>", "<a2>", "<b1>", "<b2>", ...], includeFields: "sentiment"})` — retrieve full text
 8. Present findings using the **source comparison template**
@@ -139,7 +139,7 @@ Use when comparing how different outlets cover the same topic.
 Use when analyzing tone/sentiment around a topic or entity.
 
 1. `suggest({type: "concepts", prefix: "<entity>"})` — resolve URI
-2. `search_articles({conceptUri: "<uri>", articlesCount: 100, articleBodyLen: 0, isDuplicateFilter: "skipDuplicates", includeFields: "sentiment"})` — scan with sentiment
+2. `search({kind: "articles", conceptUri: "<uri>", count: 100, articleBodyLen: 0, isDuplicateFilter: "skipDuplicates", includeFields: "sentiment"})` — scan with sentiment
 3. Triage — group by positive (>0.3), negative (<-0.3), neutral
 4. `get_article_details({articleUri: ["<selected-uris>"], includeFields: "sentiment"})` — retrieve representative articles
 5. Present findings using the **sentiment template**
@@ -156,7 +156,7 @@ Use when the user provides a topic page URI or wants monitored topic updates.
 Use when the question is about economic indicators, macro trends, or sector/industry performance.
 
 1. `suggest({type: "concepts", prefix: "<economic topic>"})` — resolve URI (e.g., "inflation", "semiconductor industry")
-2. `search_articles({conceptUri: "<uri>", articlesCount: 100, articleBodyLen: 0, isDuplicateFilter: "skipDuplicates", keyword: "GDP, inflation, unemployment, interest rate, recession, growth, forecast, central bank, trade deficit, earnings", keywordOper: "or"})` — scan with economic keywords. Translate keywords to match the language of the task.
+2. `search({kind: "articles", conceptUri: "<uri>", count: 100, articleBodyLen: 0, isDuplicateFilter: "skipDuplicates", keyword: "GDP, inflation, unemployment, interest rate, recession, growth, forecast, central bank, trade deficit, earnings", keywordOper: "or"})` — scan with economic keywords. Translate keywords to match the language of the task.
 3. Triage — select articles covering economic data, policy decisions, sector trends
 4. `get_article_details({articleUri: ["<uri1>", "<uri2>", ...], includeFields: "concepts,categories"})` — retrieve full text
 5. Present findings using the **economic template**
@@ -166,11 +166,11 @@ Use when the question is about economic indicators, macro trends, or sector/indu
 Use when the question involves policy, legislation, elections, or geopolitics.
 
 1. `suggest({type: "concepts", prefix: "<political topic>"})` — resolve URI
-2. `search_events({conceptUri: "<uri>", forceMaxDataTimeWindow: 31, eventsCount: 50, eventsSortBy: "date"})` — scan events for political developments
+2. `search({kind: "events", conceptUri: "<uri>", forceMaxDataTimeWindow: 31, count: 50, sortBy: "date"})` — scan events for political developments
 3. Triage — select relevant events
 4. `get_event_details({eventUri: ["<uri1>", "<uri2>", ...], includeFields: "concepts,categories"})` — retrieve details
 5. For each key event, fetch article URLs: `get_event_details({eventUri: "<uri>", resultType: "articles", articlesCount: 10, articlesArticleBodyLen: 0})` — returns articles with URLs directly for inline citations
-6. Optionally, for deeper coverage beyond events: `search_articles({conceptUri: "<uri>", articlesCount: 100, articleBodyLen: 0, isDuplicateFilter: "skipDuplicates", keyword: "legislation, regulation, policy, vote, amendment, coalition, campaign, reform, mandate, opposition", keywordOper: "or"})` — translate keywords to match the language of the task. Triage and `get_article_details` for selected URIs.
+6. Optionally, for deeper coverage beyond events: `search({kind: "articles", conceptUri: "<uri>", count: 100, articleBodyLen: 0, isDuplicateFilter: "skipDuplicates", keyword: "legislation, regulation, policy, vote, amendment, coalition, campaign, reform, mandate, opposition", keywordOper: "or"})` — translate keywords to match the language of the task. Triage and `get_article_details` for selected URIs.
 7. Present findings using the **political template**
 
 ### 8. Investing Report
@@ -178,7 +178,7 @@ Use when the question involves policy, legislation, elections, or geopolitics.
 Use when the question is about a company, stock, market theme, or investment opportunity.
 
 1. `suggest({type: "concepts", prefix: "<company or asset>"})` — resolve URI
-2. `search_articles({conceptUri: "<uri>", articlesCount: 100, articleBodyLen: 0, isDuplicateFilter: "skipDuplicates", keyword: "earnings, revenue, guidance, dividend, valuation, analyst, upgrade, downgrade, IPO, buyback", keywordOper: "or"})` — scan with investing keywords. Translate keywords to match the language of the task.
+2. `search({kind: "articles", conceptUri: "<uri>", count: 100, articleBodyLen: 0, isDuplicateFilter: "skipDuplicates", keyword: "earnings, revenue, guidance, dividend, valuation, analyst, upgrade, downgrade, IPO, buyback", keywordOper: "or"})` — scan with investing keywords. Translate keywords to match the language of the task.
 3. Triage — select articles about earnings, catalysts, risks, market moves
 4. `get_article_details({articleUri: ["<uri1>", "<uri2>", ...], includeFields: "sentiment,concepts"})` — retrieve full text with sentiment
 5. Present findings using the **investing template**
@@ -188,7 +188,7 @@ Use when the question is about a company, stock, market theme, or investment opp
 Use when the question requires multi-angle analysis across different stakeholder perspectives.
 
 1. `suggest({type: "concepts", prefix: "<topic>"})` — resolve URI
-2. `search_articles({conceptUri: "<uri>", articlesCount: 100, articleBodyLen: 0, isDuplicateFilter: "skipDuplicates"})` — scan titles. If the topic benefits from keyword narrowing, add `keyword` with relevant terms and `keywordOper: "or"`. Translate keywords to match the language of the task.
+2. `search({kind: "articles", conceptUri: "<uri>", count: 100, articleBodyLen: 0, isDuplicateFilter: "skipDuplicates"})` — scan titles. If the topic benefits from keyword narrowing, add `keyword` with relevant terms and `keywordOper: "or"`. Translate keywords to match the language of the task.
 3. Triage — select articles representing different viewpoints (industry, regulators, public, etc.)
 4. `get_article_details({articleUri: ["<uri1>", "<uri2>", ...], includeFields: "sentiment,concepts,categories"})` — retrieve full text
 5. Present findings using the **research template**
@@ -198,7 +198,7 @@ Use when the question requires multi-angle analysis across different stakeholder
 Use for simple factual questions needing few results. Skip the triage step.
 
 1. `suggest({type: "concepts", prefix: "<topic>"})` — resolve URI
-2. `search_articles({conceptUri: "<uri>", articlesCount: 10, forceMaxDataTimeWindow: 7})` — get recent articles directly
+2. `search({kind: "articles", conceptUri: "<uri>", count: 10, forceMaxDataTimeWindow: 7})` — get recent articles directly
 3. Answer the question concisely, cite sources
 
 ### 11. Adverse Media Report
@@ -207,10 +207,10 @@ Use for due diligence, compliance screening, or reputation checks on a person or
 
 1. `suggest({type: "concepts", prefix: "<entity>"})` — resolve primary entity URI
 2. Ask the user: "How deep should I search? I can search just the main entity, or also search associated people/subsidiaries. How many additional entities should I check, or should I use my judgment?"
-3. `search_articles({conceptUri: "<uri>", articlesCount: 100, articleBodyLen: 0, isDuplicateFilter: "skipDuplicates", keyword: "fraud, lawsuit, sanction, fine, investigation, allegations, indictment, corruption, money laundering, bribery", keywordOper: "or"})` — scan with adverse keyword filter. Translate keywords to match the language of the task.
+3. `search({kind: "articles", conceptUri: "<uri>", count: 100, articleBodyLen: 0, isDuplicateFilter: "skipDuplicates", keyword: "fraud, lawsuit, sanction, fine, investigation, allegations, indictment, corruption, money laundering, bribery", keywordOper: "or"})` — scan with adverse keyword filter. Translate keywords to match the language of the task.
 4. Triage — select articles covering legal, regulatory, or reputational issues
 5. `get_article_details({articleUri: ["<uri1>", ...], includeFields: "concepts"})` — retrieve full text
-6. If user approved additional searches: `suggest` + `search_articles` for each associated entity (same keyword filter and language)
+6. If user approved additional searches: `suggest` + `search({kind: "articles"})` for each associated entity (same keyword filter and language)
 7. Triage and retrieve additional entity results
 8. Present findings using the **adverse media template**
 
@@ -220,13 +220,13 @@ Use for broad company/entity profiling — corporate activity, strategy, competi
 
 1. `suggest({type: "concepts", prefix: "<company>"})` — resolve primary entity URI
 2. Ask the user: "How deep should I search? I can search just the company, or also search key executives/subsidiaries. How many additional entities should I check, or should I use my judgment?"
-3. `search_articles({conceptUri: "<uri>", articlesCount: 100, articleBodyLen: 0, isDuplicateFilter: "skipDuplicates", keyword: "acquisition, merger, partnership, restructuring, earnings, revenue, CEO, strategy, expansion, launch", keywordOper: "or"})` — scan with corporate activity keywords. Translate keywords to match the language of the task.
+3. `search({kind: "articles", conceptUri: "<uri>", count: 100, articleBodyLen: 0, isDuplicateFilter: "skipDuplicates", keyword: "acquisition, merger, partnership, restructuring, earnings, revenue, CEO, strategy, expansion, launch", keywordOper: "or"})` — scan with corporate activity keywords. Translate keywords to match the language of the task.
 4. Triage — select articles covering corporate developments, strategy, leadership, competitive moves
-5. `search_events({conceptUri: "<uri>", eventsCount: 50, eventsSortBy: "date", forceMaxDataTimeWindow: 31})` — scan recent events for major developments
+5. `search({kind: "events", conceptUri: "<uri>", count: 50, sortBy: "date", forceMaxDataTimeWindow: 31})` — scan recent events for major developments
 6. Triage — select relevant events
 7. `get_article_details({articleUri: ["<uri1>", ...], includeFields: "concepts,categories"})` — retrieve full article text
 8. `get_event_details({eventUri: ["<uri1>", ...], includeFields: "concepts,categories"})` — retrieve event details
-9. If user approved additional searches: `suggest` + `search_articles` for key people/subsidiaries (same language)
+9. If user approved additional searches: `suggest` + `search({kind: "articles"})` for key people/subsidiaries (same language)
 10. Triage and retrieve additional entity results
 11. Present findings using the **company intelligence template**
 
@@ -236,13 +236,13 @@ Use for supply chain disruptions, operational risks, logistics bottlenecks, sour
 
 1. `suggest({type: "concepts", prefix: "<topic/entity/region>"})` — resolve primary URI
 2. Ask the user: "How deep should I search? I can search just the main topic, or also search specific suppliers, routes, or commodities involved. How many additional entities should I check, or should I use my judgment?"
-3. `search_articles({conceptUri: "<uri>", articlesCount: 100, articleBodyLen: 0, isDuplicateFilter: "skipDuplicates", keyword: "disruption, shortage, delay, shutdown, strike, tariff, embargo, recall, logistics, inventory", keywordOper: "or"})` — scan with supply chain risk keywords. Translate keywords to match the language of the task.
+3. `search({kind: "articles", conceptUri: "<uri>", count: 100, articleBodyLen: 0, isDuplicateFilter: "skipDuplicates", keyword: "disruption, shortage, delay, shutdown, strike, tariff, embargo, recall, logistics, inventory", keywordOper: "or"})` — scan with supply chain risk keywords. Translate keywords to match the language of the task.
 4. Triage — select articles covering disruptions, operational issues, trade risks
-5. `search_events({conceptUri: "<uri>", eventsCount: 50, eventsSortBy: "date", forceMaxDataTimeWindow: 31})` — scan recent events for active disruptions
+5. `search({kind: "events", conceptUri: "<uri>", count: 50, sortBy: "date", forceMaxDataTimeWindow: 31})` — scan recent events for active disruptions
 6. Triage — select relevant events
 7. `get_article_details({articleUri: ["<uri1>", ...], includeFields: "concepts,categories"})` — retrieve full article text
 8. `get_event_details({eventUri: ["<uri1>", ...], includeFields: "concepts,categories"})` — retrieve event details
-9. If user approved additional searches: `suggest` + `search_articles` for specific suppliers, commodities, or trade routes (same language)
+9. If user approved additional searches: `suggest` + `search({kind: "articles"})` for specific suppliers, commodities, or trade routes (same language)
 10. Triage and retrieve additional entity results
 11. Present findings using the **supply chain risk template**
 
@@ -253,13 +253,13 @@ Use for country/region risk assessments — political stability, security, econo
 1. `suggest({type: "concepts", prefix: "<country/region>"})` — resolve primary concept URI
 2. `suggest({type: "locations", prefix: "<country/region>"})` — resolve location URI for geographic filtering
 3. Ask the user: "How deep should I search? I can search just the main country/region, or also search key actors, neighboring countries, or specific conflicts involved. How many additional entities should I check, or should I use my judgment?"
-4. `search_events({conceptUri: "<uri>", locationUri: "<loc-uri>", eventsCount: 50, eventsSortBy: "date", forceMaxDataTimeWindow: 31})` — scan events for political/security developments
+4. `search({kind: "events", conceptUri: "<uri>", locationUri: "<loc-uri>", count: 50, sortBy: "date", forceMaxDataTimeWindow: 31})` — scan events for political/security developments
 5. Triage — select relevant events
-6. `search_articles({conceptUri: "<uri>", locationUri: "<loc-uri>", articlesCount: 100, articleBodyLen: 0, isDuplicateFilter: "skipDuplicates", keyword: "conflict, sanctions, coup, protest, election, crisis, diplomatic, military, refugee, instability", keywordOper: "or"})` — scan with geopolitical risk keywords and location filter. Translate keywords to match the language of the task.
+6. `search({kind: "articles", conceptUri: "<uri>", locationUri: "<loc-uri>", count: 100, articleBodyLen: 0, isDuplicateFilter: "skipDuplicates", keyword: "conflict, sanctions, coup, protest, election, crisis, diplomatic, military, refugee, instability", keywordOper: "or"})` — scan with geopolitical risk keywords and location filter. Translate keywords to match the language of the task.
 7. Triage — select articles covering stability, security, diplomacy, economic risks
 8. `get_event_details({eventUri: ["<uri1>", ...], includeFields: "concepts,categories"})` — retrieve event details
 9. `get_article_details({articleUri: ["<uri1>", ...], includeFields: "concepts,categories"})` — retrieve full article text
-10. If user approved additional searches: `suggest` + `search_articles` for key actors, neighboring countries, or specific conflicts (same language)
+10. If user approved additional searches: `suggest` + `search({kind: "articles"})` for key actors, neighboring countries, or specific conflicts (same language)
 11. Triage and retrieve additional entity results
 12. Present findings using the **geopolitical risk template**
 
@@ -313,9 +313,9 @@ Approximate token costs per action:
 | Action | Tokens |
 |--------|--------|
 | suggest | 0 (free) |
-| search_articles (scan, bodyLen: 0) | 1-2 |
-| search_articles (with body) | 5-10 |
-| search_events | 1-2 |
+| search articles (scan, bodyLen: 0) | 1-2 |
+| search articles (with body) | 5-10 |
+| search events | 1-2 |
 | get_article_details (per batch) | 5-15 |
 | get_event_details (per batch) | 2-5 |
 | get_topic_page_articles | 1-5 |

@@ -206,12 +206,34 @@ function formatEventExtras(evt: Record<string, unknown>): string {
   return lines.length > 0 ? "\n" + lines.join("\n") : "";
 }
 
-/** Format article search results as numbered list with full body. */
-export const formatArticleResults: ResponseFormatter = (data) => {
+/** One row per article for a scan (no bodies): index, uri, date, source, title. URLs come with the details. */
+function formatArticleRows(
+  results: Record<string, unknown>[],
+  wrapper: Record<string, unknown> | undefined,
+): string {
+  const rows = results.map((art, i) => {
+    const date =
+      (art.dateTimePub as string | undefined)?.split("T")[0] || "Unknown";
+    const source =
+      (art.source as Record<string, unknown> | undefined)?.title || "Unknown";
+    const extras = formatArticleExtras(art).replace(/\n\s+/g, " · ").trim();
+    return `${i + 1} | ${art.uri ?? "?"} | ${date} | ${source} | ${art.title || "Untitled"}${extras ? ` | ${extras}` : ""}`;
+  });
+  return [
+    "# | uri | date | source | title",
+    ...rows,
+    paginationFooter(wrapper, results.length, "page") +
+      " Pass uri values to get_article_details for full text and URLs.",
+  ].join("\n");
+}
+
+/** Format article search results: compact rows for a scan, numbered blocks with bodies otherwise. */
+export const formatArticleResults: ResponseFormatter = (data, params) => {
   const articles = (data as Record<string, unknown>)?.articles as
     Record<string, unknown> | undefined;
   const results = articles?.results as Record<string, unknown>[] | undefined;
   if (!results?.length) return "No articles found.";
+  if (params?.articleBodyLen === 0) return formatArticleRows(results, articles);
 
   const lines = results.map((art, i) => {
     const title = art.title || "Untitled";
@@ -225,7 +247,9 @@ export const formatArticleResults: ResponseFormatter = (data) => {
     return `${i + 1}. [${date}] ${title} - ${source}${url}${uri}${formatArticleExtras(art)}\n\n${body}`;
   });
 
-  lines.push(paginationFooter(articles, results.length, "articlesPage"));
+  lines.push(
+    paginationFooter(articles, results.length, params?.kind ? "page" : "articlesPage"),
+  );
   return lines.join("\n\n---\n\n");
 };
 
@@ -257,7 +281,7 @@ export const formatMentionResults: ResponseFormatter = (data) => {
     return `${head}\n${detail.join("\n")}${formatMentionExtras(m)}`;
   });
 
-  lines.push(paginationFooter(mentions, results.length, "mentionsPage"));
+  lines.push(paginationFooter(mentions, results.length, "page"));
   return lines.join("\n\n---\n\n");
 };
 
@@ -307,12 +331,16 @@ function formatMentionExtras(m: Record<string, unknown>): string {
 }
 
 /** Format event search results with full summary. */
-export const formatEventResults: ResponseFormatter = (data) => {
+export const formatEventResults: ResponseFormatter = (data, params) => {
   const resp = data as Record<string, unknown> | undefined;
   const breaking = resp?.breakingEvents !== undefined;
   const events = (breaking ? resp?.breakingEvents : resp?.events) as
     Record<string, unknown> | undefined;
-  const pageParam = breaking ? "breakingEventsPage" : "eventsPage";
+  const pageParam = breaking
+    ? "breakingEventsPage"
+    : params?.kind
+      ? "page"
+      : "eventsPage";
   const results = events?.results as Record<string, unknown>[] | undefined;
   if (!results?.length) return "No events found.";
 
