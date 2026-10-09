@@ -1,11 +1,8 @@
 import { apiPost, parseArray } from "../client.js";
 import { ApiError } from "../types.js";
 import type { ToolDef } from "../types.js";
-import {
-  contentFilterProps,
-  buildFilterBody,
-  includeFieldsProp,
-} from "./articles.js";
+import { includeFieldsProp } from "./articles.js";
+import type { SearchKind } from "./search.js";
 import {
   parseFieldGroups,
   getEventIncludeParams,
@@ -13,89 +10,108 @@ import {
 } from "../response-filter.js";
 import { formatEventResults, formatEventDetails } from "../formatters.js";
 
-export const searchEvents: ToolDef = {
-  name: "search_events",
-  description: `Search events (clusters of related articles about the same real-world happening). Returns up to 50 events per call. Events deduplicate coverage — one entry per story instead of per article.
+/** The events API names the sentiment filters differently. */
+function adaptEventFilters(body: Record<string, unknown>): void {
+  if (body.minSentiment !== undefined) {
+    body.minSentimentEvent = body.minSentiment;
+    delete body.minSentiment;
+  }
+  if (body.maxSentiment !== undefined) {
+    body.maxSentimentEvent = body.maxSentiment;
+    delete body.maxSentiment;
+  }
+}
 
-WORKFLOW: Use suggest tool first to resolve names to URIs, then search with conceptUri.
-EXAMPLE: search_events({conceptUri: "<uri>", dateStart: "2025-01-01"})
+/** search({kind: "events"}): clusters of articles about one happening. */
+export const eventsKind: SearchKind = {
+  path: "/event/getEvents",
+  aggregates: [
+    "timeAggr",
+    "locAggr",
+    "sourceAggr",
+    "authorAggr",
+    "keywordAggr",
+    "conceptAggr",
+    "categoryAggr",
+    "sentimentAggr",
+  ],
+  defaultCount: 50,
+  maxCount: 50,
+  sortBy: ["date", "rel", "size", "socialScore"],
+  props: {
+    minArticlesInEvent: {
+      type: "integer",
+      description: "Minimum number of articles in the event.",
+    },
+  },
+  optionProps: {
+    maxArticlesInEvent: {
+      type: "integer",
+      description: "Maximum number of articles in the event.",
+    },
+    reportingDateStart: {
+      type: "string",
+      description: "Average article publishing date >= this (YYYY-MM-DD).",
+    },
+    reportingDateEnd: {
+      type: "string",
+      description: "Average article publishing date <= this (YYYY-MM-DD).",
+    },
+  },
+  unsupported: ["startSourceRankPercentile", "endSourceRankPercentile"],
+  adapt: adaptEventFilters,
+  includeParams: getEventIncludeParams,
+  formatter: formatEventResults,
+};
 
-USE THIS WHEN you need a high-level overview of what happened (event summaries, article counts). Use eventsSortBy: "size" for the biggest stories, or minArticlesInEvent to filter by significance.
-NOT THIS when you need full article text — use search_articles instead.`,
+export const getBreakingEvents: ToolDef = {
+  name: "get_breaking_events",
+  description: `List the events breaking right now: very recent, many articles in a short time, and coverage still accelerating. Each entry carries a breaking score. No query needed.
+
+EXAMPLE: get_breaking_events({})
+EXAMPLE: get_breaking_events({breakingEventsCount: 10, breakingEventsMinBreakingScore: 0.5})
+
+USE THIS WHEN the user asks what is happening now or wants today's biggest stories without naming a topic.
+NOT THIS for a specific topic — use search({kind: "events"}) with filters instead.`,
   inputSchema: {
     type: "object",
     properties: {
-      ...contentFilterProps,
       ...includeFieldsProp,
-      minArticlesInEvent: {
+      breakingEventsCount: {
         type: "integer",
-        description: "Minimum number of articles in the event.",
+        description: "Events per page (max 100). Default: 50.",
+        minimum: 1,
+        maximum: 100,
       },
-      maxArticlesInEvent: {
-        type: "integer",
-        description: "Maximum number of articles in the event.",
-      },
-      reportingDateStart: {
-        type: "string",
-        description:
-          "Filter by average article publishing date >= this (YYYY-MM-DD).",
-      },
-      reportingDateEnd: {
-        type: "string",
-        description:
-          "Filter by average article publishing date <= this (YYYY-MM-DD).",
-      },
-      eventsPage: {
+      breakingEventsPage: {
         type: "integer",
         description: "Page number (starting from 1). Default: 1.",
+        minimum: 1,
       },
-      eventsCount: {
-        type: "integer",
-        description: "Events per page (max 50). Default: 50.",
-        maximum: 50,
-      },
-      eventsSortBy: {
-        type: "string",
+      breakingEventsMinBreakingScore: {
+        type: "number",
         description:
-          'Sort by: "date", "rel", "size", "socialScore". Default: "date".',
-        enum: ["date", "rel", "size", "socialScore"],
-      },
-      eventsSortByAsc: {
-        type: "boolean",
-        description: "Ascending sort order. Default: false.",
-      },
-      query: {
-        type: ["object", "string"],
-        description:
-          "Advanced Query Language object for complex boolean logic.",
+          "Lowest breaking score to include (0 or more). Default: 0.2. Raise it to keep only the strongest stories.",
+        minimum: 0,
       },
     },
   },
   handler: async (params) => {
-    params.eventsCount ??= 50;
     const groups = parseFieldGroups(params.includeFields as string | undefined);
+    const body: Record<string, unknown> = {
+      breakingEventsCount: params.breakingEventsCount ?? 50,
+      breakingEventsPage: params.breakingEventsPage ?? 1,
+      breakingEventsMinBreakingScore:
+        params.breakingEventsMinBreakingScore ?? 0.2,
+      ...getEventIncludeParams(groups),
+    };
 
-    const body = buildFilterBody(params);
-    body.resultType = "events";
-
-    // Rename sentiment params for events API (different param names)
-    if (body.minSentiment !== undefined) {
-      body.minSentimentEvent = body.minSentiment;
-      delete body.minSentiment;
-    }
-    if (body.maxSentiment !== undefined) {
-      body.maxSentimentEvent = body.maxSentiment;
-      delete body.maxSentiment;
-    }
-    // Strip article-only params not supported by events API
-    delete body.startSourceRankPercentile;
-    delete body.endSourceRankPercentile;
-
-    Object.assign(body, getEventIncludeParams(groups));
-
-    const { data, tokenUsage } = await apiPost("/event/getEvents", body);
+    const { data, tokenUsage } = await apiPost(
+      "/event/getBreakingEvents",
+      body,
+    );
     return {
-      data: filterResponse(data, { resultType: "events", groups }),
+      data: filterResponse(data, { resultType: "breakingEvents", groups }),
       tokenUsage,
     };
   },
@@ -111,7 +127,7 @@ EXAMPLE (multiple): get_event_details({eventUri: ["eng-4567890", "eng-1234567"]}
 EXAMPLE (articles): get_event_details({eventUri: "eng-4567890", resultType: "articles"})
 
 USE THIS WHEN you have event URIs from search results and need full details.
-NOT THIS for searching — use search_events with filters instead.`,
+NOT THIS for searching — use search({kind: "events"}) with filters instead.`,
   inputSchema: {
     type: "object",
     properties: {
@@ -176,4 +192,4 @@ NOT THIS for searching — use search_events with filters instead.`,
   formatter: formatEventDetails,
 };
 
-export const eventTools: ToolDef[] = [searchEvents, getEventDetails];
+export const eventTools: ToolDef[] = [getEventDetails, getBreakingEvents];

@@ -1,13 +1,47 @@
+import { AsyncLocalStorage } from "node:async_hooks";
+import type { OAuthSession, Tokens } from "./oauth.js";
 import { ApiError } from "./types.js";
 import type { ApiResponse, TokenUsage } from "./types.js";
 
 const BASE_URL = "https://eventregistry.org/api/v1";
 
-let apiKey: string;
+let apiKey: string | undefined;
+// Browser login of the local server; refreshes its own tokens.
+let session: OAuthSession | undefined;
+
+// Per-request bearer token of the hosted server's caller.
+const accessToken = new AsyncLocalStorage<string>();
 
 /** Initialize the client with an API key. Must be called before any requests. */
 export function initClient(key: string): void {
   apiKey = key;
+  session = undefined;
+}
+
+/** Initialize the client with a browser login instead of an API key. */
+export function initLogin(login: OAuthSession): void {
+  session = login;
+  apiKey = undefined;
+}
+
+/** Run `fn` so that every API request inside it authenticates with `token`. */
+export function withAccessToken<T>(token: string, fn: () => T): T {
+  return accessToken.run(token, fn);
+}
+
+/** How the current request authenticates with the API. */
+export function authMode(): "hosted" | "login" | "apiKey" {
+  if (accessToken.getStore() !== undefined) return "hosted";
+  return session ? "login" : "apiKey";
+}
+
+// The API answers this when the login has no Event Registry account behind it.
+const UNLINKED_ACCOUNT = /no event registry account is linked/i;
+
+/** Whether the API refused this token for good, so a refresh cannot help. */
+export function isUnlinkedAccount(err: ApiError): boolean {
+  const body = typeof err.body === "string" ? err.body : JSON.stringify(err.body);
+  return UNLINKED_ACCOUNT.test(body ?? "");
 }
 
 /** Parse a param that can be a single value, comma-separated string, or JSON array. */
@@ -38,6 +72,16 @@ export async function apiPost(
   return request(`${BASE_URL}${path}`, body);
 }
 
+/** The error body as JSON when it parses, else as text. */
+async function parseErrorBody(res: Response): Promise<unknown> {
+  const text = await res.text().catch(() => "");
+  try {
+    return JSON.parse(text);
+  } catch {
+    return text;
+  }
+}
+
 /** Extract token usage from response headers, if present. */
 function parseTokenUsage(headers: Headers): TokenUsage | undefined {
   const reqTokens = headers.get("req-tokens");
@@ -53,30 +97,40 @@ async function request(
   url: string,
   body: Record<string, unknown>,
 ): Promise<ApiResponse> {
-  if (!apiKey) {
+  const hosted = accessToken.getStore();
+  if (!hosted && !session && !apiKey) {
     throw new Error("Client not initialized. Call initClient() first.");
   }
-  // Inject API key and strip undefined values
-  const payload: Record<string, unknown> = { apiKey };
+  let login: Tokens | undefined;
+  let token = hosted;
+  if (!token && session) {
+    login = await session.tokens();
+    token = login.accessToken;
+  }
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  // Inject the credential and strip undefined values
+  const payload: Record<string, unknown> = {};
+  if (token) headers.Authorization = `Bearer ${token}`;
+  else payload.apiKey = apiKey;
   for (const [k, v] of Object.entries(body)) {
     if (v !== undefined) payload[k] = v;
   }
 
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
+  const send = () =>
+    fetch(url, { method: "POST", headers, body: JSON.stringify(payload) });
+  let res = await send();
 
   if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(text);
-    } catch {
-      parsed = text;
+    const err = new ApiError(res.status, await parseErrorBody(res));
+    // A login's token may have just been revoked: renew it once and retry.
+    if (res.status !== 401 || !login || !session || isUnlinkedAccount(err)) {
+      throw err;
     }
-    throw new ApiError(res.status, parsed);
+    headers.Authorization = `Bearer ${(await session.renew(login)).accessToken}`;
+    res = await send();
+    if (!res.ok) throw new ApiError(res.status, await parseErrorBody(res));
   }
 
   let data: unknown;

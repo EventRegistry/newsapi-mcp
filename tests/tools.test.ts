@@ -25,22 +25,15 @@ vi.mock("../src/client.js", () => ({
 }));
 
 import { apiPost } from "../src/client.js";
-import {
-  searchArticles,
-  getArticleDetails,
-  buildFilterBody,
-} from "../src/tools/articles.js";
+import { search } from "../src/tools/search.js";
+import { getArticleDetails, buildFilterBody } from "../src/tools/articles.js";
 import { ApiError } from "../src/types.js";
-import { searchEvents, getEventDetails } from "../src/tools/events.js";
+import { getEventDetails, getBreakingEvents } from "../src/tools/events.js";
 import {
   getTopicPageArticles,
   getTopicPageEvents,
 } from "../src/tools/topic-pages.js";
-import {
-  suggest,
-  clearSuggestCache,
-  getSuggestCacheSize,
-} from "../src/tools/suggest.js";
+import { suggest } from "../src/tools/suggest.js";
 import { getApiUsage } from "../src/tools/usage.js";
 
 const mockedApiPost = vi.mocked(apiPost);
@@ -51,23 +44,67 @@ beforeEach(() => {
 
 // ---------- Articles ----------
 
-describe("searchArticles", () => {
+describe("search articles", () => {
   it("calls correct endpoint with resultType, articleBodyLen, and default count", async () => {
-    await searchArticles.handler({ keyword: "Tesla" });
+    await search.handler({ kind: "articles", keyword: "Tesla" });
 
     expect(mockedApiPost).toHaveBeenCalledWith(
       "/article/getArticles",
       expect.objectContaining({
         resultType: "articles",
         articleBodyLen: 1000,
-        articlesCount: 100,
+        articlesCount: 50,
         keyword: ["Tesla"],
       }),
     );
   });
 
+  const page = (pubs: string[]) => ({
+    data: {
+      articles: {
+        results: pubs.map((dateTimePub, i) => ({ uri: `u${i}`, dateTimePub })),
+      },
+    },
+  });
+  const uris = (data: unknown) =>
+    (data as { articles: { results: { uri: string }[] } }).articles.results.map(
+      (a) => a.uri,
+    );
+
+  it("orders a date-sorted page by publish time, newest first", async () => {
+    mockedApiPost.mockResolvedValueOnce(
+      page(["2026-10-09T12:35Z", "2026-10-09T12:31Z", "2026-10-09T12:40Z"]),
+    );
+    const { data } = await search.handler({ kind: "articles", keyword: "x" });
+    expect(uris(data)).toEqual(["u2", "u0", "u1"]);
+  });
+
+  it("orders a date-sorted page oldest first when sortByAsc is set", async () => {
+    mockedApiPost.mockResolvedValueOnce(
+      page(["2026-10-09T12:35Z", "2026-10-09T12:31Z"]),
+    );
+    const { data } = await search.handler({
+      kind: "articles",
+      keyword: "x",
+      options: { sortByAsc: true },
+    });
+    expect(uris(data)).toEqual(["u1", "u0"]);
+  });
+
+  it("keeps the API order for a relevance sort", async () => {
+    mockedApiPost.mockResolvedValueOnce(
+      page(["2026-10-09T12:31Z", "2026-10-09T12:35Z"]),
+    );
+    const { data } = await search.handler({
+      kind: "articles",
+      keyword: "x",
+      sortBy: "rel",
+    });
+    expect(uris(data)).toEqual(["u0", "u1"]);
+  });
+
   it("passes includeFields as API include params", async () => {
-    await searchArticles.handler({
+    await search.handler({ kind: "articles",
       keyword: "Tesla",
       includeFields: "concepts,sentiment",
     });
@@ -79,14 +116,14 @@ describe("searchArticles", () => {
   });
 
   it("expands dataType array field", async () => {
-    await searchArticles.handler({ dataType: "news,pr" });
+    await search.handler({ kind: "articles", dataType: "news,pr" });
 
     const body = mockedApiPost.mock.calls[0][1];
     expect(body.dataType).toEqual(["news", "pr"]);
   });
 
   it("passes pagination params through", async () => {
-    await searchArticles.handler({ articlesPage: 2, articlesCount: 50 });
+    await search.handler({ kind: "articles", page: 2, count: 50 });
 
     const body = mockedApiPost.mock.calls[0][1];
     expect(body.articlesPage).toBe(2);
@@ -94,7 +131,7 @@ describe("searchArticles", () => {
   });
 
   it("passes dateMentionStart/dateMentionEnd through as strings", async () => {
-    await searchArticles.handler({
+    await search.handler({ kind: "articles",
       keyword: "election",
       dateMentionStart: "2025-06-01",
       dateMentionEnd: "2025-06-30",
@@ -133,9 +170,9 @@ describe("getArticleDetails", () => {
 
 // ---------- Events ----------
 
-describe("searchEvents", () => {
+describe("search events", () => {
   it("calls correct endpoint with resultType, includeEventSummary, and default count", async () => {
-    await searchEvents.handler({ keyword: "earthquake" });
+    await search.handler({ kind: "events", keyword: "earthquake" });
 
     expect(mockedApiPost).toHaveBeenCalledWith(
       "/event/getEvents",
@@ -149,7 +186,7 @@ describe("searchEvents", () => {
   });
 
   it("passes event-specific params through", async () => {
-    await searchEvents.handler({
+    await search.handler({ kind: "events",
       minArticlesInEvent: 10,
       reportingDateStart: "2024-01-01",
     });
@@ -160,7 +197,7 @@ describe("searchEvents", () => {
   });
 
   it("renames minSentiment/maxSentiment to event-specific param names", async () => {
-    await searchEvents.handler({
+    await search.handler({ kind: "events",
       keyword: "earthquake",
       minSentiment: -0.5,
       maxSentiment: 0.8,
@@ -173,16 +210,15 @@ describe("searchEvents", () => {
     expect(body.maxSentiment).toBeUndefined();
   });
 
-  it("strips article-only source rank params", async () => {
-    await searchEvents.handler({
-      keyword: "earthquake",
-      startSourceRankPercentile: 0,
-      endSourceRankPercentile: 50,
-    });
-
-    const body = mockedApiPost.mock.calls[0][1];
-    expect(body.startSourceRankPercentile).toBeUndefined();
-    expect(body.endSourceRankPercentile).toBeUndefined();
+  it("rejects the article-only source rank params", async () => {
+    await expect(
+      search.handler({
+        kind: "events",
+        keyword: "earthquake",
+        startSourceRankPercentile: 0,
+      }),
+    ).rejects.toThrow(/startSourceRankPercentile.*applies to kind/);
+    expect(mockedApiPost).not.toHaveBeenCalled();
   });
 });
 
@@ -254,8 +290,8 @@ describe("getEventDetails", () => {
 // ---------- Ignore / Negative Filters ----------
 
 describe("ignore params", () => {
-  it("searchArticles expands ignore* params as arrays", async () => {
-    await searchArticles.handler({
+  it("articles expands ignore* params as arrays", async () => {
+    await search.handler({ kind: "articles",
       keyword: "AI",
       ignoreConceptUri: "uri1,uri2",
       ignoreSourceUri: "src1",
@@ -268,8 +304,8 @@ describe("ignore params", () => {
     expect(body.ignoreLang).toEqual(["deu", "fra"]);
   });
 
-  it("searchEvents expands ignore* params as arrays", async () => {
-    await searchEvents.handler({
+  it("events expands ignore* params as arrays", async () => {
+    await search.handler({ kind: "events",
       keyword: "earthquake",
       ignoreKeyword: "tsunami,flood",
       ignoreCategoryUri: "cat1",
@@ -281,7 +317,7 @@ describe("ignore params", () => {
   });
 
   it("passes ignoreKeywordLoc as scalar string", async () => {
-    await searchArticles.handler({
+    await search.handler({ kind: "articles",
       keyword: "AI",
       ignoreKeyword: "spam",
       ignoreKeywordLoc: "title",
@@ -290,8 +326,8 @@ describe("ignore params", () => {
     expect(body.ignoreKeywordLoc).toBe("title");
   });
 
-  it("searchArticles passes sourceGroupUri and operator params", async () => {
-    await searchArticles.handler({
+  it("articles passes sourceGroupUri and operator params", async () => {
+    await search.handler({ kind: "articles",
       keyword: "AI",
       sourceGroupUri: "group1,group2",
       conceptOper: "or",
@@ -305,9 +341,9 @@ describe("ignore params", () => {
   });
 });
 
-describe("searchEvents operators and sourceGroupUri", () => {
+describe("search events operators and sourceGroupUri", () => {
   it("passes operator and sourceGroupUri params through", async () => {
-    await searchEvents.handler({
+    await search.handler({ kind: "events",
       keyword: "earthquake",
       sourceGroupUri: "group1",
       conceptOper: "or",
@@ -385,25 +421,25 @@ describe("getTopicPageEvents", () => {
 // ---------- Default Values ----------
 
 describe("default values", () => {
-  it("searchArticles sends articlesCount: 100 and articleBodyLen: 1000 by default", async () => {
-    await searchArticles.handler({ keyword: "AI" });
+  it("articles sends articlesCount: 50 and articleBodyLen: 1000 by default", async () => {
+    await search.handler({ kind: "articles", keyword: "AI" });
 
     const body = mockedApiPost.mock.calls[0][1];
-    expect(body.articlesCount).toBe(100);
+    expect(body.articlesCount).toBe(50);
     expect(body.articleBodyLen).toBe(1000);
   });
 
-  it("searchEvents sends eventsCount: 50 by default", async () => {
-    await searchEvents.handler({ keyword: "earthquake" });
+  it("events sends eventsCount: 50 by default", async () => {
+    await search.handler({ kind: "events", keyword: "earthquake" });
 
     const body = mockedApiPost.mock.calls[0][1];
     expect(body.eventsCount).toBe(50);
   });
 
   it("explicit params override defaults", async () => {
-    await searchArticles.handler({
+    await search.handler({ kind: "articles",
       keyword: "AI",
-      articlesCount: 10,
+      count: 10,
       articleBodyLen: 200,
     });
 
@@ -424,10 +460,6 @@ describe("suggest", () => {
     authors: "/suggestAuthorsFast",
   };
 
-  beforeEach(() => {
-    clearSuggestCache();
-  });
-
   it("requires type and prefix params", () => {
     expect(suggest.inputSchema.required).toEqual(["type", "prefix"]);
   });
@@ -443,6 +475,18 @@ describe("suggest", () => {
     });
   }
 
+  it('type="eventTypes" calls the event type endpoint with the prefix only', async () => {
+    await suggest.handler({
+      type: "eventTypes",
+      prefix: "layoff",
+      lang: "deu",
+    });
+
+    expect(mockedApiPost).toHaveBeenCalledWith("/eventType/suggestEventTypes", {
+      prefix: "layoff",
+    });
+  });
+
   it("passes custom lang parameter", async () => {
     await suggest.handler({ type: "concepts", prefix: "Test", lang: "deu" });
 
@@ -452,74 +496,10 @@ describe("suggest", () => {
     });
   });
 
-  describe("caching", () => {
-    it("returns cached result on second call without API request", async () => {
-      // First call - hits API
-      await suggest.handler({ type: "concepts", prefix: "Tesla" });
-      expect(mockedApiPost).toHaveBeenCalledTimes(1);
-
-      // Second call - should use cache
-      await suggest.handler({ type: "concepts", prefix: "Tesla" });
-      expect(mockedApiPost).toHaveBeenCalledTimes(1); // Still 1, not 2
-    });
-
-    it("caches by type/prefix/lang combination", async () => {
-      await suggest.handler({ type: "concepts", prefix: "Tesla" });
-      await suggest.handler({ type: "concepts", prefix: "Tesla", lang: "deu" });
-      await suggest.handler({ type: "sources", prefix: "Tesla" });
-
-      // All three are different cache keys
-      expect(mockedApiPost).toHaveBeenCalledTimes(3);
-    });
-
-    it("cache key is case-insensitive for prefix", async () => {
-      await suggest.handler({ type: "concepts", prefix: "Tesla" });
-      await suggest.handler({ type: "concepts", prefix: "tesla" });
-      await suggest.handler({ type: "concepts", prefix: "TESLA" });
-
-      // All should hit same cache entry
-      expect(mockedApiPost).toHaveBeenCalledTimes(1);
-    });
-
-    it("returns same data from cache as from API", async () => {
-      const mockData = [{ uri: "test-uri", label: "Test" }];
-      mockedApiPost.mockResolvedValueOnce({ data: mockData });
-
-      const first = await suggest.handler({ type: "concepts", prefix: "Test" });
-      const second = await suggest.handler({
-        type: "concepts",
-        prefix: "Test",
-      });
-
-      expect(first.data).toEqual(mockData);
-      expect(second.data).toEqual(mockData);
-    });
-
-    it("tracks cache size correctly", async () => {
-      expect(getSuggestCacheSize()).toBe(0);
-
-      await suggest.handler({ type: "concepts", prefix: "One" });
-      expect(getSuggestCacheSize()).toBe(1);
-
-      await suggest.handler({ type: "concepts", prefix: "Two" });
-      expect(getSuggestCacheSize()).toBe(2);
-
-      // Same key, no size increase
-      await suggest.handler({ type: "concepts", prefix: "One" });
-      expect(getSuggestCacheSize()).toBe(2);
-    });
-
-    it("clearSuggestCache removes all entries", async () => {
-      await suggest.handler({ type: "concepts", prefix: "Test" });
-      expect(getSuggestCacheSize()).toBe(1);
-
-      clearSuggestCache();
-      expect(getSuggestCacheSize()).toBe(0);
-
-      // After clear, API should be called again
-      await suggest.handler({ type: "concepts", prefix: "Test" });
-      expect(mockedApiPost).toHaveBeenCalledTimes(2);
-    });
+  it("calls the API on every call", async () => {
+    await suggest.handler({ type: "concepts", prefix: "Tesla" });
+    await suggest.handler({ type: "concepts", prefix: "Tesla" });
+    expect(mockedApiPost).toHaveBeenCalledTimes(2);
   });
 });
 
@@ -548,11 +528,14 @@ describe("getApiUsage", () => {
 describe("buildFilterBody", () => {
   it("parses string query as JSON", () => {
     const body = buildFilterBody({ query: '{"$query":{"keyword":"AI"}}' });
-    expect(body.query).toEqual({ $query: { keyword: "AI" } });
+    expect(body.query).toEqual({
+      $query: { keyword: "AI" },
+      $filter: { forceMaxDataTimeWindow: "31" },
+    });
   });
 
   it("passes object query through directly", () => {
-    const queryObj = { $query: { keyword: "AI" } };
+    const queryObj = { $query: { keyword: "AI", dateStart: "2025-01-01" } };
     const body = buildFilterBody({ query: queryObj });
     expect(body.query).toEqual(queryObj);
   });
@@ -575,5 +558,310 @@ describe("buildFilterBody", () => {
     expect(body.includeFields).toBeUndefined();
     expect(body.articleBodyLen).toBeUndefined();
     expect(body.keyword).toBeDefined();
+  });
+});
+
+// ---------- Aggregates ----------
+
+describe("aggregate resultType", () => {
+  it("articles send filters and resultType only, returns data unfiltered", async () => {
+    const aggregate = {
+      timeAggr: { results: [{ date: "2025-01-01", count: 3 }] },
+    };
+    mockedApiPost.mockResolvedValueOnce({ data: aggregate });
+
+    const result = await search.handler({ kind: "articles",
+      keyword: "Tesla",
+      dateStart: "2025-01-01",
+      resultType: "timeAggr",
+      count: 10,
+      page: 2,
+      sortBy: "rel",
+      includeFields: "concepts",
+      articleBodyLen: 0,
+    });
+
+    const [path, body] = mockedApiPost.mock.calls[0];
+    expect(path).toBe("/article/getArticles");
+    expect(body).toEqual({
+      keyword: ["Tesla"],
+      dateStart: "2025-01-01",
+      resultType: "timeAggr",
+    });
+    expect(result.data).toBe(aggregate);
+  });
+
+  it("events send filters and resultType only, with event param names", async () => {
+    await search.handler({ kind: "events",
+      keyword: "earthquake",
+      dateStart: "2025-01-01",
+      minSentiment: -0.5,
+      resultType: "sourceAggr",
+      count: 10,
+      page: 2,
+      sortBy: "size",
+      includeFields: "concepts",
+    });
+
+    const [path, body] = mockedApiPost.mock.calls[0];
+    expect(path).toBe("/event/getEvents");
+    expect(body).toEqual({
+      keyword: ["earthquake"],
+      dateStart: "2025-01-01",
+      minSentimentEvent: -0.5,
+      resultType: "sourceAggr",
+    });
+  });
+
+  it("the default resultType keeps the list request unchanged", async () => {
+    await search.handler({ kind: "articles", keyword: "Tesla", resultType: "articles" });
+
+    const body = mockedApiPost.mock.calls[0][1];
+    expect(body.resultType).toBe("articles");
+    expect(body.articlesCount).toBe(50);
+    expect(body.articleBodyLen).toBe(1000);
+  });
+});
+
+// ---------- Breaking events ----------
+
+describe("getBreakingEvents", () => {
+  it("calls the endpoint with defaults and event include params", async () => {
+    await getBreakingEvents.handler({});
+
+    expect(mockedApiPost).toHaveBeenCalledWith("/event/getBreakingEvents", {
+      breakingEventsCount: 50,
+      breakingEventsPage: 1,
+      breakingEventsMinBreakingScore: 0.2,
+      includeEventSummary: true,
+      includeEventArticleCounts: true,
+    });
+  });
+
+  it("passes count, page, score and includeFields through", async () => {
+    await getBreakingEvents.handler({
+      breakingEventsCount: 10,
+      breakingEventsPage: 3,
+      breakingEventsMinBreakingScore: 0.5,
+      includeFields: "concepts",
+    });
+
+    const body = mockedApiPost.mock.calls[0][1];
+    expect(body.breakingEventsCount).toBe(10);
+    expect(body.breakingEventsPage).toBe(3);
+    expect(body.breakingEventsMinBreakingScore).toBe(0.5);
+    expect(body.includeEventConcepts).toBe(true);
+    expect(body.includeFields).toBeUndefined();
+  });
+
+  it("filters the breakingEvents wrapper and keeps the breaking score", async () => {
+    mockedApiPost.mockResolvedValueOnce({
+      data: {
+        breakingEvents: {
+          results: [
+            {
+              uri: "eng-1",
+              title: { eng: "Quake" },
+              eventDate: "2025-01-01",
+              summary: { eng: "S" },
+              totalArticleCount: 40,
+              breakingScore: 0.8,
+              socialScore: 5,
+            },
+          ],
+          totalResults: 1,
+        },
+      },
+    });
+
+    const result = await getBreakingEvents.handler({});
+
+    const wrapper = (result.data as Record<string, unknown>)
+      .breakingEvents as Record<string, unknown>;
+    const [evt] = wrapper.results as Record<string, unknown>[];
+    expect(evt.breakingScore).toBe(0.8);
+    expect(evt.title).toBe("Quake");
+    expect(evt.socialScore).toBeUndefined();
+    expect(wrapper.totalResults).toBe(1);
+  });
+});
+
+// ---------- Mentions ----------
+
+describe("search mentions", () => {
+  it("sends the mention filters, default count and include flags", async () => {
+    const response = {
+      mentions: {
+        results: [
+          {
+            uri: "m1",
+            dateTime: "2025-01-01T10:00:00Z",
+            sentence: "Acme cut 500 jobs.",
+            eventType: { uri: "et/business/layoffs", label: "Layoffs" },
+            articleUri: "a1",
+            articleUrl: "https://ex.com/a1",
+            articleTitle: "Acme layoffs",
+            sentenceSentiment: -0.4,
+            relevance: 12,
+            source: { uri: "ex.com", title: "Example", dataType: "news" },
+            slots: [
+              {
+                uri: "acme",
+                label: "Acme",
+                text: "Acme Inc",
+                type: "org",
+                core: true,
+              },
+              { uri: "", label: "", text: "46%", type: "percent" },
+            ],
+          },
+        ],
+        totalResults: 1,
+        page: 1,
+        pages: 1,
+      },
+    };
+    mockedApiPost.mockResolvedValueOnce({
+      data: response,
+      tokenUsage: { reqTokens: 1, remaining: 9 },
+    });
+
+    const result = await search.handler({ kind: "mentions",
+      eventTypeUri: "et/business/layoffs, et/business/hiring",
+      conceptUri: "http://en.wikipedia.org/wiki/Acme",
+      dateStart: "2025-01-01",
+      factLevel: "fact,forecast",
+      maxSentenceIndex: 1,
+      includeFields: "slots",
+    });
+
+    const [path, body] = mockedApiPost.mock.calls[0];
+    expect(path).toBe("/eventType/mention");
+    expect(body).toEqual({
+      action: "getMentions",
+      dateStart: "2025-01-01",
+      eventTypeUri: ["et/business/layoffs", "et/business/hiring"],
+      conceptUri: ["http://en.wikipedia.org/wiki/Acme"],
+      factLevel: ["fact", "forecast"],
+      maxSentenceIndex: 1,
+      mentionsCount: 50,
+      resultType: "mentions",
+      includeMentionSlots: true,
+    });
+    const wrapper = (result.data as Record<string, unknown>).mentions as Record<
+      string,
+      unknown
+    >;
+    const [m] = wrapper.results as Record<string, unknown>[];
+    expect(m.sentence).toBe("Acme cut 500 jobs.");
+    expect(m.relevance).toBeUndefined();
+    expect(m.eventType).toBe("et/business/layoffs");
+    expect(m.source).toEqual({ title: "Example", uri: "ex.com" });
+    expect(m.slots).toEqual([
+      { uri: "acme", label: "Acme", type: "org" },
+      { label: "46%", type: "percent" },
+    ]);
+    expect(wrapper.totalResults).toBe(1);
+  });
+
+  it("passes paging, sorting and the full include set through", async () => {
+    await search.handler({ kind: "mentions",
+      keyword: "merger",
+      dateStart: "2025-01-01",
+      page: 2,
+      count: 20,
+      sortBy: "rel",
+      sortByAsc: true,
+      showDuplicates: true,
+      includeFields: "full",
+    });
+
+    const [, body] = mockedApiPost.mock.calls[0];
+    expect(body).toEqual({
+      action: "getMentions",
+      keyword: ["merger"],
+      dateStart: "2025-01-01",
+      mentionsPage: 2,
+      mentionsCount: 20,
+      mentionsSortBy: "rel",
+      mentionsSortByAsc: true,
+      showDuplicates: true,
+      resultType: "mentions",
+      includeMentionSlots: true,
+      includeMentionCategories: true,
+      includeMentionFrameworks: true,
+    });
+  });
+
+  it("sends filters and resultType only for an aggregate", async () => {
+    const aggregate = { eventTypeAggr: { results: [] } };
+    mockedApiPost.mockResolvedValueOnce({ data: aggregate });
+
+    const result = await search.handler({ kind: "mentions",
+      conceptUri: "c1",
+      dateStart: "2025-01-01",
+      resultType: "eventTypeAggr",
+      count: 10,
+      page: 3,
+      includeFields: "slots",
+    });
+
+    const [path, body] = mockedApiPost.mock.calls[0];
+    expect(path).toBe("/eventType/mention");
+    expect(body).toEqual({
+      action: "getMentions",
+      conceptUri: ["c1"],
+      dateStart: "2025-01-01",
+      resultType: "eventTypeAggr",
+    });
+    expect(result.data).toBe(aggregate);
+  });
+
+  it("rejects filters the endpoint lacks and tags them in the schema", async () => {
+    for (const k of ["forceMaxDataTimeWindow", "keywordLoc", "articleBodyLen"]) {
+      await expect(
+        search.handler({ kind: "mentions", eventTypeUri: "et/x", [k]: 1 }),
+      ).rejects.toThrow(new RegExp(`${k}.*applies to kind`));
+    }
+    expect(mockedApiPost).not.toHaveBeenCalled();
+    const props = search.inputSchema.properties as Record<
+      string,
+      { description: string }
+    >;
+    expect(props.forceMaxDataTimeWindow.description).toMatch(
+      /^articles\/events only\./,
+    );
+    expect(props.eventTypeUri.description).toMatch(/^mentions only\./);
+    expect(props.keyword.description).not.toMatch(/only\./);
+  });
+
+  it("rejects an unknown kind, a foreign sortBy and a foreign aggregate", async () => {
+    await expect(search.handler({ kind: "sources" })).rejects.toThrow(
+      /kind must be one of/,
+    );
+    await expect(
+      search.handler({ kind: "articles", sortBy: "size" }),
+    ).rejects.toThrow(/sortBy .*size.* is not available for kind .*articles/);
+    await expect(
+      search.handler({ kind: "events", resultType: "langAggr" }),
+    ).rejects.toThrow(/resultType .*langAggr.* is not available for kind .*events/);
+    expect(mockedApiPost).not.toHaveBeenCalled();
+  });
+
+  it("explains searches that cost more than one API token", async () => {
+    mockedApiPost.mockResolvedValueOnce({ data: {}, tokenUsage: { reqTokens: 5, remaining: 1 } });
+    const ev = await search.handler({ kind: "events", keyword: "x" });
+    expect(ev.notes?.join()).toMatch(/Event searches cost 5 API tokens/);
+    mockedApiPost.mockResolvedValueOnce({ data: {}, tokenUsage: { reqTokens: 10, remaining: 1 } });
+    const old = await search.handler({ kind: "articles", keyword: "x", dateStart: "2025-01-01" });
+    expect(old.notes?.join()).toMatch(/cost 10 API tokens.*more than 31 days/);
+    mockedApiPost.mockResolvedValueOnce({ data: {}, tokenUsage: { reqTokens: 1, remaining: 1 } });
+    const cheap = await search.handler({ kind: "articles", keyword: "x" });
+    expect(cheap.notes?.join()).not.toMatch(/This search cost|Event searches cost/);
+  });
+
+  it("caps count at the kind's maximum", async () => {
+    await search.handler({ kind: "events", keyword: "x", count: 100 });
+    expect(mockedApiPost.mock.calls[0][1].eventsCount).toBe(50);
   });
 });

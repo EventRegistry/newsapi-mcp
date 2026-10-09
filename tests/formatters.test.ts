@@ -1,11 +1,14 @@
 import { describe, it, expect } from "vitest";
 import {
+  formatAggregate,
   formatSuggestLocations,
   formatSuggestConcepts,
   formatSuggestSources,
   formatSuggestCategories,
   formatSuggestAuthors,
+  formatSuggestEventTypes,
   formatArticleResults,
+  formatMentionResults,
   formatArticleDetails,
   formatEventResults,
   formatEventDetails,
@@ -234,7 +237,7 @@ describe("formatArticleResults", () => {
 
     const result = formatArticleResults(data, {});
 
-    expect(result).toContain("[2024-01-15]");
+    expect(result).toContain("[2024-01-15 10:00]");
     expect(result).toContain("Test Article");
     expect(result).toContain("Test Source");
     expect(result).toContain("Article body content here.");
@@ -587,7 +590,7 @@ describe("formatArticleDetails", () => {
 
     const result = formatArticleDetails(data, {});
 
-    expect(result).toContain("[2024-03-10]");
+    expect(result).toContain("[2024-03-10 08:00]");
     expect(result).toContain("Detail Article");
     expect(result).toContain("Detail Source");
     expect(result).toContain("Detailed body content.");
@@ -619,9 +622,9 @@ describe("formatArticleDetails", () => {
 
     const result = formatArticleDetails(data, {});
 
-    expect(result).toContain("1. [2024-01-01] First");
+    expect(result).toContain("1. [2024-01-01 00:00] First");
     expect(result).toContain("URI: uri1");
-    expect(result).toContain("2. [2024-01-02] Second");
+    expect(result).toContain("2. [2024-01-02 00:00] Second");
     expect(result).toContain("URI: uri2");
     expect(result).toContain("---");
   });
@@ -847,5 +850,324 @@ describe("formatUsageResults", () => {
 
     expect(result).toContain("Tokens used:");
     expect(result).toContain("Tokens available:");
+  });
+});
+
+describe("formatAggregate", () => {
+  it("formats a time aggregate as date — count rows", () => {
+    const data = {
+      timeAggr: {
+        usedResults: 2,
+        results: [
+          { date: "2025-01-01", count: 12 },
+          { date: "2025-01-02", count: 7 },
+        ],
+      },
+    };
+
+    const result = formatAggregate(data, { resultType: "timeAggr" });
+
+    expect(result).toContain("usedResults: 2");
+    expect(result).toContain("1. 2025-01-01 — 12");
+    expect(result).toContain("2. 2025-01-02 — 7");
+  });
+
+  it("labels nested source, author and location rows", () => {
+    expect(
+      formatAggregate(
+        {
+          sourceAggr: {
+            results: [{ source: { uri: "bbc.co.uk", title: "BBC" }, count: 4 }],
+          },
+        },
+        { resultType: "sourceAggr" },
+      ),
+    ).toContain("1. BBC — 4");
+    expect(
+      formatAggregate(
+        {
+          authorAggr: {
+            results: [{ author: { uri: "a@x", name: "Ana" }, count: 2 }],
+          },
+        },
+        { resultType: "authorAggr" },
+      ),
+    ).toContain("1. Ana — 2");
+    expect(
+      formatAggregate(
+        {
+          locAggr: {
+            results: [{ location: { label: { eng: "Berlin" } }, count: 9 }],
+          },
+        },
+        { resultType: "locAggr" },
+      ),
+    ).toContain("1. Berlin — 9");
+  });
+
+  it("reads the count and the fallback uri from inside the nested entity", () => {
+    const data = {
+      sourceAggr: {
+        countsPerSource: [
+          { source: { uri: "bbc.co.uk", title: "BBC", count: 4 } },
+          {
+            location: { uri: "http://x/Nowhere", label: "", type: "wiki" },
+            count: 7,
+          },
+        ],
+      },
+    };
+
+    const result = formatAggregate(data, { resultType: "sourceAggr" });
+
+    expect(result).toContain("1. BBC — 4");
+    expect(result).toContain("2. http://x/Nowhere [wiki] — 7");
+  });
+
+  it("reads sourceAggr counts.frequency and falls back to ? for a blank entity", () => {
+    const data = {
+      sourceAggr: {
+        countsPerSource: [
+          {
+            source: {
+              uri: "benzinga.com",
+              dataType: "news",
+              title: "Benzinga",
+            },
+            counts: { total: 4404, frequency: 15 },
+          },
+        ],
+        countsPerCountry: [
+          { uri: "", label: { eng: "" }, type: "wiki", count: 6 },
+        ],
+      },
+    };
+
+    const result = formatAggregate(data, { resultType: "sourceAggr" });
+
+    expect(result).toContain("1. Benzinga — 15");
+    expect(result).toContain("1. ? [wiki] — 6");
+  });
+
+  it("flattens concept labels, appends the type and uses score", () => {
+    const data = {
+      conceptAggr: {
+        results: [
+          {
+            uri: "http://en.wikipedia.org/wiki/Tesla",
+            type: "org",
+            label: { eng: "Tesla" },
+            score: 88,
+          },
+        ],
+      },
+    };
+
+    expect(formatAggregate(data, { resultType: "conceptAggr" })).toContain(
+      "1. Tesla [org] — 88",
+    );
+  });
+
+  it("uses keyword and weight for keyword aggregates", () => {
+    const data = {
+      keywordAggr: { results: [{ keyword: "battery", weight: 31 }] },
+    };
+
+    expect(formatAggregate(data, { resultType: "keywordAggr" })).toContain(
+      "1. battery — 31",
+    );
+  });
+
+  it("labels the sentiment histogram buckets from -1 to 1", () => {
+    const data = {
+      sentimentAggr: {
+        usedResults: 20,
+        results: [0, 3, 6, 11],
+      },
+    };
+
+    const result = formatAggregate(data, { resultType: "sentimentAggr" });
+
+    expect(result).toContain("usedResults: 20");
+    expect(result).toContain("1. -1.0 to -0.5 — 0");
+    expect(result).toContain("2. -0.5 to 0.0 — 3");
+    expect(result).toContain("4. 0.5 to 1.0 — 11");
+  });
+
+  it("falls back to the first numeric field and rounds decimals", () => {
+    const data = {
+      sourceAggr: {
+        countsPerSource: [
+          { source: { title: "BBC" }, articleCount: 4 },
+          {
+            label: "",
+            uri: "x",
+            type: "wiki",
+            lat: 1.5,
+            long: 2.5,
+            hits: 2.3456,
+          },
+        ],
+      },
+    };
+
+    const result = formatAggregate(data, { resultType: "sourceAggr" });
+
+    expect(result).toContain("1. BBC — 4");
+    expect(result).toContain("2. x [wiki] — 2.35");
+  });
+
+  it("names each list when the aggregate has several", () => {
+    const data = {
+      sourceAggr: {
+        countsBySource: [{ source: { title: "BBC" }, count: 4 }],
+        countsByCountry: [{ label: { eng: "Germany" }, count: 1 }],
+      },
+    };
+
+    const result = formatAggregate(data, { resultType: "sourceAggr" });
+
+    expect(result).toContain("countsBySource:\n1. BBC — 4");
+    expect(result).toContain("countsByCountry:\n1. Germany — 1");
+  });
+
+  it("says so when the aggregate is empty", () => {
+    expect(
+      formatAggregate(
+        { timeAggr: { results: [] } },
+        { resultType: "timeAggr" },
+      ),
+    ).toBe("No results found.");
+  });
+
+  it("falls back to JSON for an unexpected shape", () => {
+    const data = { timeAggr: { total: 5 } };
+
+    expect(formatAggregate(data, { resultType: "timeAggr" })).toBe(
+      JSON.stringify(data, null, 2),
+    );
+    expect(formatAggregate({ other: 1 }, { resultType: "timeAggr" })).toBe(
+      JSON.stringify({ other: 1 }, null, 2),
+    );
+  });
+});
+
+describe("formatEventResults for breaking events", () => {
+  it("reads the breakingEvents wrapper, shows the score and the page param", () => {
+    const data = {
+      breakingEvents: {
+        results: [
+          {
+            uri: "eng-1",
+            title: "Quake hits coast",
+            eventDate: "2025-01-01",
+            summary: "A strong quake.",
+            totalArticleCount: 40,
+            breakingScore: 0.83,
+          },
+        ],
+        totalResults: 120,
+        page: 1,
+        pages: 3,
+      },
+    };
+
+    const result = formatEventResults(data, {});
+
+    expect(result).toContain("1. [2025-01-01] Quake hits coast (40 articles)");
+    expect(result).toContain("Breaking score: 0.83");
+    expect(result).toContain("Use breakingEventsPage: 2 for more.");
+  });
+});
+
+describe("formatSuggestEventTypes", () => {
+  it("renders label and uri per row", () => {
+    const data = [
+      { uri: "et/business/layoffs", label: "et/business/layoffs" },
+      { uri: "et/business/hiring", label: { eng: "Hiring" } },
+    ];
+    expect(formatSuggestEventTypes(data, {})).toBe(
+      "1. et/business/layoffs\n   et/business/layoffs\n\n2. Hiring\n   et/business/hiring",
+    );
+  });
+
+  it("handles an empty array", () => {
+    expect(formatSuggestEventTypes([], {})).toBe("No results found.");
+  });
+});
+
+describe("formatMentionResults", () => {
+  const base = {
+    uri: "m1",
+    dateTime: "2025-03-04T08:00:00Z",
+    sentence: "Acme will cut 500 jobs in May.",
+    eventType: "et/business/layoffs",
+    articleUri: "a1",
+    articleUrl: "https://ex.com/a1",
+    articleTitle: "Acme announces layoffs",
+    sentenceSentiment: -0.35,
+    factLevel: "forecast",
+    source: { uri: "ex.com", title: "Example News" },
+  };
+
+  it("renders the minimal fields and the paging footer", () => {
+    const data = {
+      mentions: { results: [base], totalResults: 250, page: 1, pages: 3 },
+    };
+    const out = formatMentionResults(data, {});
+    expect(out).toContain(
+      '1. [2025-03-04 08:00] et/business/layoffs - Example News\n   "Acme will cut 500 jobs in May."\n   Article: Acme announces layoffs\n   URL: https://ex.com/a1\n   URI: m1 (article a1)\n   Sentiment: -0.35\n   Fact level: forecast',
+    );
+    expect(out).toContain(
+      "1 results (250 total) Page 1 of 3. Use page: 2 for more.",
+    );
+  });
+
+  it("renders slots, categories, frameworks and metadata", () => {
+    const data = {
+      mentions: {
+        results: [
+          {
+            ...base,
+            eventType: { uri: "et/business/layoffs", label: "Layoffs" },
+            slots: [
+              { uri: "acme", label: "Acme", type: "org" },
+              { label: "46%", type: "percent" },
+              { label: "46%", type: "percent" },
+              { uri: "may", label: { eng: "May" } },
+            ],
+            categories: [{ uri: "dmoz/Business", label: "Business" }],
+            frameworks: {
+              sdg: { uri: "sdg/8", label: "Decent work" },
+              esg: { uri: "esg/social", label: "social" },
+            },
+            lang: "eng",
+            relevance: 12,
+            sentenceIndex: 1,
+            isDuplicate: false,
+            articleSentiment: -0.1,
+            articleImageUrl: "https://ex.com/i.jpg",
+          },
+        ],
+      },
+    };
+    const out = formatMentionResults(data, {});
+    expect(out).toContain("1. [2025-03-04 08:00] Layoffs - Example News");
+    expect(out).toContain("   Entities: Acme [org], 46% [percent], May");
+    expect(out).toContain("   Categories: Business");
+    expect(out).toContain("   Frameworks: Decent work, social");
+    expect(out).toContain(
+      "   lang: eng | relevance: 12 | sentenceIndex: 1 | isDuplicate: false | articleSentiment: -0.1",
+    );
+    expect(out).toContain("   Image: https://ex.com/i.jpg");
+  });
+
+  it("reports an empty list", () => {
+    expect(formatMentionResults({ mentions: { results: [] } }, {})).toBe(
+      "No mentions found.",
+    );
+    expect(formatMentionResults({ error: "bad" }, {})).toContain(
+      '"error": "bad"',
+    );
   });
 });

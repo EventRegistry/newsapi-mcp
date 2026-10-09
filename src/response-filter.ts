@@ -23,6 +23,8 @@ const VALID_GROUPS = new Set<string>([
   "social",
   "metadata",
   "event",
+  "slots",
+  "frameworks",
   "full",
 ]);
 
@@ -304,7 +306,87 @@ export function filterEvent(
   return result;
 }
 
-export type ResultType = "articles" | "events";
+/** Fields to always keep on mentions (minimal set). */
+const MENTION_MINIMAL = new Set([
+  "uri",
+  "dateTime",
+  "sentence",
+  "eventType",
+  "sentenceSentiment",
+  "factLevel",
+  "articleUri",
+  "articleUrl",
+  "articleTitle",
+  "source",
+]);
+
+const MENTION_GROUP_FIELDS: Record<string, string[]> = {
+  slots: ["slots"],
+  categories: ["categories"],
+  frameworks: ["frameworks"],
+  metadata: [
+    "relevance",
+    "lang",
+    "date",
+    "time",
+    "sentenceIndex",
+    "isDuplicate",
+    "isDuplicateOf",
+    "articleSentiment",
+    "eventTypeSentiment",
+    "articleImageUrl",
+  ],
+};
+
+/** Mention include params: basic info and source title are on by default at the API. */
+export function getMentionIncludeParams(
+  groups: Set<string>,
+): Record<string, boolean> {
+  const params: Record<string, boolean> = {};
+  const all = groups.has("full");
+  if (all || groups.has("slots")) params.includeMentionSlots = true;
+  if (all || groups.has("categories")) params.includeMentionCategories = true;
+  if (all || groups.has("frameworks")) params.includeMentionFrameworks = true;
+  return params;
+}
+
+/** Slots without a linked entity carry only the surface text; keep it as the label. */
+function filterSlotItem(s: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = {
+    label: flattenLang(s.label) || s.text,
+    type: s.type,
+  };
+  if (s.uri) out.uri = s.uri;
+  return out;
+}
+
+/** Filter a single mention object. */
+export function filterMention(
+  mention: Record<string, unknown>,
+  groups: Set<string>,
+): Record<string, unknown> {
+  if (groups.has("full")) return mention;
+  const allowed = buildAllowedFields(
+    MENTION_MINIMAL,
+    MENTION_GROUP_FIELDS,
+    groups,
+  );
+  const result = pickFields(mention, allowed);
+  if (result.source) result.source = filterSource(result.source);
+  if (result.eventType && typeof result.eventType === "object")
+    result.eventType = (result.eventType as Record<string, unknown>).uri;
+  if (Array.isArray(result.slots)) {
+    result.slots = result.slots.map((s: unknown) =>
+      s && typeof s === "object"
+        ? filterSlotItem(s as Record<string, unknown>)
+        : s,
+    );
+  }
+  filterSubFields(result);
+  return result;
+}
+
+export type ResultType = "articles" | "events" | "breakingEvents" | "mentions";
 
 export interface FilterOptions {
   resultType: ResultType;
@@ -350,6 +432,13 @@ export function filterResponse(
           return filterArticle(obj, groups, bodyLen);
         case "events":
           return filterEvent(obj, groups);
+        case "breakingEvents":
+          return {
+            ...filterEvent(obj, groups),
+            breakingScore: obj.breakingScore,
+          };
+        case "mentions":
+          return filterMention(obj, groups);
         default:
           return obj;
       }

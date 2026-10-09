@@ -143,6 +143,7 @@ vite.config.ts.timestamp-*
 .claude
 .mcp.json
 .*-mcp
-docs/
+docs/*
+!docs/deployment.md
 reports/
-tests_use_cases/
+tests_use_cases/.scratch/

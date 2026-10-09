@@ -8,13 +8,14 @@ export type ResponseFormatter = (
 export interface TokenUsage {
   reqTokens: number;
   remaining: number;
-  cached?: boolean;
 }
 
 /** Wrapper returned by API client and tool handlers. */
 export interface ApiResponse {
   data: unknown;
   tokenUsage?: TokenUsage;
+  /** Remarks about defaults the server applied, shown under the result. */
+  notes?: string[];
 }
 
 /** Tool definition for MCP registration. */

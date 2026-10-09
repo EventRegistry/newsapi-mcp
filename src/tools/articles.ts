@@ -1,6 +1,7 @@
 import { apiPost, parseArray } from "../client.js";
-import { ApiError } from "../types.js";
 import type { ToolDef } from "../types.js";
+import { buildSearchBody } from "../query.js";
+import type { SearchKind } from "./search.js";
 import {
   parseFieldGroups,
   getArticleIncludeParams,
@@ -8,47 +9,53 @@ import {
 } from "../response-filter.js";
 import { formatArticleResults, formatArticleDetails } from "../formatters.js";
 
-/** Shared content filter properties. Some props (e.g. sourceRankPercentile) are article-only and stripped by events handler. */
+/** All shared content filters; the search tools expose the common ones at top level and the rest under `options`. */
 export const contentFilterProps: Record<string, unknown> = {
   keyword: {
     type: "string",
     description:
-      'Secondary keyword filter. Use conceptUri as the primary search method. Keywords narrow concept results — especially useful with broad concepts (e.g., keyword: "2026" with Olympic Games concept). Also effective as a fallback when a specific concept returns no results. IMPORTANT: each keyword value is matched as an exact phrase. Comma-separate individual words for multi-term matching (e.g., "SaaS, acquisition, merger" NOT "SaaS acquisition merger"). Use keywordOper to control AND/OR logic for comma-separated keywords.',
+      "Text filter; each value is an exact phrase (comma-separate several). One boolean expression is also accepted: \"Tesla AND (recall OR lawsuit) NOT Musk\".",
+  },
+  keywordSearchMode: {
+    type: "string",
+    description:
+      "\"phrase\" (default), \"exact\" (boolean expression; auto-detected), \"simple\" (relevance ranking, noisy).",
+    enum: ["phrase", "exact", "simple"],
   },
   conceptUri: {
     type: "string",
     description:
-      'Primary search filter. Always use suggest(type: "concepts") first to resolve entity names to URIs, then pass them here. Prefer this over keyword search for reliable results. Comma-separated for multiple concepts. Prefer well-established concepts over year-specific ones (e.g., "Olympic Games" not "2026 Olympics"). Combine broad concept + keyword for precision.',
+      "Entity URI(s) from suggest(type: \"concepts\"), comma-separated (AND; see conceptOper). The primary filter.",
   },
   categoryUri: {
     type: "string",
     description:
-      'Category URI(s) to filter by (comma-separated). Use suggest(type: "categories") to look up URIs.',
+      "Category URI(s), comma-separated; from suggest(type: \"categories\").",
   },
   sourceUri: {
     type: "string",
     description:
-      'Specific news source URI(s) to filter by (e.g., Reuters, BBC). Use suggest(type: "sources") to look up URIs. For sources from a country/region, use sourceLocationUri instead.',
+      "Source URI(s), comma-separated; from suggest(type: \"sources\"). For a country's sources use sourceLocationUri.",
   },
   sourceLocationUri: {
     type: "string",
     description:
-      'Filter by where news sources are based (e.g., sources from Slovenia, UK). Use suggest(type: "locations") to look up country/region URIs. Prefer this over sourceUri when filtering by country.',
+      "Location URI(s) where the sources are based; from suggest(type: \"locations\").",
   },
   authorUri: {
     type: "string",
     description:
-      'Author URI(s) to filter by (comma-separated). Use suggest(type: "authors") to look up URIs.',
+      "Author URI(s), comma-separated; from suggest(type: \"authors\").",
   },
   locationUri: {
     type: "string",
     description:
-      'Location URI(s) mentioned in content (comma-separated). Use suggest(type: "locations") to look up URIs.',
+      "URI(s) of places the content is about, comma-separated; from suggest(type: \"locations\").",
   },
   lang: {
     type: "string",
     description:
-      'Language code(s) to filter by (comma-separated ISO codes, e.g. "eng", "deu", "fra").',
+      "Language code(s), comma-separated ISO-3 (\"eng\", \"deu\", \"slv\").",
   },
   dateStart: {
     type: "string",
@@ -61,128 +68,166 @@ export const contentFilterProps: Record<string, unknown> = {
   forceMaxDataTimeWindow: {
     type: "integer",
     description:
-      "Limit results to recent data: 7 (last week) or 31 (last month). Use this instead of dateStart/dateEnd for recent news queries to minimize token usage. Omit to search all available data.",
+      "Only the last 7 or 31 days. Default when no date is given: 31 (1 API token); older dates cost 5-65x.",
     enum: [7, 31],
   },
   keywordLoc: {
     type: "string",
     description:
-      'Where to match keywords: "body", "title", or "title,body" (OR — matches in either location). Default: "body".',
+      "Where keyword matches: \"body\" (default), \"title\", \"title,body\".",
     enum: ["body", "title", "title,body"],
   },
   keywordOper: {
     type: "string",
     description:
-      'Boolean operator for multiple keywords: "and" or "or". Default: "and".',
+      "\"and\" (default) or \"or\" between comma-separated keywords.",
     enum: ["and", "or"],
   },
   minSentiment: {
     type: "number",
-    description: "Minimum sentiment (-1 to 1).",
+    description: "Minimum sentiment, -1 to 1 (English articles only).",
   },
   maxSentiment: {
     type: "number",
-    description: "Maximum sentiment (-1 to 1).",
+    description: "Maximum sentiment, -1 to 1.",
   },
   startSourceRankPercentile: {
     type: "integer",
     description:
-      "Min source rank percentile (0-100). Lower = more important. Default: 0.",
+      "Min source rank percentile, 0-90 in steps of 10 (0 = most important).",
   },
   endSourceRankPercentile: {
     type: "integer",
-    description: "Max source rank percentile (0-100). Default: 100.",
+    description: "Max source rank percentile, 10-100 in steps of 10; e.g. 30 keeps the top 30% of sources.",
   },
   ignoreKeyword: {
     type: "string",
     description:
-      "Exclude articles/events mentioning these keywords. Comma-separated for multiple.",
+      "Exclude by keyword(s), comma-separated.",
   },
   ignoreConceptUri: {
     type: "string",
     description:
-      'Exclude by concept URI(s). Comma-separated for multiple. Use suggest(type: "concepts") to look up URIs.',
+      "Exclude by concept URI(s), comma-separated.",
   },
   ignoreCategoryUri: {
     type: "string",
     description:
-      'Exclude by category URI(s). Comma-separated for multiple. Use suggest(type: "categories") to look up URIs.',
+      "Exclude category URI(s), comma-separated.",
   },
   ignoreSourceUri: {
     type: "string",
     description:
-      'Exclude by source URI(s). Comma-separated for multiple. Use suggest(type: "sources") to look up URIs.',
+      "Exclude by source URI(s), comma-separated.",
   },
   ignoreSourceLocationUri: {
     type: "string",
     description:
-      'Exclude by source location URI(s). Comma-separated for multiple. Use suggest(type: "locations") to look up URIs.',
+      "Exclude sources based in these location URI(s).",
   },
   ignoreSourceGroupUri: {
     type: "string",
     description:
-      "Exclude by source group URI(s). Comma-separated for multiple.",
+      "Exclude source group URI(s).",
   },
   ignoreAuthorUri: {
     type: "string",
     description:
-      'Exclude by author URI(s). Comma-separated for multiple. Use suggest(type: "authors") to look up URIs.',
+      "Exclude author URI(s).",
   },
   ignoreLocationUri: {
     type: "string",
     description:
-      'Exclude by location URI(s). Comma-separated for multiple. Use suggest(type: "locations") to look up URIs.',
+      "Exclude content about these location URI(s).",
   },
   ignoreLang: {
     type: "string",
     description:
-      'Exclude by language code(s). Comma-separated ISO codes (e.g. "eng", "deu").',
+      "Exclude language code(s), e.g. \"eng,deu\".",
   },
   ignoreKeywordLoc: {
     type: "string",
     description:
-      'Where to match ignoreKeyword: "body", "title", or "title,body". Default: "body".',
+      "Where ignoreKeyword is matched: \"body\" (default), \"title\", \"title,body\".",
     enum: ["body", "title", "title,body"],
   },
   sourceGroupUri: {
     type: "string",
-    description: "Filter by source group URI(s). Comma-separated for multiple.",
+    description: "Source group URI(s), comma-separated.",
   },
   conceptOper: {
     type: "string",
     description:
-      'Boolean operator for multiple concepts: "and" or "or". Default: "and".',
+      "\"and\" (default) or \"or\" between comma-separated concepts.",
     enum: ["and", "or"],
   },
   categoryOper: {
     type: "string",
     description:
-      'Boolean operator for multiple categories: "and" or "or". Default: "or".',
+      "Operator for several categoryUri values: \"or\" (default) or \"and\".",
     enum: ["and", "or"],
   },
   dateMentionStart: {
     type: "string",
     description:
-      "Articles mentioning dates >= this (YYYY-MM-DD). Filters by dates mentioned in content.",
+      "Keep articles whose text mentions a date on/after YYYY-MM-DD.",
   },
   dateMentionEnd: {
     type: "string",
     description:
-      "Articles mentioning dates <= this (YYYY-MM-DD). Filters by dates mentioned in content. WARNING: combining both dateMentionStart and dateMentionEnd often returns 0 results — prefer using dateMentionStart alone.",
+      "Keep articles whose text mentions a date on/before YYYY-MM-DD (often empty when combined with dateMentionStart).",
   },
 };
+
+/** Filters most searches never need; they live under `options` to keep the schema small. */
+export const RARE_FILTER_KEYS = [
+  "authorUri",
+  "locationUri",
+  "sourceGroupUri",
+  "categoryOper",
+  "minSentiment",
+  "maxSentiment",
+  "startSourceRankPercentile",
+  "endSourceRankPercentile",
+  "ignoreCategoryUri",
+  "ignoreSourceLocationUri",
+  "ignoreSourceGroupUri",
+  "ignoreAuthorUri",
+  "ignoreLocationUri",
+  "ignoreLang",
+  "ignoreKeywordLoc",
+  "dateMentionStart",
+  "dateMentionEnd",
+] as const;
+
+const rare = new Set<string>(RARE_FILTER_KEYS);
+
+/** The common filters, exposed at the top level of each search tool. */
+export const coreFilterProps: Record<string, unknown> = Object.fromEntries(
+  Object.entries(contentFilterProps).filter(([k]) => !rare.has(k)),
+);
+
+/** Merge `options` into the flat params the handlers and request builder work with. */
+export function flattenOptions(
+  params: Record<string, unknown>,
+): Record<string, unknown> {
+  const { options, ...rest } = params;
+  return options && typeof options === "object"
+    ? { ...rest, ...(options as Record<string, unknown>) }
+    : rest;
+}
 
 /** Response control properties for article-returning tools. */
 export const responseControlProps: Record<string, unknown> = {
   includeFields: {
     type: "string",
     description:
-      "Comma-separated field groups to include beyond the minimal set (title, body, date, source). Options: sentiment, concepts, categories, images, authors, location, social, metadata, event, full. Default: minimal only.",
+      "Extra field groups, comma-separated: sentiment, concepts, categories, images, authors, location, social, metadata, event, full. Default: none.",
   },
   articleBodyLen: {
     type: "integer",
     description:
-      "Article body length in characters. Default: 1000. Use -1 for full text, 0 to exclude body.",
+      "Body chars per article. Default 1000; -1 full text; 0 titles only (scan rows).",
   },
 };
 
@@ -195,149 +240,83 @@ export const includeFieldsProp: Record<string, unknown> = {
   },
 };
 
-/** Params that are NOT API filter params and should be stripped before sending. */
-const LOCAL_PARAMS = new Set(["includeFields", "articleBodyLen"]);
-
-/** Build the request body from params, expanding array-typed fields. */
+/** Request body only, for callers that do not surface the server's notes. */
 export function buildFilterBody(
   params: Record<string, unknown>,
 ): Record<string, unknown> {
-  const body: Record<string, unknown> = {};
-  const arrayFields = [
-    "keyword",
-    "conceptUri",
-    "categoryUri",
-    "sourceUri",
-    "sourceLocationUri",
-    "authorUri",
-    "locationUri",
-    "lang",
-    "ignoreKeyword",
-    "ignoreConceptUri",
-    "ignoreCategoryUri",
-    "ignoreSourceUri",
-    "ignoreSourceLocationUri",
-    "ignoreSourceGroupUri",
-    "ignoreAuthorUri",
-    "ignoreLocationUri",
-    "ignoreLang",
-    "sourceGroupUri",
-  ];
-  for (const [k, v] of Object.entries(params)) {
-    if (v === undefined || v === null) continue;
-    if (LOCAL_PARAMS.has(k)) continue;
-    if (k === "query") {
-      if (typeof v === "string") {
-        try {
-          body[k] = JSON.parse(v);
-        } catch {
-          throw new ApiError(400, `Invalid JSON in "query" parameter`);
-        }
-      } else {
-        body[k] = v;
-      }
-    } else if (arrayFields.includes(k)) {
-      body[k] = parseArray(v);
-    } else {
-      body[k] = v;
-    }
-  }
-  return body;
+  return buildSearchBody(params).body;
 }
 
-export const searchArticles: ToolDef = {
-  name: "search_articles",
-  description: `Search news articles by concepts, sources, categories, dates, language, and sentiment. Returns up to 100 articles per call.
+/** search({kind: "articles"}): individual articles with text. */
+/** The API's "date" sort uses crawl time; order the page by publish time instead. */
+function sortByPublishTime(
+  data: unknown,
+  body: Record<string, unknown>,
+): void {
+  if ((body.articlesSortBy ?? "date") !== "date") return;
+  const results = (
+    data as { articles?: { results?: { dateTimePub?: string }[] } }
+  )?.articles?.results;
+  if (!Array.isArray(results)) return;
+  const sign = body.articlesSortByAsc === true ? 1 : -1;
+  results.sort(
+    (a, b) => sign * (a.dateTimePub ?? "").localeCompare(b.dateTimePub ?? ""),
+  );
+}
 
-WORKFLOW: Use suggest tool first to resolve names to URIs, then search with conceptUri. Use keyword only as a secondary text filter.
-EXAMPLE: search_articles({conceptUri: "<uri>", dateStart: "2025-01-01", lang: "eng"})
-
-USE THIS WHEN you need individual articles with full text, dates, and sources.
-NOT THIS when you need high-level event summaries — use search_events instead.`,
-  inputSchema: {
-    type: "object",
-    properties: {
-      ...contentFilterProps,
-      ...responseControlProps,
-      isDuplicateFilter: {
-        type: "string",
-        description:
-          'Duplicate handling: "keepAll" (default), "skipDuplicates" (recommended for scan steps — removes wire syndication noise), "keepOnlyDuplicates".',
-        enum: ["keepAll", "skipDuplicates", "keepOnlyDuplicates"],
-      },
-      dataType: {
-        type: "string",
-        description:
-          'Content types (comma-separated): "news", "pr", "blog". Default: "news".',
-      },
-      articlesPage: {
-        type: "integer",
-        description: "Page number (starting from 1). Default: 1.",
-      },
-      articlesCount: {
-        type: "integer",
-        description: "Articles per page (max 100). Default: 100.",
-        maximum: 100,
-      },
-      articlesSortBy: {
-        type: "string",
-        description:
-          'Sort by: "date", "rel", "sourceImportance", "socialScore". Default: "date". Note: socialScore may surface low-authority viral sources — combine with startSourceRankPercentile/endSourceRankPercentile to filter for quality.',
-        enum: [
-          "date",
-          "rel",
-          "sourceImportance",
-          "sourceAlexaGlobalRank",
-          "socialScore",
-          "facebookShares",
-        ],
-      },
-      articlesSortByAsc: {
-        type: "boolean",
-        description: "Ascending sort order. Default: false.",
-      },
-      query: {
-        type: ["object", "string"],
-        description:
-          "Advanced Query Language object for complex boolean logic. See API docs. Overrides simple filter params when provided.",
-      },
+export const articlesKind: SearchKind = {
+  path: "/article/getArticles",
+  aggregates: [
+    "timeAggr",
+    "sourceAggr",
+    "authorAggr",
+    "keywordAggr",
+    "locAggr",
+    "conceptAggr",
+    "categoryAggr",
+    "sentimentAggr",
+    "langAggr",
+  ],
+  defaultCount: 50,
+  maxCount: 100,
+  sortBy: [
+    "date",
+    "rel",
+    "sourceImportance",
+    "sourceAlexaGlobalRank",
+    "socialScore",
+    "facebookShares",
+  ],
+  props: {
+    articleBodyLen: responseControlProps.articleBodyLen,
+    isDuplicateFilter: {
+      type: "string",
+      description:
+        "\"keepAll\" (default), \"skipDuplicates\" (use for scans), \"keepOnlyDuplicates\".",
+      enum: ["keepAll", "skipDuplicates", "keepOnlyDuplicates"],
     },
   },
-  handler: async (params) => {
-    params.articlesCount ??= 100;
-    const groups = parseFieldGroups(params.includeFields as string | undefined);
-    const bodyLen = (params.articleBodyLen as number) ?? 1000;
-
-    const body = buildFilterBody(params);
-    body.resultType = "articles";
-    body.articleBodyLen = bodyLen;
-    if (params.dataType) {
-      body.dataType = parseArray(params.dataType);
-    }
-    Object.assign(body, getArticleIncludeParams(groups));
-
-    const { data, tokenUsage } = await apiPost("/article/getArticles", body);
-    return {
-      data: filterResponse(data, {
-        resultType: "articles",
-        groups,
-        bodyLen,
-      }),
-      tokenUsage,
-    };
+  optionProps: {
+    dataType: {
+      type: "string",
+      description:
+        'Content types, comma-separated: "news" (default), "pr", "blog".',
+    },
   },
+  unsupported: [],
+  reorder: sortByPublishTime,
+  bodyLen: (params) => (params.articleBodyLen as number) ?? 1000,
+  adapt: (body, params) => {
+    if (params.dataType) body.dataType = parseArray(params.dataType);
+  },
+  includeParams: getArticleIncludeParams,
   formatter: formatArticleResults,
 };
 
 export const getArticleDetails: ToolDef = {
   name: "get_article_details",
-  description: `Get full details for one or more articles by their URI(s).
-
-EXAMPLE: get_article_details({articleUri: "123456789", includeFields: "concepts,sentiment"})
-EXAMPLE (multiple): get_article_details({articleUri: ["123456789", "987654321"]})
-
-USE THIS WHEN you already have article URIs from search results and need more details.
-NOT THIS for searching — use search_articles with filters instead.`,
+  description: `Full text, URL and metadata for article URIs (up to 100 per call, 1 API token). Use after a scan; not for searching.
+Example: get_article_details({articleUri: ["123", "456"], includeFields: "sentiment"})`,
   inputSchema: {
     type: "object",
     properties: {
@@ -380,4 +359,4 @@ NOT THIS for searching — use search_articles with filters instead.`,
   formatter: formatArticleDetails,
 };
 
-export const articleTools: ToolDef[] = [searchArticles, getArticleDetails];
+export const articleTools: ToolDef[] = [getArticleDetails];

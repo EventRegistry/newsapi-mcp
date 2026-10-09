@@ -106,8 +106,8 @@ describe("MCP Resources", () => {
     expect(text).toContain("Language Codes");
     expect(text).toContain("sentiment");
     expect(text).toContain("concepts");
-    expect(text).toContain("articlesCount");
-    expect(text).toContain("eventsCount");
+    expect(text).toContain("count");
+    expect(text).toContain("count");
     expect(text).toContain("articleBodyLen");
   });
 
@@ -145,7 +145,7 @@ describe("Server Instructions", () => {
   });
 
   it("instructions contain workflow guidance", () => {
-    expect(serverInstructions).toContain("search_articles");
+    expect(serverInstructions).toContain('search({kind: "articles"');
     expect(serverInstructions).toContain("get_article_details");
   });
 

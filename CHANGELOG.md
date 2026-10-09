@@ -1,5 +1,41 @@
 # Changelog
 
+## [Unreleased]
+
+### Breaking changes
+
+- **One `search` tool** — `search_articles`, `search_events` and `search_mentions` are replaced by `search` with `kind: "articles" | "events" | "mentions"`. Paging and sorting are generic: `page`, `count`, `sortBy`, `options.sortByAsc` replace `articlesPage/Count/SortBy`, `eventsPage/Count/SortBy` and `mentionsPage/Count/SortBy`. Kind-only params are tagged in their descriptions and rejected with a corrective 400 for the other kinds
+- **Rare filters under `options`** — Sentiment, source rank, author/location/source-group filters, secondary `ignore*` filters, date-mention filters, `dataType` and the `*SortByAsc` flags are accepted only inside the `options` object
+- **31-day default window** — A search with no date filter covers the last 31 days (`forceMaxDataTimeWindow`, or `dateStart` for mentions); an unbounded search costs 65× as many API tokens. A note under the result says how to widen it
+- **Default count 50** — Articles and mentions return 50 results by default (scans still ask for 100; events max 50)
+
+### Features
+
+- **Hosted server** — New Streamable HTTP entry point (`src/http.ts`) for `https://mcp.newsapi.ai/mcp`: users log in with their Event Registry account through the MCP client's OAuth flow instead of pasting an API key. Stateless, verifies JWT access tokens against the issuer's JWKS (`iss`, `aud`, `exp`), serves protected-resource metadata, and runs each request on the caller's own token. Configured via `MCP_PUBLIC_URL`, `MCP_AUTH_ISSUER`, `PORT`; `docs/deployment.md` covers deployment
+- **Local server login** — `npx newsapi-mcp` without `NEWSAPI_KEY` logs in to Event Registry in the browser (authorization code + PKCE on a loopback redirect, ports 51337–51339), keeps the tokens in the OS credential store and refreshes them; `newsapi-mcp login` / `logout` manage the stored login. `NEWSAPI_KEY` still selects API-key mode
+- **Login error guidance** — Tools explain an unlinked Event Registry account (sign in once at eventregistry.org/login) and an expired login (reconnect, or `npx newsapi-mcp login` locally) instead of the API key message
+- **Docker image** — `Dockerfile` and `npm run build:http` build the hosted server; `GET /healthz` for health checks
+- **Hosted results as source material** — The hosted server marks tool results with `audience: ["assistant"]`, wraps them in `<source_material>` tags and tells the model to report key points with links instead of pasting raw results
+- **Mentions** — `search({kind: "mentions"})` returns sentences tagged with an event type (acquisition, layoffs, launch, recall, …) with the entities involved, sentiment, fact level and a link to the article. Mention-only filters: `eventTypeUri`, `industryUri`, `sdgUri`, `sasbUri`, `esgUri`, `factLevel`, sentence index range, `showDuplicates`; `includeFields` groups `slots`, `categories`, `frameworks`, `metadata`, `full`; aggregate `eventTypeAggr`. `suggest(type: "eventTypes")` resolves event type names to URIs
+- **Aggregate result types** — Article and event searches accept `resultType` set to one aggregate (`timeAggr`, `sourceAggr`, `authorAggr`, `keywordAggr`, `locAggr`, `conceptAggr`, `categoryAggr`, `sentimentAggr`, `langAggr`) that summarises every match in one call, rendered as label/count rows
+- **`get_breaking_events`** — Wraps `event/getBreakingEvents` with count, page and minimum score; events keep their breaking score
+- **Server-side query composition** — Flat filters given alongside an advanced `query` are merged into it (leaf filters ANDed, `ignore*` as `$not`, duplicate/sentiment/rank flags into `$filter`) instead of being rejected by the API; arrays and `$not` lists are normalised. `query` is documented as a grammar with worked examples, and query-shaped 400s return rewrite guidance
+- **Boolean keyword strings** — `keyword: "Tesla AND (recall OR lawsuit) NOT Musk"` is detected and sent with `keywordSearchMode: "exact"`; `keywordSearchMode` is also exposed directly
+- **Cost notes** — A search that costs more than 1 API token says why under the result (events cost 5; dates reaching back more than 31 days cost 5–10×), and the server instructions map "recent / this week / last month" to `forceMaxDataTimeWindow`
+
+### Improvements
+
+- **Compact scan rows** — With `articleBodyLen: 0` each article is one row (`# | uri | date | source | title`); `get_article_details` supplies the text and URL. Notes under the result report applied defaults and body truncation
+- **Publish time in rows** — Article, scan, detail and mention rows show `YYYY-MM-DD HH:MM` instead of the day alone, and date-sorted article pages are re-sorted by publish time (the API orders by crawl time). Events keep their day-only date
+- **Smaller schema and instructions** — Shared parameter and tool descriptions were shortened and the guidance moved into the server instructions; the shared filters and query grammar load once for the single `search` tool, cutting the session-start cost from about 15.8k to about 10.5k tokens
+- **Response cap 50k chars** — Oversized results are truncated at a clean boundary (was 100k) so clients with a 25k-token tool-result limit do not drop them
+- **Pagination footer** — List formatters share one footer with page, count and total
+
+### Changes
+
+- **Suggest cache removed** — `suggest` calls the API every time; the cheap endpoints gained nothing from caching, and the "(cached)" token footer is gone
+- **Dependencies** — Lock file bumped to clear `npm audit` findings; no `package.json` range changes
+
 ## [1.3.1] - 2026-03-18
 
 ### Features
