@@ -182,7 +182,7 @@ describe("hosted server MCP over HTTP", () => {
   it("lists tools with a valid token", async () => {
     const client = await connect(await sign());
     const { tools } = await client.listTools();
-    expect(tools).toHaveLength(10);
+    expect(tools).toHaveLength(8);
     await client.close();
   });
 
@@ -207,8 +207,8 @@ describe("hosted server MCP over HTTP", () => {
     const tokenB = await sign({ sub: "b" });
     const [a, b] = await Promise.all([connect(tokenA), connect(tokenB)]);
     await Promise.all([
-      a.callTool({ name: "search_articles", arguments: { keyword: "a" } }),
-      b.callTool({ name: "search_articles", arguments: { keyword: "b" } }),
+      a.callTool({ name: "search", arguments: { kind: "articles", keyword: "a" } }),
+      b.callTool({ name: "search", arguments: { kind: "articles", keyword: "b" } }),
     ]);
     await Promise.all([a.close(), b.close()]);
 

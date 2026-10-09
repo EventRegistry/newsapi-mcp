@@ -222,7 +222,7 @@ function formatArticleRows(
   return [
     "# | uri | date | source | title",
     ...rows,
-    paginationFooter(wrapper, results.length, "articlesPage") +
+    paginationFooter(wrapper, results.length, "page") +
       " Pass uri values to get_article_details for full text and URLs.",
   ].join("\n");
 }
@@ -247,7 +247,9 @@ export const formatArticleResults: ResponseFormatter = (data, params) => {
     return `${i + 1}. [${date}] ${title} - ${source}${url}${uri}${formatArticleExtras(art)}\n\n${body}`;
   });
 
-  lines.push(paginationFooter(articles, results.length, "articlesPage"));
+  lines.push(
+    paginationFooter(articles, results.length, params?.kind ? "page" : "articlesPage"),
+  );
   return lines.join("\n\n---\n\n");
 };
 
@@ -279,7 +281,7 @@ export const formatMentionResults: ResponseFormatter = (data) => {
     return `${head}\n${detail.join("\n")}${formatMentionExtras(m)}`;
   });
 
-  lines.push(paginationFooter(mentions, results.length, "mentionsPage"));
+  lines.push(paginationFooter(mentions, results.length, "page"));
   return lines.join("\n\n---\n\n");
 };
 
@@ -329,12 +331,16 @@ function formatMentionExtras(m: Record<string, unknown>): string {
 }
 
 /** Format event search results with full summary. */
-export const formatEventResults: ResponseFormatter = (data) => {
+export const formatEventResults: ResponseFormatter = (data, params) => {
   const resp = data as Record<string, unknown> | undefined;
   const breaking = resp?.breakingEvents !== undefined;
   const events = (breaking ? resp?.breakingEvents : resp?.events) as
     Record<string, unknown> | undefined;
-  const pageParam = breaking ? "breakingEventsPage" : "eventsPage";
+  const pageParam = breaking
+    ? "breakingEventsPage"
+    : params?.kind
+      ? "page"
+      : "eventsPage";
   const results = events?.results as Record<string, unknown>[] | undefined;
   if (!results?.length) return "No events found.";
 

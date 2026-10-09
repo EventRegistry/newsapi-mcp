@@ -15,7 +15,7 @@ export const getTopicPageArticles: ToolDef = {
 
 EXAMPLE: get_topic_page_articles({uri: "<topic-page-uri>", articlesCount: 5, articleBodyLen: 200})
 
-USE THIS WHEN monitoring a pre-configured topic. NOT THIS for ad-hoc searches — use search_articles.`,
+USE THIS WHEN monitoring a pre-configured topic. NOT THIS for ad-hoc searches — use search({kind: "articles"}).`,
   inputSchema: {
     type: "object",
     properties: {
@@ -79,7 +79,7 @@ export const getTopicPageEvents: ToolDef = {
 
 EXAMPLE: get_topic_page_events({uri: "<topic-page-uri>", eventsSortBy: "size"})
 
-USE THIS WHEN monitoring a pre-configured topic for events. NOT THIS for ad-hoc searches — use search_events.`,
+USE THIS WHEN monitoring a pre-configured topic for events. NOT THIS for ad-hoc searches — use search({kind: "events"}).`,
   inputSchema: {
     type: "object",
     properties: {

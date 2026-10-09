@@ -306,19 +306,14 @@ const DATE_NOTE = `No date filter given: searched the last ${DEFAULT_WINDOW_DAYS
 const defaultStart = () =>
   new Date(Date.now() - DEFAULT_WINDOW_DAYS * 864e5).toISOString().slice(0, 10);
 
-/** Schema for the advanced `query` param; the full grammar is on search_articles, the others refer to it. */
-export function queryProp(kind: "articles" | "events" | "mentions"): Record<string, unknown> {
-  const extra =
-    kind === "mentions"
-      ? " Leaf keys here also include eventTypeUri."
-      : kind === "events"
-        ? " Leaf keys here also include minArticlesInEvent."
-        : "";
-  const description =
-    kind === "articles"
-      ? `Boolean query for logic the flat params cannot express (OR across different fields, two OR-groups ANDed). {"$query": NODE, "$filter": {...}}; NODE = {"$and": [NODE...]} | {"$or": [NODE...]} | leaf object of filter keys (conceptUri, keyword, keywordLoc, categoryUri, sourceUri, sourceLocationUri, locationUri, authorUri, lang, dateStart, dateEnd); keys in one leaf are ANDed; a value may be {"$or": [...]}; "$not": NODE sits beside "$and"/"$or", never alone. "$filter": isDuplicate, dataType, minSentiment, maxSentiment, startSourceRankPercentile, endSourceRankPercentile.
+/** Schema for the advanced `query` param of the search tool. */
+export function queryProp(): Record<string, unknown> {
+  return {
+    query: {
+      type: ["object", "string"],
+      description: `Boolean query for logic the flat params cannot express (OR across different fields, two OR-groups ANDed). {"$query": NODE, "$filter": {...}}; NODE = {"$and": [NODE...]} | {"$or": [NODE...]} | leaf object of filter keys (conceptUri, keyword, keywordLoc, categoryUri, sourceUri, sourceLocationUri, locationUri, authorUri, lang, dateStart, dateEnd, minArticlesInEvent, eventTypeUri); keys in one leaf are ANDed; a value may be {"$or": [...]}; "$not": NODE sits beside "$and"/"$or", never alone. "$filter": isDuplicate, dataType, minSentiment, maxSentiment, startSourceRankPercentile, endSourceRankPercentile.
 Example: {"$query": {"$and": [{"$or": [{"conceptUri": "<AI Act>"}, {"keyword": "Digital Services Act"}]}, {"conceptUri": {"$or": ["<Meta>", "<Google>"]}}], "$not": {"conceptUri": "<TikTok>"}}}
-Flat params given alongside are merged into it.`
-      : `Boolean query; same grammar as search_articles.query.${extra} Flat params given alongside are merged into it.`;
-  return { query: { type: ["object", "string"], description } };
+Flat params given alongside are merged into it.`,
+    },
+  };
 }

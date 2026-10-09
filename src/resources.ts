@@ -19,50 +19,33 @@ This server provides access to Event Registry's global news database covering 15
 ### Entity URIs
 NewsAPI uses URIs to identify entities precisely. Raw text searches can be ambiguous, so always resolve names to URIs first using the suggest tool.
 
-## Search Tools
+## The search tool
+One tool, search, takes kind: "articles", "events" or "mentions" plus the same filters for all three (conceptUri, categoryUri, sourceUri, sourceLocationUri, keyword, dateStart/dateEnd, lang, ignore*, query, options). Paging is page, count and sortBy for every kind. Params the schema marks "<kind> only" are rejected for the other kinds.
 
-### search_articles
-Primary tool for finding news articles. Supports filtering by:
-- conceptUri, categoryUri, sourceUri, locationUri, authorUri
-- keyword (secondary filter, use with conceptUri)
-- dateStart, dateEnd (YYYY-MM-DD format)
-- lang (ISO codes: "eng", "deu", "fra", "slv", etc.)
-- sentiment range (minSentiment, maxSentiment: -1 to 1)
+### kind: "articles"
+Individual articles with text. Sort: "date", "rel", "sourceImportance", "socialScore". articleBodyLen and isDuplicateFilter apply here only.
 
-### search_events
-Events are clusters of related articles about the same real-world happening. Each event groups all articles covering the same story into one entry with a summary, article count, and date.
-
-Use search_events when you need:
-- A high-level overview of what's happening with a topic
-- Deduplicated results (one entry per story, not per article)
-- Summary of developments over a time period
-- Quick scan of major happenings without reading full articles
-
-Supports the same filters as search_articles:
-- conceptUri, categoryUri, sourceUri, locationUri, authorUri
-- keyword, dateStart, dateEnd, lang, sentiment range
-- eventsSortBy: "date", "rel", "size" (article count), "socialScore"
-- minArticlesInEvent / maxArticlesInEvent to filter by event significance
+### kind: "events"
+Events are clusters of related articles about the same real-world happening: one entry per story with a summary, article count and date. Use it for a high-level overview, deduplicated results or a summary of developments over a period. Sort: "date", "rel", "size" (article count), "socialScore". minArticlesInEvent / options.maxArticlesInEvent filter by event significance.
 
 ### Choosing Between Articles and Events
-- **search_articles**: when you need full article text, specific source coverage, or individual stories
-- **search_events**: when you need an overview, want deduplicated results, or the user asks "what's happening with X"
+- **articles**: when you need full article text, specific source coverage, or individual stories
+- **events**: when you need an overview, want deduplicated results, or the user asks "what's happening with X"
 
 ### Aggregates
-Both search tools accept resultType. The default returns a page of results; an aggregate summarises all matches in one call and costs one search action:
+Every kind accepts resultType. The default returns a page of results; an aggregate summarises all matches in one call and costs one search action:
 - timeAggr: count per day (coverage over time)
 - sourceAggr / authorAggr: who publishes most
 - conceptAggr / categoryAggr / keywordAggr: what the coverage is about
 - sentimentAggr: tone distribution
-- locAggr: where it happens; langAggr (articles only): which languages
-Example: search_articles({conceptUri: "<uri>", dateStart: "2025-01-01", resultType: "timeAggr"})
-search_mentions takes the same aggregates plus eventTypeAggr (count per event type).
+- locAggr: where it happens; langAggr (articles, mentions): which languages; eventTypeAggr (mentions): count per event type
+Example: search({kind: "articles", conceptUri: "<uri>", dateStart: "2025-01-01", resultType: "timeAggr"})
 Paging, sorting, includeFields and articleBodyLen do not apply to aggregates.
 
-### search_mentions
-Sentences from articles that state a specific event type: a relation such as an acquisition, layoffs, a product launch, a recall or a natural disaster, about 100 types in all. Resolve the type first with suggest({type: "eventTypes", prefix: "acquisition"}), then filter with eventTypeUri plus conceptUri, sourceUri, dates, lang and sentiment. Each mention carries the sentence, its event type, sentiment, a link to the article and, with includeFields: "slots", the entities involved. Mention-only filters: industryUri, sdgUri, sasbUri, esgUri, factLevel ("fact", "opinion", "forecast"), minSentenceIndex / maxSentenceIndex, showDuplicates. Paging uses mentionsPage / mentionsCount (default 100).
-Example: search_mentions({eventTypeUri: "<uri>", conceptUri: "<uri>", dateStart: "2025-01-01", includeFields: "slots"})
-Use it when the question names a kind of happening; use search_articles for general coverage of a topic.
+### kind: "mentions"
+Sentences from articles that state a specific event type: a relation such as an acquisition, layoffs, a product launch, a recall or a natural disaster, about 100 types in all. Resolve the type first with suggest({type: "eventTypes", prefix: "acquisition"}), then filter with eventTypeUri plus conceptUri, sourceUri, dates, lang and sentiment. Each mention carries the sentence, its event type, sentiment, a link to the article and, with includeFields: "slots", the entities involved. Mention-only filters: factLevel ("fact", "opinion", "forecast") and, under options, industryUri, sdgUri, sasbUri, esgUri, minSentenceIndex / maxSentenceIndex, showDuplicates.
+Example: search({kind: "mentions", eventTypeUri: "<uri>", conceptUri: "<uri>", dateStart: "2025-01-01", includeFields: "slots"})
+Use it when the question names a kind of happening; kind: "articles" for general coverage of a topic.
 
 ### get_breaking_events
 Events that are very recent, heavily covered and still accelerating, each with a breaking score. Takes no query; use it for "what is happening right now". breakingEventsMinBreakingScore (default 0.2) trims weaker stories.
@@ -70,8 +53,7 @@ Events that are very recent, heavily covered and still accelerating, each with a
 ## Response Control
 
 ### Default Values
-- articlesCount: 100 (max per page)
-- eventsCount: 50 (max per page)
+- count: 50 (max 100 for articles and mentions, 50 for events; scans use 100)
 - articleBodyLen: 1000 (character preview; use -1 for full text, 0 to exclude body)
 
 ### includeFields Groups
@@ -84,22 +66,23 @@ Request additional data beyond the minimal set:
 - location: geographic data
 - social: share counts
 - metadata: relevance scores, language, timestamps
-- slots / frameworks (search_mentions only): entities in the sentence; SDG, ESG and SASB tags of the event type
+- slots / frameworks (mentions only): entities in the sentence; SDG, ESG and SASB tags of the event type
 - event: eventUri linking articles to events
 - full: all available fields
 
 ### Token Optimization Tips
-1. Always use scan→triage→retrieve for comprehensive queries: scan with articlesCount: 100, articleBodyLen: 0 (one row per article: # | uri | date | source | title; no URL), then retrieve only relevant articles via get_article_details
+1. Always use scan→triage→retrieve for comprehensive queries: scan with count: 100, articleBodyLen: 0 (one row per article: # | uri | date | source | title; no URL), then retrieve only relevant articles via get_article_details
 2. Use isDuplicateFilter: "skipDuplicates" in scan steps to remove wire syndication duplicates — this is the #1 triage efficiency improvement
 3. Use forceMaxDataTimeWindow: 7 for "recent news" queries
 4. In the retrieve step, request specific includeFields — avoid "full" unless you need everything
-5. For simple questions needing few results, skip triage: use articlesCount: 10 directly
+5. For simple questions needing few results, skip triage: use count: 10 directly
 
 ## Advanced Patterns
 
 ### Combining Filters
 Multiple URIs can be comma-separated (concepts are ANDed by default, set conceptOper: "or" for any-of; categories, sources, languages are ORed):
-search_articles({
+search({
+  kind: "articles",
   conceptUri: "uri1,uri2",
   categoryUri: "dmoz/Business",
   lang: "eng,deu"
@@ -108,12 +91,13 @@ Exclude with ignoreConceptUri, ignoreKeyword, ignoreSourceUri, ignoreLang.
 
 ### Boolean keyword expressions
 One keyword string may be a boolean expression; the server switches keywordSearchMode to "exact" automatically:
-search_articles({conceptUri: "<tesla>", keyword: "(recall OR lawsuit) NOT Musk", keywordLoc: "title"})
+search({kind: "articles", conceptUri: "<tesla>", keyword: "(recall OR lawsuit) NOT Musk", keywordLoc: "title"})
 Operators: AND, OR, NOT, parentheses, "quoted phrase", NEAR/n (within n words, any order), NEXT/n (in order). Precedence: NEAR/NEXT > NOT > AND > OR.
 
 ### The query parameter
 Use it only when the logic needs an OR across different fields or two independent OR-groups:
-search_articles({
+search({
+  kind: "articles",
   query: {"$query": {"$and": [
     {"$or": [{"conceptUri": "<AI Act>"}, {"keyword": "Digital Services Act"}]},
     {"conceptUri": {"$or": ["<Meta>", "<Google>"]}}
@@ -124,14 +108,15 @@ Rules: "$and"/"$or" hold a list of nodes; a leaf is an object of filter keys (se
 
 ### Cost of a search (API tokens)
 | Search | last 31 days | 32–365 days | no date filter |
-| articles (any articlesCount, any body length) | 1 | 5–10 | 65 |
+| articles (any count, any body length) | 1 | 5–10 | 65 |
 | events | 5 | 20+ | 260 |
 | aggregates | 5 | — | 130 |
-get_article_details costs 1 per call (up to 100 URIs); suggest is free. Without a date filter the server searches the last 31 days and notes it under the result.
+get_article_details costs 1 per call (up to 100 URIs); suggest is free. Without a date filter the server searches the last 31 days and notes it under the result. A search that cost more than 1 token says why under the result; do not repeat it with reworded keywords.
 
 ### Date Ranges
 Use dateStart and dateEnd in YYYY-MM-DD format:
-search_articles({
+search({
+  kind: "articles",
   conceptUri: "<uri>",
   dateStart: "2025-01-01",
   dateEnd: "2025-01-31"
@@ -139,7 +124,8 @@ search_articles({
 
 ### Rare filters: the options object
 Sentiment, source rank, authors, locations, source groups, extra exclusions and date mentions sit under options:
-search_articles({
+search({
+  kind: "articles",
   conceptUri: "<uri>",
   options: { minSentiment: 0.3, endSourceRankPercentile: 30 }
 })
@@ -176,11 +162,12 @@ export const EXAMPLES_CONTENT = `# NewsAPI MCP Examples
 // Step 1: Suggest
 suggest({type: "concepts", prefix: "artificial intelligence"})
 // Step 2: Scan — titles only
-search_articles({
+search({
+  kind: "articles",
   conceptUri: "<uri-from-suggest>",
   forceMaxDataTimeWindow: 7,
   lang: "eng",
-  articlesCount: 100,
+  count: 100,
   articleBodyLen: 0,
   isDuplicateFilter: "skipDuplicates"
 })
@@ -193,11 +180,12 @@ get_article_details({
 ## 2. Event Workflow — "What's happening with climate?"
 suggest({type: "concepts", prefix: "climate change"})
 // Scan events
-search_events({
+search({
+  kind: "events",
   conceptUri: "<uri-from-suggest>",
   forceMaxDataTimeWindow: 31,
-  eventsCount: 50,
-  eventsSortBy: "size"
+  count: 50,
+  sortBy: "size"
 })
 // Triage — pick relevant event URIs
 // Retrieve full event details
@@ -211,17 +199,19 @@ suggest({type: "sources", prefix: "Reuters"})
 suggest({type: "sources", prefix: "BBC"})
 suggest({type: "concepts", prefix: "climate change"})
 // Scan from each source
-search_articles({
+search({
+  kind: "articles",
   conceptUri: "<climate-uri>",
   sourceUri: "<reuters-uri>",
-  articlesCount: 50,
+  count: 50,
   articleBodyLen: 0,
   isDuplicateFilter: "skipDuplicates"
 })
-search_articles({
+search({
+  kind: "articles",
   conceptUri: "<climate-uri>",
   sourceUri: "<bbc-uri>",
-  articlesCount: 50,
+  count: 50,
   articleBodyLen: 0,
   isDuplicateFilter: "skipDuplicates"
 })
@@ -233,10 +223,11 @@ get_article_details({
 
 ## 4. Sentiment Filtering — "Positive news about Tesla"
 suggest({type: "concepts", prefix: "Tesla"})
-search_articles({
+search({
+  kind: "articles",
   conceptUri: "<uri-from-suggest>",
   minSentiment: 0.3,
-  articlesCount: 100,
+  count: 100,
   articleBodyLen: 0,
   isDuplicateFilter: "skipDuplicates"
 })
@@ -248,12 +239,13 @@ get_article_details({
 
 ## 5. Date Range — "Bitcoin news in January 2025"
 suggest({type: "concepts", prefix: "Bitcoin"})
-search_articles({
+search({
+  kind: "articles",
   conceptUri: "<uri-from-suggest>",
   dateStart: "2025-01-01",
   dateEnd: "2025-01-31",
   lang: "eng",
-  articlesCount: 100,
+  count: 100,
   articleBodyLen: 0,
   isDuplicateFilter: "skipDuplicates"
 })
@@ -261,19 +253,21 @@ search_articles({
 
 ## 6. Quick Lookup — simple question, few results needed
 suggest({type: "concepts", prefix: "Elon Musk"})
-search_articles({
+search({
+  kind: "articles",
   conceptUri: "<uri-from-suggest>",
-  articlesCount: 10,
+  count: 10,
   forceMaxDataTimeWindow: 7
 })
 
 ## 7. Multi-Concept — "Apple AND iPhone news"
 suggest({type: "concepts", prefix: "Apple Inc"})
 suggest({type: "concepts", prefix: "iPhone"})
-search_articles({
+search({
+  kind: "articles",
   conceptUri: "<apple-uri>,<iphone-uri>",
   forceMaxDataTimeWindow: 7,
-  articlesCount: 100,
+  count: 100,
   articleBodyLen: 0,
   isDuplicateFilter: "skipDuplicates"
 })
@@ -282,7 +276,7 @@ search_articles({
 ## 8. Topic Page Monitoring
 get_topic_page_articles({
   uri: "<topic-page-uri>",
-  articlesCount: 5,
+  count: 5,
   articleBodyLen: 200
 })
 
@@ -323,8 +317,7 @@ Default (no includeFields): title, body, date, source, URL
 
 | Parameter | Default | Max |
 |-----------|---------|-----|
-| articlesCount | 100 | 100 |
-| eventsCount | 50 | 50 |
+| count | 50 | 100 (events: 50) |
 | articleBodyLen | 1000 | -1 (full text) |
 
 Set articleBodyLen: 0 to exclude body, -1 for full text.
@@ -367,7 +360,7 @@ Use comma-separated for multiple: lang: "eng,deu,fra"
 
 ## Sort Options
 
-### articlesSortBy
+### sortBy for articles and mentions
 - date: Publication date (default)
 - rel: Relevance to query
 - sourceImportance: Source authority rank
@@ -378,7 +371,7 @@ Use comma-separated for multiple: lang: "eng,deu,fra"
 - facebookShares: Facebook shares
   ⚠ Tip: socialScore may surface low-authority viral sources. Combine with startSourceRankPercentile/endSourceRankPercentile to ensure quality (e.g., endSourceRankPercentile: 30 for top 30% sources).
 
-### eventsSortBy
+### sortBy for events
 - date: Event date (default)
 - rel: Relevance to the query
 - size: Number of articles in the event

@@ -1,19 +1,6 @@
-import { apiPost } from "../client.js";
-import type { ToolDef } from "../types.js";
-import { buildSearchBody, queryProp } from "../query.js";
-import {
-  contentFilterProps,
-  RARE_FILTER_KEYS,
-  buildAggregateBody,
-  flattenOptions,
-  formatByResultType,
-  resultTypeProp,
-} from "./articles.js";
-import {
-  parseFieldGroups,
-  getMentionIncludeParams,
-  filterResponse,
-} from "../response-filter.js";
+import { contentFilterProps } from "./articles.js";
+import type { SearchKind } from "./search.js";
+import { getMentionIncludeParams } from "../response-filter.js";
 import { formatMentionResults } from "../formatters.js";
 
 /** The shared content filters the mentions endpoint supports. */
@@ -46,19 +33,7 @@ const SHARED_FILTER_KEYS = [
   "ignoreLang",
 ] as const;
 
-const rareShared = new Set<string>(RARE_FILTER_KEYS);
-const sharedFilterProps = Object.fromEntries(
-  SHARED_FILTER_KEYS.filter((k) => !rareShared.has(k)).map((k) => [
-    k,
-    contentFilterProps[k],
-  ]),
-);
-const sharedRareProps = Object.fromEntries(
-  SHARED_FILTER_KEYS.filter((k) => rareShared.has(k)).map((k) => [
-    k,
-    contentFilterProps[k],
-  ]),
-);
+const supported = new Set<string>(SHARED_FILTER_KEYS);
 
 const mentionFilterProps: Record<string, unknown> = {
   eventTypeUri: {
@@ -73,19 +48,6 @@ const mentionFilterProps: Record<string, unknown> = {
   },
 };
 
-const MENTION_AGGREGATES = [
-  "timeAggr",
-  "sourceAggr",
-  "keywordAggr",
-  "locAggr",
-  "conceptAggr",
-  "eventTypeAggr",
-  "categoryAggr",
-  "sentimentAggr",
-  "langAggr",
-] as const;
-
-/** The mentions endpoint routes on an action field, unlike the article and event endpoints. */
 /** Mention-only filters most searches never need. */
 const mentionRareProps: Record<string, unknown> = {
   industryUri: {
@@ -147,102 +109,38 @@ const mentionRareProps: Record<string, unknown> = {
   },
 };
 
-const MENTIONS_PATH = "/eventType/mention";
-const MENTIONS_ACTION = "getMentions";
-
-// The mentions endpoint has no forceMaxDataTimeWindow; bound the window by date.
-const MENTION_SEARCH_OPTIONS = { dateDefault: "dateStart" as const };
-
-const MENTION_LIST_PARAMS = [
-  "mentionsPage",
-  "mentionsCount",
-  "mentionsSortBy",
-  "mentionsSortByAsc",
-] as const;
-
-export const searchMentions: ToolDef = {
-  name: "search_mentions",
-  description: `Search sentences that state a kind of happening (acquisition, layoffs, product launch, recall, lawsuit, disaster; ~100 event types): each result is one sentence with its entities, sentiment and article link (100 per call). Resolve the type with suggest(type: "eventTypes") first. Use when the question names a kind of happening; search_articles for general coverage.
-Example: search_mentions({eventTypeUri: "<uri>", conceptUri: "<uri>", dateStart: "2025-01-01"})`,
-  inputSchema: {
-    type: "object",
-    properties: {
-      ...sharedFilterProps,
-      ...mentionFilterProps,
-      includeFields: {
-        type: "string",
-        description:
-          "Comma-separated field groups to include beyond the minimal set (sentence, event type, date, source, article title and links, sentiment). Options: slots (entities in the sentence), categories (of the article), frameworks (SDG, ESG, SASB tags of the event type), metadata, full. Default: minimal only.",
-      },
-      ...resultTypeProp("mentions", MENTION_AGGREGATES),
-      mentionsPage: {
-        type: "integer",
-        description: "Page number (starting from 1). Default: 1.",
-        minimum: 1,
-      },
-      mentionsCount: {
-        type: "integer",
-        description: "Mentions per page (max 100). Default: 100.",
-        minimum: 1,
-        maximum: 100,
-      },
-      mentionsSortBy: {
-        type: "string",
-        description:
-          'Sort by: "date" (default), "rel", "sourceImportance", "sourceAlexaGlobalRank", "sourceAlexaCountryRank".',
-        enum: [
-          "date",
-          "rel",
-          "sourceImportance",
-          "sourceAlexaGlobalRank",
-          "sourceAlexaCountryRank",
-        ],
-      },
-      ...queryProp("mentions"),
-      options: {
-        type: "object",
-        description:
-          "Rare filters as a nested object (sentiment, source rank, industry/SDG/SASB/ESG tags, sentence position, duplicates).",
-        properties: {
-          ...sharedRareProps,
-          ...mentionRareProps,
-          mentionsSortByAsc: {
-            type: "boolean",
-            description: "Ascending sort order. Default: false.",
-          },
-        },
-      },
-    },
+/** search({kind: "mentions"}): sentences that state a kind of happening. */
+export const mentionsKind: SearchKind = {
+  path: "/eventType/mention",
+  aggregates: [
+    "timeAggr",
+    "sourceAggr",
+    "keywordAggr",
+    "locAggr",
+    "conceptAggr",
+    "eventTypeAggr",
+    "categoryAggr",
+    "sentimentAggr",
+    "langAggr",
+  ],
+  defaultCount: 50,
+  maxCount: 100,
+  sortBy: [
+    "date",
+    "rel",
+    "sourceImportance",
+    "sourceAlexaGlobalRank",
+    "sourceAlexaCountryRank",
+  ],
+  props: mentionFilterProps,
+  optionProps: mentionRareProps,
+  unsupported: Object.keys(contentFilterProps).filter((k) => !supported.has(k)),
+  // The mentions endpoint has no forceMaxDataTimeWindow; bound the window by date.
+  searchOptions: { dateDefault: "dateStart" },
+  // The mentions endpoint routes on an action field.
+  adapt: (body) => {
+    body.action = "getMentions";
   },
-  handler: async (raw) => {
-    const params = flattenOptions(raw);
-    const resultType = (params.resultType as string) || "mentions";
-    if (resultType !== "mentions") {
-      const { body, notes } = buildAggregateBody(
-        params,
-        resultType,
-        MENTION_LIST_PARAMS,
-        MENTION_SEARCH_OPTIONS,
-      );
-      body.action = MENTIONS_ACTION;
-      return { ...(await apiPost(MENTIONS_PATH, body)), notes };
-    }
-
-    params.mentionsCount ??= 100;
-    const groups = parseFieldGroups(params.includeFields as string | undefined);
-    const { body, notes } = buildSearchBody(params, MENTION_SEARCH_OPTIONS);
-    body.action = MENTIONS_ACTION;
-    body.resultType = "mentions";
-    Object.assign(body, getMentionIncludeParams(groups));
-
-    const { data, tokenUsage } = await apiPost(MENTIONS_PATH, body);
-    return {
-      data: filterResponse(data, { resultType: "mentions", groups }),
-      tokenUsage,
-      notes,
-    };
-  },
-  formatter: formatByResultType("mentions", formatMentionResults),
+  includeParams: getMentionIncludeParams,
+  formatter: formatMentionResults,
 };
-
-export const mentionTools: ToolDef[] = [searchMentions];

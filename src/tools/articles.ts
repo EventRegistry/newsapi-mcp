@@ -1,72 +1,13 @@
 import { apiPost, parseArray } from "../client.js";
-import type { ResponseFormatter, ToolDef } from "../types.js";
-import { buildSearchBody, queryProp } from "../query.js";
-import type { SearchBody, SearchBodyOptions } from "../query.js";
+import type { ToolDef } from "../types.js";
+import { buildSearchBody } from "../query.js";
+import type { SearchKind } from "./search.js";
 import {
   parseFieldGroups,
   getArticleIncludeParams,
   filterResponse,
 } from "../response-filter.js";
-import {
-  formatAggregate,
-  formatArticleResults,
-  formatArticleDetails,
-} from "../formatters.js";
-
-/** What each aggregate resultType summarises, for the schema description. */
-const AGGREGATE_DESCRIPTIONS: Record<string, string> = {
-  timeAggr: "count per day",
-  sourceAggr: "top sources",
-  authorAggr: "top authors",
-  keywordAggr: "top keywords",
-  locAggr: "top locations",
-  conceptAggr: "top entities",
-  categoryAggr: "top categories",
-  sentimentAggr: "sentiment distribution",
-  langAggr: "count per language",
-  eventTypeAggr: "count per event type",
-};
-
-/** Schema for resultType: the list (default) or one aggregate over all matches. */
-export function resultTypeProp(
-  listType: string,
-  aggregates: readonly string[],
-): Record<string, unknown> {
-  const kinds = aggregates
-    .map((a) => `"${a}" (${AGGREGATE_DESCRIPTIONS[a]})`)
-    .join(", ");
-  return {
-    resultType: {
-      type: "string",
-      description: `"${listType}" (default) or one aggregate over ALL matches: ${kinds}. Aggregates ignore paging, sorting, includeFields and articleBodyLen.`,
-      enum: [listType, ...aggregates],
-    },
-  };
-}
-
-/** Request body for an aggregate: the filters only, no paging, sorting or field selection. */
-export function buildAggregateBody(
-  params: Record<string, unknown>,
-  resultType: string,
-  listParams: readonly string[],
-  options?: SearchBodyOptions,
-): SearchBody {
-  const search = buildSearchBody(params, options);
-  for (const k of listParams) delete search.body[k];
-  search.body.resultType = resultType;
-  return search;
-}
-
-/** Pick the list formatter or the aggregate formatter from the resultType param. */
-export function formatByResultType(
-  listType: string,
-  listFormatter: ResponseFormatter,
-): ResponseFormatter {
-  return (data, params) =>
-    params.resultType && params.resultType !== listType
-      ? formatAggregate(data, params)
-      : listFormatter(data, params);
-}
+import { formatArticleResults, formatArticleDetails } from "../formatters.js";
 
 /** All shared content filters; the search tools expose the common ones at top level and the rest under `options`. */
 export const contentFilterProps: Record<string, unknown> = {
@@ -266,26 +207,6 @@ export const coreFilterProps: Record<string, unknown> = Object.fromEntries(
   Object.entries(contentFilterProps).filter(([k]) => !rare.has(k)),
 );
 
-/** Schema for `options`: the rare shared filters (minus `omit`) plus tool-specific extras. */
-export function optionsProp(
-  extra: Record<string, unknown> = {},
-  omit: readonly string[] = [],
-): Record<string, unknown> {
-  const properties: Record<string, unknown> = {};
-  for (const k of RARE_FILTER_KEYS) {
-    if (!omit.includes(k)) properties[k] = contentFilterProps[k];
-  }
-  Object.assign(properties, extra);
-  return {
-    options: {
-      type: "object",
-      description:
-        "Rare filters as a nested object, e.g. options: {minSentiment: 0.3}.",
-      properties,
-    },
-  };
-}
-
 /** Merge `options` into the flat params the handlers and request builder work with. */
 export function flattenOptions(
   params: Record<string, unknown>,
@@ -326,119 +247,53 @@ export function buildFilterBody(
   return buildSearchBody(params).body;
 }
 
-const ARTICLE_AGGREGATES = [
-  "timeAggr",
-  "sourceAggr",
-  "authorAggr",
-  "keywordAggr",
-  "locAggr",
-  "conceptAggr",
-  "categoryAggr",
-  "sentimentAggr",
-  "langAggr",
-] as const;
-
-const ARTICLE_LIST_PARAMS = [
-  "articlesPage",
-  "articlesCount",
-  "articlesSortBy",
-  "articlesSortByAsc",
-] as const;
-
-export const searchArticles: ToolDef = {
-  name: "search_articles",
-  description: `Search news articles (100 per call, 1 API token within the last 31 days). Scan first with articleBodyLen: 0 (one row per article: uri | date | source | title), pick uris, then get_article_details for text and URLs. Resolve names with suggest before using conceptUri. Prefer this for individual articles; search_events for an overview.
-Example: search_articles({conceptUri: "<uri>", forceMaxDataTimeWindow: 7, lang: "eng", articleBodyLen: 0, isDuplicateFilter: "skipDuplicates"})`,
-  inputSchema: {
-    type: "object",
-    properties: {
-      ...coreFilterProps,
-      ...responseControlProps,
-      ...resultTypeProp("articles", ARTICLE_AGGREGATES),
-      isDuplicateFilter: {
-        type: "string",
-        description:
-          "\"keepAll\" (default), \"skipDuplicates\" (use for scans), \"keepOnlyDuplicates\".",
-        enum: ["keepAll", "skipDuplicates", "keepOnlyDuplicates"],
-      },
-      articlesPage: {
-        type: "integer",
-        description: "Page number (starting from 1). Default: 1.",
-      },
-      articlesCount: {
-        type: "integer",
-        description: "Articles per page (max 100). Default: 100.",
-        maximum: 100,
-      },
-      articlesSortBy: {
-        type: "string",
-        description:
-          "\"date\" (default), \"rel\", \"sourceImportance\", \"socialScore\".",
-        enum: [
-          "date",
-          "rel",
-          "sourceImportance",
-          "sourceAlexaGlobalRank",
-          "socialScore",
-          "facebookShares",
-        ],
-      },
-      ...queryProp("articles"),
-      ...optionsProp({
-        dataType: {
-          type: "string",
-          description:
-            'Content types, comma-separated: "news" (default), "pr", "blog".',
-        },
-        articlesSortByAsc: {
-          type: "boolean",
-          description: "Ascending sort order. Default: false.",
-        },
-      }),
+/** search({kind: "articles"}): individual articles with text. */
+export const articlesKind: SearchKind = {
+  path: "/article/getArticles",
+  aggregates: [
+    "timeAggr",
+    "sourceAggr",
+    "authorAggr",
+    "keywordAggr",
+    "locAggr",
+    "conceptAggr",
+    "categoryAggr",
+    "sentimentAggr",
+    "langAggr",
+  ],
+  defaultCount: 50,
+  maxCount: 100,
+  sortBy: [
+    "date",
+    "rel",
+    "sourceImportance",
+    "sourceAlexaGlobalRank",
+    "socialScore",
+    "facebookShares",
+  ],
+  props: {
+    articleBodyLen: responseControlProps.articleBodyLen,
+    isDuplicateFilter: {
+      type: "string",
+      description:
+        "\"keepAll\" (default), \"skipDuplicates\" (use for scans), \"keepOnlyDuplicates\".",
+      enum: ["keepAll", "skipDuplicates", "keepOnlyDuplicates"],
     },
   },
-  handler: async (raw) => {
-    const params = flattenOptions(raw);
-    const resultType = (params.resultType as string) || "articles";
-    if (resultType !== "articles") {
-      const { body, notes } = buildAggregateBody(
-        params,
-        resultType,
-        ARTICLE_LIST_PARAMS,
-      );
-      if (params.dataType) body.dataType = parseArray(params.dataType);
-      return { ...(await apiPost("/article/getArticles", body)), notes };
-    }
-
-    params.articlesCount ??= 100;
-    const groups = parseFieldGroups(params.includeFields as string | undefined);
-    const bodyLen = (params.articleBodyLen as number) ?? 1000;
-
-    const { body, notes } = buildSearchBody(params);
-    body.resultType = "articles";
-    body.articleBodyLen = bodyLen;
-    if (params.dataType) {
-      body.dataType = parseArray(params.dataType);
-    }
-    Object.assign(body, getArticleIncludeParams(groups));
-
-    const { data, tokenUsage } = await apiPost("/article/getArticles", body);
-    if (bodyLen > 0) {
-      notes.push(
-        `Bodies cut to ${bodyLen} chars; get_article_details returns full text.`,
-      );
-    }
-    return {
-      data: filterResponse(data, {
-        resultType: "articles",
-        groups,
-        bodyLen,
-      }),
-      tokenUsage,
-      notes,
-    };
+  optionProps: {
+    dataType: {
+      type: "string",
+      description:
+        'Content types, comma-separated: "news" (default), "pr", "blog".',
+    },
   },
-  formatter: formatByResultType("articles", formatArticleResults),
+  unsupported: [],
+  bodyLen: (params) => (params.articleBodyLen as number) ?? 1000,
+  adapt: (body, params) => {
+    if (params.dataType) body.dataType = parseArray(params.dataType);
+  },
+  includeParams: getArticleIncludeParams,
+  formatter: formatArticleResults,
 };
 
 export const getArticleDetails: ToolDef = {
@@ -487,4 +342,4 @@ Example: get_article_details({articleUri: ["123", "456"], includeFields: "sentim
   formatter: formatArticleDetails,
 };
 
-export const articleTools: ToolDef[] = [searchArticles, getArticleDetails];
+export const articleTools: ToolDef[] = [getArticleDetails];

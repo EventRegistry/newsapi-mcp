@@ -1,16 +1,8 @@
 import { apiPost, parseArray } from "../client.js";
 import { ApiError } from "../types.js";
 import type { ToolDef } from "../types.js";
-import { buildSearchBody, queryProp } from "../query.js";
-import {
-  coreFilterProps,
-  buildAggregateBody,
-  flattenOptions,
-  formatByResultType,
-  includeFieldsProp,
-  optionsProp,
-  resultTypeProp,
-} from "./articles.js";
+import { includeFieldsProp } from "./articles.js";
+import type { SearchKind } from "./search.js";
 import {
   parseFieldGroups,
   getEventIncludeParams,
@@ -18,25 +10,7 @@ import {
 } from "../response-filter.js";
 import { formatEventResults, formatEventDetails } from "../formatters.js";
 
-const EVENT_AGGREGATES = [
-  "timeAggr",
-  "locAggr",
-  "sourceAggr",
-  "authorAggr",
-  "keywordAggr",
-  "conceptAggr",
-  "categoryAggr",
-  "sentimentAggr",
-] as const;
-
-const EVENT_LIST_PARAMS = [
-  "eventsPage",
-  "eventsCount",
-  "eventsSortBy",
-  "eventsSortByAsc",
-] as const;
-
-/** The events API names the sentiment filters differently and has no source rank filter. */
+/** The events API names the sentiment filters differently. */
 function adaptEventFilters(body: Record<string, unknown>): void {
   if (body.minSentiment !== undefined) {
     body.minSentimentEvent = body.minSentiment;
@@ -46,94 +20,48 @@ function adaptEventFilters(body: Record<string, unknown>): void {
     body.maxSentimentEvent = body.maxSentiment;
     delete body.maxSentiment;
   }
-  delete body.startSourceRankPercentile;
-  delete body.endSourceRankPercentile;
 }
 
-export const searchEvents: ToolDef = {
-  name: "search_events",
-  description: `Search events: clusters of articles about one happening, each with a summary and article count (50 per call, 5 API tokens within 31 days). Use for an overview of what happened; search_articles for full text. Same filters, keyword syntax and query as search_articles.
-Example: search_events({conceptUri: "<uri>", forceMaxDataTimeWindow: 31, eventsSortBy: "size", eventsCount: 20})`,
-  inputSchema: {
-    type: "object",
-    properties: {
-      ...coreFilterProps,
-      ...includeFieldsProp,
-      ...resultTypeProp("events", EVENT_AGGREGATES),
-      minArticlesInEvent: {
-        type: "integer",
-        description: "Minimum number of articles in the event.",
-      },
-      eventsPage: {
-        type: "integer",
-        description: "Page number (starting from 1). Default: 1.",
-      },
-      eventsCount: {
-        type: "integer",
-        description: "Events per page (max 50). Default: 50.",
-        maximum: 50,
-      },
-      eventsSortBy: {
-        type: "string",
-        description:
-          'Sort by: "date", "rel", "size", "socialScore". Default: "date".',
-        enum: ["date", "rel", "size", "socialScore"],
-      },
-      ...queryProp("events"),
-      ...optionsProp(
-        {
-          maxArticlesInEvent: {
-            type: "integer",
-            description: "Maximum number of articles in the event.",
-          },
-          reportingDateStart: {
-            type: "string",
-            description:
-              "Average article publishing date >= this (YYYY-MM-DD).",
-          },
-          reportingDateEnd: {
-            type: "string",
-            description:
-              "Average article publishing date <= this (YYYY-MM-DD).",
-          },
-          eventsSortByAsc: {
-            type: "boolean",
-            description: "Ascending sort order. Default: false.",
-          },
-        },
-        ["startSourceRankPercentile", "endSourceRankPercentile"],
-      ),
+/** search({kind: "events"}): clusters of articles about one happening. */
+export const eventsKind: SearchKind = {
+  path: "/event/getEvents",
+  aggregates: [
+    "timeAggr",
+    "locAggr",
+    "sourceAggr",
+    "authorAggr",
+    "keywordAggr",
+    "conceptAggr",
+    "categoryAggr",
+    "sentimentAggr",
+  ],
+  defaultCount: 50,
+  maxCount: 50,
+  sortBy: ["date", "rel", "size", "socialScore"],
+  props: {
+    minArticlesInEvent: {
+      type: "integer",
+      description: "Minimum number of articles in the event.",
     },
   },
-  handler: async (raw) => {
-    const params = flattenOptions(raw);
-    const resultType = (params.resultType as string) || "events";
-    if (resultType !== "events") {
-      const { body, notes } = buildAggregateBody(
-        params,
-        resultType,
-        EVENT_LIST_PARAMS,
-      );
-      adaptEventFilters(body);
-      return { ...(await apiPost("/event/getEvents", body)), notes };
-    }
-
-    params.eventsCount ??= 50;
-    const groups = parseFieldGroups(params.includeFields as string | undefined);
-
-    const { body, notes } = buildSearchBody(params);
-    body.resultType = "events";
-    adaptEventFilters(body);
-    Object.assign(body, getEventIncludeParams(groups));
-
-    const { data, tokenUsage } = await apiPost("/event/getEvents", body);
-    return {
-      data: filterResponse(data, { resultType: "events", groups }),
-      tokenUsage,
-      notes,
-    };
+  optionProps: {
+    maxArticlesInEvent: {
+      type: "integer",
+      description: "Maximum number of articles in the event.",
+    },
+    reportingDateStart: {
+      type: "string",
+      description: "Average article publishing date >= this (YYYY-MM-DD).",
+    },
+    reportingDateEnd: {
+      type: "string",
+      description: "Average article publishing date <= this (YYYY-MM-DD).",
+    },
   },
-  formatter: formatByResultType("events", formatEventResults),
+  unsupported: ["startSourceRankPercentile", "endSourceRankPercentile"],
+  adapt: adaptEventFilters,
+  includeParams: getEventIncludeParams,
+  formatter: formatEventResults,
 };
 
 export const getBreakingEvents: ToolDef = {
@@ -144,7 +72,7 @@ EXAMPLE: get_breaking_events({})
 EXAMPLE: get_breaking_events({breakingEventsCount: 10, breakingEventsMinBreakingScore: 0.5})
 
 USE THIS WHEN the user asks what is happening now or wants today's biggest stories without naming a topic.
-NOT THIS for a specific topic — use search_events with filters instead.`,
+NOT THIS for a specific topic — use search({kind: "events"}) with filters instead.`,
   inputSchema: {
     type: "object",
     properties: {
@@ -199,7 +127,7 @@ EXAMPLE (multiple): get_event_details({eventUri: ["eng-4567890", "eng-1234567"]}
 EXAMPLE (articles): get_event_details({eventUri: "eng-4567890", resultType: "articles"})
 
 USE THIS WHEN you have event URIs from search results and need full details.
-NOT THIS for searching — use search_events with filters instead.`,
+NOT THIS for searching — use search({kind: "events"}) with filters instead.`,
   inputSchema: {
     type: "object",
     properties: {
@@ -264,8 +192,4 @@ NOT THIS for searching — use search_events with filters instead.`,
   formatter: formatEventDetails,
 };
 
-export const eventTools: ToolDef[] = [
-  searchEvents,
-  getEventDetails,
-  getBreakingEvents,
-];
+export const eventTools: ToolDef[] = [getEventDetails, getBreakingEvents];

@@ -151,8 +151,8 @@ export class ToolRegistry {
             text += "\n" + notes.map((n) => `Note: ${n}`).join("\n");
           }
 
-          // Truncate oversized responses before appending token footer
-          const MAX_RESPONSE_CHARS = 100_000;
+          // Truncate before the client's own ~25k-token result cap drops the whole result.
+          const MAX_RESPONSE_CHARS = 50_000;
           if (text.length > MAX_RESPONSE_CHARS) {
             const sep = "\n\n";
             let cut = text.lastIndexOf(sep, MAX_RESPONSE_CHARS);
@@ -163,8 +163,8 @@ export class ToolRegistry {
             text =
               text.slice(0, cut) +
               "\n\n⚠ Response truncated to fit context window. " +
-              "Use fewer results (articlesCount), shorter bodies (articleBodyLen), " +
-              "or pagination (articlesPage/eventsPage) to get remaining data.";
+              "Use fewer results (count), shorter bodies (articleBodyLen), " +
+              "or pagination (page) to get remaining data.";
           }
 
           if (tokenUsage) {

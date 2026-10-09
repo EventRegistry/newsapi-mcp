@@ -41,7 +41,7 @@ const SUGGEST_FORMATTERS: Record<string, ResponseFormatter> = {
 
 export const suggest: ToolDef = {
   name: "suggest",
-  description: `Resolve a name to the URI the search filters need (free). Types: concepts (people, orgs, things → conceptUri), categories, sources, locations (→ locationUri / sourceLocationUri), authors, eventTypes (→ eventTypeUri, search_mentions only). Keep the prefix short (1-3 words), use English names, prefer established concepts ("Olympic Games", not "2026 Olympics").
+  description: `Resolve a name to the URI the search filters need (free). Types: concepts (people, orgs, things → conceptUri), categories, sources, locations (→ locationUri / sourceLocationUri), authors, eventTypes (→ eventTypeUri for kind: "mentions"). Keep the prefix short (1-3 words), use English names, prefer established concepts ("Olympic Games", not "2026 Olympics").
 Example: suggest({type: "concepts", prefix: "Tesla"})`,
   inputSchema: {
     type: "object",

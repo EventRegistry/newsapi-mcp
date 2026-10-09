@@ -1119,7 +1119,7 @@ describe("formatMentionResults", () => {
       '1. [2025-03-04] et/business/layoffs - Example News\n   "Acme will cut 500 jobs in May."\n   Article: Acme announces layoffs\n   URL: https://ex.com/a1\n   URI: m1 (article a1)\n   Sentiment: -0.35\n   Fact level: forecast',
     );
     expect(out).toContain(
-      "1 results (250 total) Page 1 of 3. Use mentionsPage: 2 for more.",
+      "1 results (250 total) Page 1 of 3. Use page: 2 for more.",
     );
   });
 

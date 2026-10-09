@@ -107,12 +107,13 @@ describe("formatArticleResults scan rows", () => {
 
 describe("options object", () => {
   it("flattens options into the request and keeps the schema nested", async () => {
-    const { searchArticles, flattenOptions } = await import("../src/tools/articles.js");
+    const { flattenOptions } = await import("../src/tools/articles.js");
+    const { search } = await import("../src/tools/search.js");
     const flat = flattenOptions({ conceptUri: "a", options: { minSentiment: 0.3, dataType: "news,pr" } });
     expect(flat).toEqual({ conceptUri: "a", minSentiment: 0.3, dataType: "news,pr" });
-    const opts = searchArticles.inputSchema.properties.options as { type: string; properties: Record<string, unknown> };
+    const opts = search.inputSchema.properties.options as { type: string; properties: Record<string, unknown> };
     expect(opts.type).toBe("object");
-    expect(Object.keys(opts.properties)).toEqual(expect.arrayContaining(["minSentiment", "endSourceRankPercentile", "dataType", "articlesSortByAsc"]));
-    expect(searchArticles.inputSchema.properties).not.toHaveProperty("minSentiment");
+    expect(Object.keys(opts.properties)).toEqual(expect.arrayContaining(["minSentiment", "endSourceRankPercentile", "dataType", "sortByAsc"]));
+    expect(search.inputSchema.properties).not.toHaveProperty("minSentiment");
   });
 });
