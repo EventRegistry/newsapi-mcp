@@ -23,7 +23,8 @@ Read `${CLAUDE_PLUGIN_ROOT}/skills/_reporting.md` first: it holds the search wor
 | Names a kind of happening ("layoffs in fintech", "recalls by Toyota") | Happenings |
 | "How much / who / where / since when" | Numbers |
 | Multi-angle question across stakeholders | Research report |
-| "What's breaking right now?" | Breaking events |
+| "What's breaking right now?" (no topic) | Breaking events |
+| "What's breaking in <region/topic>?" | Breaking in a topic |
 | Topic page URI given | Topic page |
 | Simple factual question, few results | Quick lookup |
 
@@ -67,9 +68,21 @@ Read `${CLAUDE_PLUGIN_ROOT}/skills/_reporting.md` first: it holds the search wor
 
 ## Breaking events
 
-1. `get_breaking_events({breakingEventsCount: 10, includeTopArticleUrl: true})` — the tool takes no topic filter; each event comes with its newest article's URL for citation
-2. Only when an event needs more than one source: `get_event_details({eventUri: "<uri>", resultType: "articles", articlesCount: 10})`
+For "what's breaking right now" with no topic or region. The tool takes no filter, so a topic belongs in the next pattern.
+
+1. `get_breaking_events({breakingEventsCount: 10})` (5 tokens) — events only, no article URLs
+2. Pick the 3-5 events the report will cover; for each, `get_event_details({eventUri: "<uri>", resultType: "articles", articlesCount: 10})` (5 tokens each) gives citable rows. Do not call it for events the report only lists by title.
 3. Report with the **findings** template
+
+## Breaking in a topic
+
+For "what's breaking in <region>", "breaking <topic> news". The unfiltered breaking feed is mostly off-topic here; a date-sorted events search returns only the asked topic.
+
+1. `suggest({type: "concepts", prefix: "<topic>"})` (or `type: "locations"` for a region)
+2. `search({kind: "events", conceptUri or locationUri, count: 50, sortBy: "date"})` (5 tokens); for a category like technology use `categoryUri` from `suggest({type: "categories"})`
+3. Triage by title, summary and article count; prefer events from the last 48 hours
+4. For the 3-5 key events `get_event_details({eventUri: "<uri>", resultType: "articles", articlesCount: 10})` (5 tokens each)
+5. Report with the **findings** template
 
 ## Topic page
 

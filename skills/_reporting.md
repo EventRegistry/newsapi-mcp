@@ -80,7 +80,7 @@ Rules: resolve every URI first; keep text logic inside one boolean `keyword` str
 
 ### Article URLs from events
 
-`get_event_details({eventUri: "<uri>", resultType: "articles", articlesCount: 10})` returns one row per article (`# | uri | date | source | title | url`), no bodies, 5 tokens. Single `eventUri` only, not an array. Use it to cite events without a second `search`; add `articlesArticleBodyLen: 300` only when the text itself is needed. `get_breaking_events({includeTopArticleUrl: true})` adds the newest article's URL under each breaking event.
+`get_event_details({eventUri: "<uri>", resultType: "articles", articlesCount: 10})` returns one row per article (`# | uri | date | source | title | url`), no bodies, 5 tokens. Single `eventUri` only, not an array. Use it to cite events without a second `search`; add `articlesArticleBodyLen: 300` only when the text itself is needed. `get_breaking_events` returns events without article URLs; fetch rows for the events you cite rather than passing `includeTopArticleUrl: true`, which costs 5 tokens for every listed event whether cited or not.
 
 ### Suggest fallback
 
@@ -145,7 +145,7 @@ Measured on the live API (2026-10-09); the response footer is authoritative.
 | search articles, aggregate resultType | 5 |
 | search events (list or aggregate) | 5 |
 | search mentions (list or aggregate) | 0 |
-| get_breaking_events | 1; +5 per event with `includeTopArticleUrl` |
+| get_breaking_events | 5; +5 per event with `includeTopArticleUrl` |
 | get_article_details, per batch | 1-5 |
 | get_event_details info, per call (any number of URIs) | 20 |
 | get_event_details articles, per event | 5 |
