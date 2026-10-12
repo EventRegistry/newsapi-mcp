@@ -94,13 +94,14 @@ Skills marked **ask depth** start by asking the user: "How deep should I search?
 
 **Every factual claim carries an inline Markdown link to its source.** A report without clickable links is incomplete.
 
-- Form: `claim ([Reuters](URL))`. The URL is the article's `url` field from the tool response, copied verbatim; never fabricate, shorten or guess one.
+- Form: `claim ([Reuters](URL))`. The URL is the `url` field of an article row or `URL:` line in a tool result of this conversation. Copy it character by character, including the slug; a URL retyped from the headline or from memory is a different URL and points nowhere.
+- Only retrieved articles get a link. A claim read in an event summary, a mention or another article's body has no URL of its own: cite it as plain text, *"Title" (Source, via event summary)* or *(per Reuters, in [Outlet](URL))*. Never build a URL from an outlet name and a headline, even when the outlet is well known.
 - Link the article whose text states the claim, not another article from the same outlet or event.
-- Never link an outlet's homepage or section page. Missing URL → cite by title and source name without a link: *"Title" (Source)*.
+- Never link an outlet's homepage, section or date index page (`example.com/news/business/2026/1008/`). Missing URL → cite by title and source name without a link: *"Title" (Source)*.
 - Reuse the same link for repeated citations; disambiguate several articles from one outlet as `[Reuters 1](URL1)`, `[Reuters 2](URL2)`.
 - Do not sharpen a source: a forecast, allegation or estimate stays one in the report.
 - No separate Sources section; all attribution is inline.
-- Self-check before presenting: any factual sentence without a `[Source](URL)` link gets one.
+- Self-check before presenting, both directions: any factual sentence without a `[Source](URL)` link gets one, and every link is located in a tool result row; a link you cannot find is removed and the claim cited as plain text. Do this check in the final pass of writing the report, not in a separate tool call.
 
 ## Content
 
