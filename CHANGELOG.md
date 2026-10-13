@@ -29,6 +29,7 @@
 
 ### Improvements
 
+- **Docs for end users** — The README leads with the hosted server (Claude Desktop and claude.ai first), a first question, cost and troubleshooting; the local server, the research skills and a human guide on how to ask moved to `docs/local-server.md`, `docs/skills.md` and `docs/how-to-ask.md`. Node 20 is the minimum, as in CI
 - **Claude Code plugin** — The repository installs as a plugin (`claude plugin marketplace add EventRegistry/newsapi-mcp`, then `claude plugin install newsapi@newsapi-mcp`) that bundles the hosted MCP server and the `/news` skill, which moved from `skill/` to `skills/news/`; `npm version` keeps the plugin version in step with the package
 - **Six research skills** — The single `/news` skill with 14 patterns and 9 template files is split by task: `/newsapi:news`, `due-diligence`, `risk`, `markets`, `political` and `source-analysis`, each with its tool sequences and templates inline; `skills/_reporting.md` carries the shared workflow, citation and report rules. The skills use the new server features: `kind: "mentions"` with event types for dated happenings, aggregate `resultType`s for counts and tone, boolean `keyword` strings, `options` filters (sentiment, source rank) and the `query` grammar for cross-field logic
 - **Compact scan rows** — With `articleBodyLen: 0` each article is one row (`# | uri | date | source | title`); `get_article_details` supplies the text and URL. Notes under the result report applied defaults and body truncation

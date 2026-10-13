@@ -38,7 +38,7 @@
     "prepublishOnly": "node scripts/sync-version.js && npm run build:bundle"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",

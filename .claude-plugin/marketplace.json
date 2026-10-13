@@ -6,7 +6,7 @@
     {
       "name": "newsapi",
       "source": "./",
-      "description": "NewsAPI.ai hosted MCP server and the /news research skill",
+      "description": "NewsAPI.ai hosted MCP server and six research skills: news, due diligence, risk, markets, political and source analysis",
       "category": "research",
       "tags": ["news", "research", "mcp"]
     }

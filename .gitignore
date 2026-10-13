@@ -145,5 +145,8 @@ vite.config.ts.timestamp-*
 .*-mcp
 docs/*
 !docs/deployment.md
+!docs/local-server.md
+!docs/skills.md
+!docs/how-to-ask.md
 reports/
 tests_use_cases/.scratch/
