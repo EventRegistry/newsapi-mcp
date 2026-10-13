@@ -39,7 +39,7 @@ const mentionFilterProps: Record<string, unknown> = {
   eventTypeUri: {
     type: "string",
     description:
-      "Event type URI(s) from suggest(type: \"eventTypes\"), comma-separated (OR).",
+      'Event type URI(s) from suggest(type: "eventTypes"), comma-separated (OR).',
   },
   factLevel: {
     type: "string",
@@ -124,7 +124,8 @@ export const mentionsKind: SearchKind = {
     "langAggr",
   ],
   defaultCount: 50,
-  maxCount: 100,
+  // 100 mention rows overflow the 50 kB result cap.
+  maxCount: 50,
   sortBy: [
     "date",
     "rel",

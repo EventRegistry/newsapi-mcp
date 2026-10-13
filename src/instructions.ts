@@ -48,7 +48,7 @@ For quantitative questions (volume over time, who covers it, which entities, ton
 - Simple questions needing few results: search({kind: "articles", count: 10}) (skip triage)
 
 ## Usage Tracking
-Each response footer shows token cost (e.g., "Tokens used: 5 | Remaining: 950"); suggest calls are free (0 tokens).
+Each response footer shows token cost (e.g., "Tokens used: 5 | Remaining: 950"); suggest calls are free (0 tokens). get_api_usage reports account totals, not a call cost, and has no footer. get_event_details info costs 20 per call whatever the number of URIs (batch them); resultType "articles" costs 5 and returns compact rows with URLs.
 
 ## Sequential Requests
 Make requests sequentially — do not fire multiple NewsAPI calls in parallel.

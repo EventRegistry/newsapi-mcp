@@ -1,0 +1,14 @@
+{
+  "name": "newsapi-mcp",
+  "description": "NewsAPI.ai plugins for Claude Code",
+  "owner": { "name": "Erik Novak" },
+  "plugins": [
+    {
+      "name": "newsapi",
+      "source": "./",
+      "description": "NewsAPI.ai hosted MCP server and six research skills: news, due diligence, risk, markets, political and source analysis",
+      "category": "research",
+      "tags": ["news", "research", "mcp"]
+    }
+  ]
+}

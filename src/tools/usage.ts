@@ -10,8 +10,10 @@ USE THIS WHEN checking remaining quota before large queries or when the user ask
     type: "object",
     properties: {},
   },
+  // No tokenUsage: the result is account usage, not a call cost, so no footer.
   handler: async () => {
-    return await apiPost("/usage", {});
+    const { data } = await apiPost("/usage", {});
+    return { data };
   },
   formatter: formatUsageResults,
 };

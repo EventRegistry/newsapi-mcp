@@ -1,35 +1,40 @@
 # NewsAPI.ai MCP Server
 
 [![npm version](https://img.shields.io/npm/v/newsapi-mcp)](https://www.npmjs.com/package/newsapi-mcp)
+[![npm downloads](https://img.shields.io/npm/dm/newsapi-mcp)](https://www.npmjs.com/package/newsapi-mcp)
+[![Tests](https://github.com/EventRegistry/newsapi-mcp/actions/workflows/test.yml/badge.svg)](https://github.com/EventRegistry/newsapi-mcp/actions/workflows/test.yml)
+[![Node 20+](https://img.shields.io/node/v/newsapi-mcp)](https://nodejs.org/)
+[![MCP](https://img.shields.io/badge/MCP-Streamable_HTTP_%2B_stdio-blue)](https://modelcontextprotocol.io)
 [![MIT License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-A Model Context Protocol (MCP) server that provides real-time news intelligence
-using [NewsAPI.ai](https://newsapi.ai/). This server enables LLMs to search articles,
-track events, and analyze news through natural conversation.
+Ask your AI assistant about the news. This Model Context Protocol (MCP) server connects
+Claude, Cursor, Codex and other AI tools to [NewsAPI.ai](https://newsapi.ai/) (Event
+Registry): 150,000+ sources in 100+ languages, searched as articles, events (clusters of
+articles about one story) and mentions (sentences that state a happening such as an
+acquisition or a recall).
 
-Make sure to follow the [NewsAPI.ai Terms of Service](https://newsapi.ai/terms).
+Use of the data is subject to the [NewsAPI.ai Terms of Service](https://newsapi.ai/terms).
 
-## Requirements
-- Node.js 18 or newer
-- Claude Desktop, Claude Code, VS Code, Cursor, Windsurf or any other MCP client
+## Connect in two minutes
 
-## Quick Start
+You need an [Event Registry account](https://eventregistry.org/register) (free tier
+included). No download, no API key: add the server address to your AI tool and log in
+when it asks.
 
-There are two ways to connect:
+```
+https://mcp.newsapi.ai/mcp
+```
 
-- **Hosted server** (no install, no API key): add `https://mcp.newsapi.ai/mcp` to your
-  AI tool and log in with your Event Registry account when it asks. Works in web apps
-  such as claude.ai too. See [Hosted server](#hosted-server).
-- **Local server** (runs on your machine via `npx`): add it to your MCP client (see
-  [Configuration](#configuration) below). It logs you in to Event Registry in your browser
-  on first use, or uses an API key when you set `NEWSAPI_KEY`.
+<details open>
+<summary><strong>Claude Desktop and claude.ai</strong></summary>
 
-## Hosted server
+1. Open **Customize → Connectors → + Add → Add custom connector**.
+2. Name: `NewsAPI.ai`. URL: `https://mcp.newsapi.ai/mcp`. Save.
+3. Click **Connect**: a browser window opens at Event Registry. Log in and allow access.
 
-The hosted server runs the same tools at `https://mcp.newsapi.ai/mcp`. Your AI tool
-opens a browser window to log in to Event Registry the first time you use it, and the
-tools then run on your own account. If no Event Registry account is linked to your
-login yet, sign in once at [eventregistry.org/login](https://eventregistry.org/login) and retry.
+The connector shows as connected. Start a new chat and ask a news question.
+
+</details>
 
 <details>
 <summary><strong>Claude Code</strong></summary>
@@ -38,19 +43,11 @@ login yet, sign in once at [eventregistry.org/login](https://eventregistry.org/l
 claude mcp add --transport http newsapi https://mcp.newsapi.ai/mcp
 ```
 
-Ask a news question; Claude Code prompts you to log in (or run `/mcp` to log in up front).
+Ask a news question and Claude Code prompts you to log in, or run `/mcp` to log in up
+front. For the research skills (`/newsapi:news`, `/newsapi:due-diligence`, …) install the
+[plugin](#claude-code-plugin) instead.
 
 </details>
-
-
-<details>
-<summary><strong>claude.ai and Claude Desktop</strong></summary>
-
-**Customize → Connectors → + Add → Add custom connector**, enter the name `NewsAPI.ai` and
-the URL `https://mcp.newsapi.ai/mcp`, then sign in when prompted.
-
-</details>
-
 
 <details>
 <summary><strong>Codex</strong></summary>
@@ -60,20 +57,12 @@ codex mcp add newsapi --url https://mcp.newsapi.ai/mcp
 codex mcp login newsapi
 ```
 
-Or in `~/.codex/config.toml`:
-
-```toml
-[mcp_servers.newsapi]
-url = "https://mcp.newsapi.ai/mcp"
-```
-
 </details>
-
 
 <details>
 <summary><strong>Cursor</strong></summary>
 
-In `~/.cursor/mcp.json` (or `.cursor/mcp.json` in a project):
+Add to `~/.cursor/mcp.json` (or `.cursor/mcp.json` in a project):
 
 ```json
 {
@@ -88,193 +77,95 @@ In `~/.cursor/mcp.json` (or `.cursor/mcp.json` in a project):
 </details>
 
 <details>
-<summary><strong>Self-hosting</strong></summary>
+<summary><strong>Other MCP clients</strong></summary>
 
-The hosted server (`src/http.ts`) ships as a Docker image built from this repo. It
-keeps no sessions and verifies each request's OAuth access token (a JWT signed by
-the issuer, with `aud` set to the public URL) before calling NewsAPI.ai with it.
-
-| Variable | Default | Meaning |
-|----------|---------|---------|
-| `MCP_PUBLIC_URL` | `https://mcp.newsapi.ai/mcp` | URL clients connect to; tokens must name it as `aud` |
-| `MCP_AUTH_ISSUER` | `https://auth.id.eventregistry.org` | OAuth issuer; its `/.well-known/openid-configuration` gives the JWKS |
-| `PORT` | `3000` | Port to listen on |
-
-```bash
-docker build -t newsapi-mcp-hosted .
-docker run -p 3000:3000 -e MCP_PUBLIC_URL=https://mcp.example.org/mcp newsapi-mcp-hosted
-```
-
-Put it behind TLS at the public URL. `GET /healthz` answers `{"status":"ok"}`.
-Without Docker: `npm run build:http && node dist/http.js`.
+Any client that supports Streamable HTTP with OAuth login works: add the URL
+`https://mcp.newsapi.ai/mcp` as a remote server and complete the login the client opens.
+If your client only runs local servers, use the [local server](docs/local-server.md).
 
 </details>
 
-## Configuration
+### Your first question
 
-Install the NewsAPI.ai MCP server with your client (local server).
+Try one of these in a new chat:
 
-The server runs via `npx -y newsapi-mcp`. It authenticates in one of two ways:
+- What happened with the EU AI Act this week?
+- What are the biggest news stories globally right now?
+- Which companies announced layoffs in the last 7 days?
+- How did German media cover the EU budget talks?
 
-- **Event Registry login** (default): the first request opens your browser to log in;
-  tokens are kept in your OS credential store (Keychain, Credential Manager, Secret
-  Service) and refreshed automatically. Log in up front with `npx newsapi-mcp login`,
-  forget the login with `npx newsapi-mcp logout`. The login listens on
-  `http://127.0.0.1:51337/callback` (51338 and 51339 as fallbacks). If no Event
-  Registry account is linked to your login yet, sign in once at
-  [eventregistry.org/login](https://eventregistry.org/login) and retry.
-- **API key**: set `NEWSAPI_KEY` (get one at [newsapi.ai/register](https://newsapi.ai/register);
-  free tier: one time 2,000 tokens) and no login happens.
+The assistant resolves the names you mention, searches, reviews the relevant article information
+and answers with links to its sources. [How to ask](docs/how-to-ask.md) explains what the
+server can and cannot answer and how to phrase a question for the best result.
 
-**Standard config** works in most of the tools (drop the `env` block to use the login):
+### Cost and usage
 
-```json
-{
-  "mcpServers": {
-    "newsapi": {
-      "command": "npx",
-      "args": ["-y", "newsapi-mcp"],
-      "env": {
-        "NEWSAPI_KEY": "your_api_key_here"
-      }
-    }
-  }
-}
-```
+Every account has a budget of API tokens. Looking up names is free; each search or
+lookup costs a few tokens, and searches that reach further back than the last 30 days
+cost more. The official rates per request are in the Tokens section of
+[newsapi.ai/plans](https://newsapi.ai/plans#faq). Each tool result carries the cost and
+the remaining balance, and you can ask "how many API tokens do I have left?" at any time.
 
-Below are examples for popular MCP clients.
+### Troubleshooting
 
-<details>
-<summary><strong>Antigravity</strong></summary>
+| What you see | What to do |
+|--------------|------------|
+| "No Event Registry account is linked to this login" | Sign in once at [eventregistry.org/login](https://eventregistry.org/login) with the same account you used in the login window, then retry. |
+| The login window opens again and again | Your login expired. Disconnect and reconnect the server in your AI tool (Claude: Connectors → NewsAPI.ai → Disconnect, then Connect). |
+| The assistant says the tool is not available | The connector is added but not connected. Open the connector settings and click Connect. |
+| Results stop at 31 days | The server searches the last 31 days unless you name a period. Say "since January" or "in 2025" to widen it. |
+| "Tokens used" grows fast | Event searches and searches older than 31 days cost more. Ask about recent coverage, or name the company or topic precisely so one search is enough. |
 
-Add via the Antigravity settings or by updating your configuration file:
-
-```json
-{
-  "mcpServers": {
-    "newsapi": {
-      "command": "npx",
-      "args": ["-y", "newsapi-mcp"],
-      "env": {
-        "NEWSAPI_KEY": "your_api_key_here"
-      }
-    }
-  }
-}
-```
-
-</details>
-
-
-<details>
-<summary><strong>Claude Code</strong></summary>
-
-```bash
-claude mcp add newsapi -e NEWSAPI_KEY=your_api_key_here -- npx -y newsapi-mcp
-```
-
-</details>
-
-
-<details>
-<summary><strong>Claude Desktop</strong></summary>
-
-Follow the MCP install [guide](https://modelcontextprotocol.io/docs/develop/connect-local-servers), use the standard config above.
-
-</details>
-
-
-<details>
-<summary><strong>Gemini CLI</strong></summary>
-
-Follow the MCP install [guide](https://github.com/google-gemini/gemini-cli/blob/main/docs/tools/mcp-server.md#configure-the-mcp-server-in-settingsjson), use the standard config above.
-
-</details>
-
-
-<details>
-<summary><strong>Qodo Gen</strong></summary>
-
-Open [Qodo Gen](https://docs.qodo.ai/qodo-documentation/qodo-gen) chat panel in VSCode or IntelliJ → Connect more tools → + Add new MCP → Paste the standard config above.
-
-</details>
-
-
-<details>
-<summary><strong>VS Code</strong></summary>
-
-Follow the MCP install [guide](https://code.visualstudio.com/docs/copilot/customization/mcp-servers#_add-an-mcp-server), use the standard config above. You can also install the NewsAPI.ai MCP server using the VS Code CLI:
-
-```bash
-# For VS Code
-code --add-mcp '{"name":"newsapi","command":"npx","args":["-y","newsapi-mcp"],"env":{"NEWSAPI_KEY":"your_api_key_here"}}'
-```
-
-After installation, the NewsAPI.ai MCP server will be available for use with your GitHub Copilot agent in VS Code.
-
-</details>
-
-
-<details>
-<summary><strong>Windsurf</strong></summary>
-
-Follow Windsurf MCP [documentation](https://docs.windsurf.com/windsurf/cascade/mcp). Use the standard config above.
-
-</details>
-
-## Usage Patterns
-
-### Search News Articles
-
-Find articles by keyword, source, author, date, language, sentiment, and more.
-
-- Find recent articles about the EU AI Act
-- What has Reuters published about climate change this week?
-- Show me negative-sentiment articles about Tesla from the last 3 days
-- Find French-language coverage of the Paris Olympics
-- What are German media reporting about the EU budget?
-
-### Track Events
-
-Events are clusters of related articles about the same real-world happening.
-
-- Find events related to mergers and acquisitions in the tech sector
-- What larger events happened in Slovenia last week?
-- What are the biggest news stories globally this week?
-
-### Use Topic Pages
-
-Pull articles or events from saved [Topic Pages](https://newsapi.ai) on NewsAPI.ai.
-
-- Summarize the latest articles from my cyber-security topic page with URI b220679c-95ff-4e4e-a1fa-ad8b3905b7df
-
-
-## Available Tools
+## What the assistant can do
 
 | Tool | Description |
 |------|-------------|
-| `suggest` | Look up URIs for entities and event types by name. Required before searching with URI filters. |
+| `suggest` | Look up URIs for entities, sources, categories, locations and event types by name. Used before searching with URI filters. |
 | `search` | One search tool with `kind`: `articles` (by concepts, sources, categories, dates, language, sentiment), `events` (clusters of related articles about the same happening) or `mentions` (sentences that state a specific event type such as an acquisition, layoffs, a launch or a recall, with entities and article links). Every kind also returns aggregates (`resultType`: coverage over time, top sources, top entities, sentiment). |
+| `get_article_details` | Article information (URL, publisher, date, entities and more) for articles selected from a search. |
+| `get_event_details` | Summary, concepts and articles of an event. |
 | `get_breaking_events` | List the events breaking right now, ranked by breaking score. |
-| `get_topic_page_articles` | Get articles from a pre-configured topic page on NewsAPI.ai. |
-| `get_topic_page_events` | Get events from a pre-configured topic page on NewsAPI.ai. |
-| `get_api_usage` | Check token usage and plan details for the current API key. |
+| `get_topic_page_articles` | Get articles from a saved [Topic Page](https://newsapi.ai) on NewsAPI.ai. |
+| `get_topic_page_events` | Get events from a saved Topic Page on NewsAPI.ai. |
+| `get_api_usage` | Check token usage and plan details for the current account. |
 
-## News Research Skill
+## Claude Code plugin
 
-The `skill/` directory contains a `/news` slash command for [Claude Code](https://code.claude.com/docs/en/skills)
-(CLI and Desktop) that orchestrates multi-step research workflows on top of the MCP tools.
-It automates the suggest → scan → triage → retrieve pattern and formats findings into structured reports.
+The repository is a Claude Code plugin: it bundles the hosted MCP server and six research
+skills, so one install gives Claude Code both.
 
+```bash
+claude plugin marketplace add EventRegistry/newsapi-mcp
+claude plugin install newsapi@newsapi-mcp
 ```
-/news "What's happening with AI regulation?"
-```
 
-To install, copy the `skill/` directory into your project's `.claude/skills/` directory. See the
-[skills documentation](https://code.claude.com/docs/en/skills) for details.
+Ask a news question or run a skill; Claude Code prompts you to log in with your Event
+Registry account the first time (or run `/mcp` to log in up front). Claude Code also picks
+the right skill from a plain question, without the slash command.
+
+| Skill | Ask it for | Example |
+|-------|------------|---------|
+| `/newsapi:news` | Overviews, article deep dives, happenings, coverage counts, breaking news, topic pages, research reports | "What is happening with the Boeing strike?" |
+| `/newsapi:due-diligence` | Adverse media screening, ESG controversies, company profiles, key people | "Screen Wirecard for adverse media since 2024." |
+| `/newsapi:risk` | Supply chain disruptions, country and regional geopolitical risk | "What is the supply chain risk for shipping through the Red Sea?" |
+| `/newsapi:markets` | Economic indicators and sectors, company and asset analysis | "What drove Nvidia's stock this month?" |
+| `/newsapi:political` | Policy, legislation, elections, diplomacy | "Where does the EU Digital Markets Act enforcement stand?" |
+| `/newsapi:source-analysis` | Outlet comparison, sentiment, coverage landscape | "Compare how the BBC and Fox News covered the UN climate summit." |
+
+[docs/skills.md](docs/skills.md) describes each skill, how they are built and how to use
+them without the plugin.
+
+## Running it yourself
+
+- **Local server**: run the server on your own machine with `npx newsapi-mcp`, log in in
+  the browser or use an API key. For clients without remote-server support, and for
+  developers. See [docs/local-server.md](docs/local-server.md).
+- **Self-hosting**: deploy the hosted server from the Docker image in this repo. See
+  [docs/deployment.md](docs/deployment.md).
 
 ## Links
 
 - [npm package](https://www.npmjs.com/package/newsapi-mcp)
-- [NewsAPI.ai Documentation](https://newsapi.ai/documentation)
-- [MCP Protocol Specification](https://modelcontextprotocol.io)
+- [NewsAPI.ai documentation](https://newsapi.ai/documentation)
+- [MCP protocol specification](https://modelcontextprotocol.io)
+- [Changelog](CHANGELOG.md)

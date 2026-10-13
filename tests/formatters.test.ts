@@ -757,6 +757,64 @@ describe("formatEventDetails", () => {
     expect(result).toContain("Direct summary.");
   });
 
+  it("renders resultType articles as citable rows with URLs", () => {
+    const data = {
+      "evt-9": {
+        articles: {
+          results: [
+            {
+              uri: "a1",
+              title: "Quake hits coast",
+              dateTimePub: "2025-01-02T10:30:00Z",
+              source: { title: "Reuters" },
+              url: "https://reuters.com/quake",
+            },
+          ],
+          totalResults: 120,
+          page: 1,
+          pages: 12,
+        },
+      },
+    };
+
+    const result = formatEventDetails(data, { articlesArticleBodyLen: 0 });
+
+    expect(result).toContain("Articles of event evt-9");
+    expect(result).toContain("# | uri | date | source | title | url");
+    expect(result).toContain(
+      "1 | a1 | 2025-01-02 10:30 | Reuters | Quake hits coast | https://reuters.com/quake",
+    );
+    expect(result).toContain("Use articlesPage: 2 for more.");
+    expect(result).not.toContain("{");
+  });
+
+  it("renders resultType articles with bodies as blocks", () => {
+    const data = {
+      "evt-9": {
+        articles: {
+          results: [
+            {
+              uri: "a1",
+              title: "Quake hits coast",
+              dateTimePub: "2025-01-02T10:30:00Z",
+              source: { title: "Reuters" },
+              url: "https://reuters.com/quake",
+              body: "A strong earthquake struck.",
+            },
+          ],
+        },
+      },
+    };
+
+    const result = formatEventDetails(data, { articlesArticleBodyLen: 200 });
+
+    expect(result).toContain(
+      "1. [2025-01-02 10:30] Quake hits coast - Reuters",
+    );
+    expect(result).toContain("URL: https://reuters.com/quake");
+    expect(result).toContain("A strong earthquake struck.");
+  });
+
   it("returns empty message for empty/null data", () => {
     expect(formatEventDetails({}, {})).toBe("No event details found.");
     expect(formatEventDetails(null, {})).toBe("No event details found.");
@@ -841,15 +899,16 @@ describe("formatUsageResults", () => {
 
     const result = formatUsageResults(data, {});
 
-    expect(result).toContain("Tokens used:");
-    expect(result).toContain("Tokens available:");
+    expect(result).toBe(
+      "Account usage: 2500 tokens used | 30000 available (not a call cost)",
+    );
   });
 
   it("handles missing fields with defaults", () => {
     const result = formatUsageResults({}, {});
 
-    expect(result).toContain("Tokens used:");
-    expect(result).toContain("Tokens available:");
+    expect(result).toContain("Account usage: 0 tokens used | 0 available");
+    expect(result).not.toContain("Tokens used:");
   });
 });
 
@@ -1116,8 +1175,9 @@ describe("formatMentionResults", () => {
     };
     const out = formatMentionResults(data, {});
     expect(out).toContain(
-      '1. [2025-03-04 08:00] et/business/layoffs - Example News\n   "Acme will cut 500 jobs in May."\n   Article: Acme announces layoffs\n   URL: https://ex.com/a1\n   URI: m1 (article a1)\n   Sentiment: -0.35\n   Fact level: forecast',
+      '1. [2025-03-04 08:00] et/business/layoffs - Example News | sentiment -0.35 | forecast\n   "Acme will cut 500 jobs in May."\n   Article: Acme announces layoffs (a1)\n   URL: https://ex.com/a1',
     );
+    expect(out).not.toContain("URI: m1");
     expect(out).toContain(
       "1 results (250 total) Page 1 of 3. Use page: 2 for more.",
     );

@@ -104,7 +104,8 @@ describe("search articles", () => {
   });
 
   it("passes includeFields as API include params", async () => {
-    await search.handler({ kind: "articles",
+    await search.handler({
+      kind: "articles",
       keyword: "Tesla",
       includeFields: "concepts,sentiment",
     });
@@ -131,7 +132,8 @@ describe("search articles", () => {
   });
 
   it("passes dateMentionStart/dateMentionEnd through as strings", async () => {
-    await search.handler({ kind: "articles",
+    await search.handler({
+      kind: "articles",
       keyword: "election",
       dateMentionStart: "2025-06-01",
       dateMentionEnd: "2025-06-30",
@@ -186,7 +188,8 @@ describe("search events", () => {
   });
 
   it("passes event-specific params through", async () => {
-    await search.handler({ kind: "events",
+    await search.handler({
+      kind: "events",
       minArticlesInEvent: 10,
       reportingDateStart: "2024-01-01",
     });
@@ -197,7 +200,8 @@ describe("search events", () => {
   });
 
   it("renames minSentiment/maxSentiment to event-specific param names", async () => {
-    await search.handler({ kind: "events",
+    await search.handler({
+      kind: "events",
       keyword: "earthquake",
       minSentiment: -0.5,
       maxSentiment: 0.8,
@@ -266,6 +270,77 @@ describe("getEventDetails", () => {
     expect(body.eventUri).toBe("evt-123");
   });
 
+  it("defaults the article page to 10 compact rows and forwards overrides", async () => {
+    await getEventDetails.handler({
+      eventUri: "evt-123",
+      resultType: "articles",
+    });
+    let body = mockedApiPost.mock.calls[0][1];
+    expect(body.articlesCount).toBe(10);
+    expect(body.articlesPage).toBe(1);
+    expect(body.articlesSortBy).toBe("date");
+    expect(body.articlesArticleBodyLen).toBe(0);
+
+    await getEventDetails.handler({
+      eventUri: "evt-123",
+      resultType: "articles",
+      articlesCount: 25,
+      articlesPage: 2,
+      articlesSortBy: "rel",
+      articlesArticleBodyLen: -1,
+    });
+    body = mockedApiPost.mock.calls[1][1];
+    expect(body.articlesCount).toBe(25);
+    expect(body.articlesPage).toBe(2);
+    expect(body.articlesSortBy).toBe("rel");
+    expect(body.articlesArticleBodyLen).toBe(-1);
+  });
+
+  it("strips article fields the caller did not ask for", async () => {
+    mockedApiPost.mockResolvedValueOnce({
+      data: {
+        "evt-1": {
+          articles: {
+            results: [
+              {
+                uri: "a1",
+                title: "T",
+                url: "https://ex.com/a",
+                source: { title: "Ex" },
+                dateTimePub: "2025-01-01T00:00:00Z",
+                wgt: 1,
+                sim: 0.5,
+                image: "https://ex.com/i.jpg",
+                authors: [{ name: "A" }],
+              },
+            ],
+            totalResults: 1,
+          },
+        },
+      },
+    });
+    const result = await getEventDetails.handler({
+      eventUri: "evt-1",
+      resultType: "articles",
+    });
+    const entry = (result.data as Record<string, Record<string, unknown>>)[
+      "evt-1"
+    ];
+    const [art] = (entry.articles as { results: Record<string, unknown>[] })
+      .results;
+    expect(art.url).toBe("https://ex.com/a");
+    expect(art.title).toBe("T");
+    expect(art.wgt).toBeUndefined();
+    expect(art.image).toBeUndefined();
+    expect(art.authors).toBeUndefined();
+  });
+
+  it("sends no article params for resultType info", async () => {
+    await getEventDetails.handler({ eventUri: "evt-1", articlesCount: 5 });
+    const body = mockedApiPost.mock.calls[0][1];
+    expect(body.articlesCount).toBeUndefined();
+  });
+
   it("throws error for resultType articles with multiple URIs", async () => {
     await expect(
       getEventDetails.handler({
@@ -291,7 +366,8 @@ describe("getEventDetails", () => {
 
 describe("ignore params", () => {
   it("articles expands ignore* params as arrays", async () => {
-    await search.handler({ kind: "articles",
+    await search.handler({
+      kind: "articles",
       keyword: "AI",
       ignoreConceptUri: "uri1,uri2",
       ignoreSourceUri: "src1",
@@ -305,7 +381,8 @@ describe("ignore params", () => {
   });
 
   it("events expands ignore* params as arrays", async () => {
-    await search.handler({ kind: "events",
+    await search.handler({
+      kind: "events",
       keyword: "earthquake",
       ignoreKeyword: "tsunami,flood",
       ignoreCategoryUri: "cat1",
@@ -317,7 +394,8 @@ describe("ignore params", () => {
   });
 
   it("passes ignoreKeywordLoc as scalar string", async () => {
-    await search.handler({ kind: "articles",
+    await search.handler({
+      kind: "articles",
       keyword: "AI",
       ignoreKeyword: "spam",
       ignoreKeywordLoc: "title",
@@ -327,7 +405,8 @@ describe("ignore params", () => {
   });
 
   it("articles passes sourceGroupUri and operator params", async () => {
-    await search.handler({ kind: "articles",
+    await search.handler({
+      kind: "articles",
       keyword: "AI",
       sourceGroupUri: "group1,group2",
       conceptOper: "or",
@@ -343,7 +422,8 @@ describe("ignore params", () => {
 
 describe("search events operators and sourceGroupUri", () => {
   it("passes operator and sourceGroupUri params through", async () => {
-    await search.handler({ kind: "events",
+    await search.handler({
+      kind: "events",
       keyword: "earthquake",
       sourceGroupUri: "group1",
       conceptOper: "or",
@@ -437,7 +517,8 @@ describe("default values", () => {
   });
 
   it("explicit params override defaults", async () => {
-    await search.handler({ kind: "articles",
+    await search.handler({
+      kind: "articles",
       keyword: "AI",
       count: 10,
       articleBodyLen: 200,
@@ -570,7 +651,8 @@ describe("aggregate resultType", () => {
     };
     mockedApiPost.mockResolvedValueOnce({ data: aggregate });
 
-    const result = await search.handler({ kind: "articles",
+    const result = await search.handler({
+      kind: "articles",
       keyword: "Tesla",
       dateStart: "2025-01-01",
       resultType: "timeAggr",
@@ -592,7 +674,8 @@ describe("aggregate resultType", () => {
   });
 
   it("events send filters and resultType only, with event param names", async () => {
-    await search.handler({ kind: "events",
+    await search.handler({
+      kind: "events",
       keyword: "earthquake",
       dateStart: "2025-01-01",
       minSentiment: -0.5,
@@ -614,7 +697,11 @@ describe("aggregate resultType", () => {
   });
 
   it("the default resultType keeps the list request unchanged", async () => {
-    await search.handler({ kind: "articles", keyword: "Tesla", resultType: "articles" });
+    await search.handler({
+      kind: "articles",
+      keyword: "Tesla",
+      resultType: "articles",
+    });
 
     const body = mockedApiPost.mock.calls[0][1];
     expect(body.resultType).toBe("articles");
@@ -684,6 +771,70 @@ describe("getBreakingEvents", () => {
     expect(evt.socialScore).toBeUndefined();
     expect(wrapper.totalResults).toBe(1);
   });
+
+  it("attaches the newest article per event and sums the token cost", async () => {
+    mockedApiPost.mockResolvedValueOnce({
+      data: {
+        breakingEvents: {
+          results: [
+            { uri: "eng-1", title: { eng: "Quake" }, breakingScore: 0.8 },
+            { uri: "eng-2", title: { eng: "Flood" }, breakingScore: 0.5 },
+          ],
+        },
+      },
+      tokenUsage: { reqTokens: 1, remaining: 900 },
+    });
+    mockedApiPost.mockResolvedValueOnce({
+      data: {
+        "eng-1": {
+          articles: {
+            results: [
+              {
+                title: "Quake hits coast",
+                url: "https://ex.com/quake",
+                source: { title: "Reuters" },
+              },
+            ],
+          },
+        },
+      },
+      tokenUsage: { reqTokens: 5, remaining: 895 },
+    });
+    mockedApiPost.mockResolvedValueOnce({
+      data: { "eng-2": { articles: { results: [] } } },
+      tokenUsage: { reqTokens: 5, remaining: 890 },
+    });
+
+    const result = await getBreakingEvents.handler({
+      includeTopArticleUrl: true,
+    });
+
+    expect(mockedApiPost).toHaveBeenCalledTimes(3);
+    expect(mockedApiPost.mock.calls[1][0]).toBe("/event/getEvent");
+    expect(mockedApiPost.mock.calls[1][1]).toMatchObject({
+      eventUri: "eng-1",
+      resultType: "articles",
+      articlesCount: 1,
+      articlesArticleBodyLen: 0,
+    });
+    const [first, second] = (
+      (result.data as Record<string, unknown>).breakingEvents as {
+        results: Record<string, unknown>[];
+      }
+    ).results;
+    expect(first.topArticle).toEqual({
+      title: "Quake hits coast",
+      url: "https://ex.com/quake",
+      source: "Reuters",
+    });
+    expect(second.topArticle).toBeUndefined();
+    expect(result.tokenUsage).toEqual({ reqTokens: 11, remaining: 890 });
+  });
+
+  it("makes no extra calls without includeTopArticleUrl", async () => {
+    await getBreakingEvents.handler({});
+    expect(mockedApiPost).toHaveBeenCalledTimes(1);
+  });
 });
 
 // ---------- Mentions ----------
@@ -726,7 +877,8 @@ describe("search mentions", () => {
       tokenUsage: { reqTokens: 1, remaining: 9 },
     });
 
-    const result = await search.handler({ kind: "mentions",
+    const result = await search.handler({
+      kind: "mentions",
       eventTypeUri: "et/business/layoffs, et/business/hiring",
       conceptUri: "http://en.wikipedia.org/wiki/Acme",
       dateStart: "2025-01-01",
@@ -765,7 +917,8 @@ describe("search mentions", () => {
   });
 
   it("passes paging, sorting and the full include set through", async () => {
-    await search.handler({ kind: "mentions",
+    await search.handler({
+      kind: "mentions",
       keyword: "merger",
       dateStart: "2025-01-01",
       page: 2,
@@ -797,7 +950,8 @@ describe("search mentions", () => {
     const aggregate = { eventTypeAggr: { results: [] } };
     mockedApiPost.mockResolvedValueOnce({ data: aggregate });
 
-    const result = await search.handler({ kind: "mentions",
+    const result = await search.handler({
+      kind: "mentions",
       conceptUri: "c1",
       dateStart: "2025-01-01",
       resultType: "eventTypeAggr",
@@ -818,7 +972,11 @@ describe("search mentions", () => {
   });
 
   it("rejects filters the endpoint lacks and tags them in the schema", async () => {
-    for (const k of ["forceMaxDataTimeWindow", "keywordLoc", "articleBodyLen"]) {
+    for (const k of [
+      "forceMaxDataTimeWindow",
+      "keywordLoc",
+      "articleBodyLen",
+    ]) {
       await expect(
         search.handler({ kind: "mentions", eventTypeUri: "et/x", [k]: 1 }),
       ).rejects.toThrow(new RegExp(`${k}.*applies to kind`));
@@ -844,20 +1002,37 @@ describe("search mentions", () => {
     ).rejects.toThrow(/sortBy .*size.* is not available for kind .*articles/);
     await expect(
       search.handler({ kind: "events", resultType: "langAggr" }),
-    ).rejects.toThrow(/resultType .*langAggr.* is not available for kind .*events/);
+    ).rejects.toThrow(
+      /resultType .*langAggr.* is not available for kind .*events/,
+    );
     expect(mockedApiPost).not.toHaveBeenCalled();
   });
 
   it("explains searches that cost more than one API token", async () => {
-    mockedApiPost.mockResolvedValueOnce({ data: {}, tokenUsage: { reqTokens: 5, remaining: 1 } });
+    mockedApiPost.mockResolvedValueOnce({
+      data: {},
+      tokenUsage: { reqTokens: 5, remaining: 1 },
+    });
     const ev = await search.handler({ kind: "events", keyword: "x" });
     expect(ev.notes?.join()).toMatch(/Event searches cost 5 API tokens/);
-    mockedApiPost.mockResolvedValueOnce({ data: {}, tokenUsage: { reqTokens: 10, remaining: 1 } });
-    const old = await search.handler({ kind: "articles", keyword: "x", dateStart: "2025-01-01" });
+    mockedApiPost.mockResolvedValueOnce({
+      data: {},
+      tokenUsage: { reqTokens: 10, remaining: 1 },
+    });
+    const old = await search.handler({
+      kind: "articles",
+      keyword: "x",
+      dateStart: "2025-01-01",
+    });
     expect(old.notes?.join()).toMatch(/cost 10 API tokens.*more than 31 days/);
-    mockedApiPost.mockResolvedValueOnce({ data: {}, tokenUsage: { reqTokens: 1, remaining: 1 } });
+    mockedApiPost.mockResolvedValueOnce({
+      data: {},
+      tokenUsage: { reqTokens: 1, remaining: 1 },
+    });
     const cheap = await search.handler({ kind: "articles", keyword: "x" });
-    expect(cheap.notes?.join()).not.toMatch(/This search cost|Event searches cost/);
+    expect(cheap.notes?.join()).not.toMatch(
+      /This search cost|Event searches cost/,
+    );
   });
 
   it("caps count at the kind's maximum", async () => {

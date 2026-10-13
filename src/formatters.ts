@@ -198,6 +198,13 @@ function formatEventExtras(evt: Record<string, unknown>): string {
     lines.push(`   Social score: ${evt.socialScore}`);
   if (evt.breakingScore != null)
     lines.push(`   Breaking score: ${evt.breakingScore}`);
+  if (evt.topArticle && typeof evt.topArticle === "object") {
+    const top = evt.topArticle as Record<string, unknown>;
+    lines.push(
+      `   Top article: ${top.title || "Untitled"} - ${top.source || "Unknown"}`,
+    );
+    if (top.url) lines.push(`   URL: ${top.url}`);
+  }
   const metaKeys = ["wgt", "relevance"];
   const metaParts = metaKeys
     .filter((k) => evt[k] != null)
@@ -212,34 +219,43 @@ function formatDateTime(value: unknown): string {
   return value.replace("T", " ").slice(0, 16);
 }
 
-/** One row per article for a scan (no bodies): index, uri, date, source, title. URLs come with the details. */
+/** One row per article (no bodies): index, uri, date, source, title, and the URL when the rows are citable. */
 function formatArticleRows(
   results: Record<string, unknown>[],
   wrapper: Record<string, unknown> | undefined,
+  pageParam: string,
+  withUrl = false,
 ): string {
   const rows = results.map((art, i) => {
     const date = formatDateTime(art.dateTimePub);
     const source =
       (art.source as Record<string, unknown> | undefined)?.title || "Unknown";
-    const extras = formatArticleExtras(art).replace(/\n\s+/g, " · ").trim();
-    return `${i + 1} | ${art.uri ?? "?"} | ${date} | ${source} | ${art.title || "Untitled"}${extras ? ` | ${extras}` : ""}`;
+    const extras = formatArticleExtras(art)
+      .replace(/\n\s+/g, " · ")
+      .replace(/^\s*· /, "")
+      .trim();
+    const url = withUrl ? ` | ${art.url ?? "?"}` : "";
+    return `${i + 1} | ${art.uri ?? "?"} | ${date} | ${source} | ${art.title || "Untitled"}${url}${extras ? ` | ${extras}` : ""}`;
   });
+  const footer = paginationFooter(wrapper, results.length, pageParam);
   return [
-    "# | uri | date | source | title",
+    withUrl
+      ? "# | uri | date | source | title | url"
+      : "# | uri | date | source | title",
     ...rows,
-    paginationFooter(wrapper, results.length, "page") +
-      " Pass uri values to get_article_details for full text and URLs.",
+    withUrl
+      ? footer
+      : footer +
+        " Pass uri values to get_article_details for full text and URLs.",
   ].join("\n");
 }
 
-/** Format article search results: compact rows for a scan, numbered blocks with bodies otherwise. */
-export const formatArticleResults: ResponseFormatter = (data, params) => {
-  const articles = (data as Record<string, unknown>)?.articles as
-    Record<string, unknown> | undefined;
-  const results = articles?.results as Record<string, unknown>[] | undefined;
-  if (!results?.length) return "No articles found.";
-  if (params?.articleBodyLen === 0) return formatArticleRows(results, articles);
-
+/** Numbered blocks with URL, URI, extras and body for each article. */
+function formatArticleBlocks(
+  results: Record<string, unknown>[],
+  wrapper: Record<string, unknown> | undefined,
+  pageParam: string,
+): string {
   const lines = results.map((art, i) => {
     const title = art.title || "Untitled";
     const date = formatDateTime(art.dateTimePub);
@@ -250,16 +266,40 @@ export const formatArticleResults: ResponseFormatter = (data, params) => {
     const uri = art.uri ? `\n   URI: ${art.uri}` : "";
     return `${i + 1}. [${date}] ${title} - ${source}${url}${uri}${formatArticleExtras(art)}\n\n${body}`;
   });
-
-  lines.push(
-    paginationFooter(
-      articles,
-      results.length,
-      params?.kind ? "page" : "articlesPage",
-    ),
-  );
+  lines.push(paginationFooter(wrapper, results.length, pageParam));
   return lines.join("\n\n---\n\n");
+}
+
+/** Format article search results: compact rows for a scan, numbered blocks with bodies otherwise. */
+export const formatArticleResults: ResponseFormatter = (data, params) => {
+  const articles = (data as Record<string, unknown>)?.articles as
+    Record<string, unknown> | undefined;
+  const results = articles?.results as Record<string, unknown>[] | undefined;
+  if (!results?.length) return "No articles found.";
+  if (params?.articleBodyLen === 0)
+    return formatArticleRows(results, articles, "page");
+  return formatArticleBlocks(
+    results,
+    articles,
+    params?.kind ? "page" : "articlesPage",
+  );
 };
+
+/** The articles of one event ({ "<uri>": { articles: {...} } }): citable rows, or blocks when bodies were requested. */
+function formatEventArticles(
+  eventUri: string,
+  articles: Record<string, unknown>,
+  params: Record<string, unknown>,
+): string {
+  const results = articles.results as Record<string, unknown>[] | undefined;
+  if (!results?.length) return `No articles found for event ${eventUri}.`;
+  const bodyLen = params?.articlesArticleBodyLen ?? 0;
+  const body =
+    bodyLen === 0
+      ? formatArticleRows(results, articles, "articlesPage", true)
+      : formatArticleBlocks(results, articles, "articlesPage");
+  return `Articles of event ${eventUri}\n${body}`;
+}
 
 /** Format mention search results: one sentence per entry with its event type and article. */
 export const formatMentionResults: ResponseFormatter = (data) => {
@@ -278,14 +318,17 @@ export const formatMentionResults: ResponseFormatter = (data) => {
       typeof m.eventType === "object" && m.eventType
         ? extractLabel(m.eventType as Record<string, unknown>)
         : m.eventType || "?";
-    const head = `${i + 1}. [${date}] ${eventType} - ${source}`;
+    const facts = [
+      m.sentenceSentiment != null ? `sentiment ${m.sentenceSentiment}` : "",
+      m.factLevel ? String(m.factLevel) : "",
+    ].filter(Boolean);
+    const head = `${i + 1}. [${date}] ${eventType} - ${source}${facts.length ? ` | ${facts.join(" | ")}` : ""}`;
     const detail = [`   "${m.sentence || ""}"`];
-    if (m.articleTitle) detail.push(`   Article: ${m.articleTitle}`);
-    if (m.articleUrl) detail.push(`   URL: ${m.articleUrl}`);
-    if (m.uri) {
-      const art = m.articleUri ? ` (article ${m.articleUri})` : "";
-      detail.push(`   URI: ${m.uri}${art}`);
+    if (m.articleTitle || m.articleUri) {
+      const uri = m.articleUri ? ` (${m.articleUri})` : "";
+      detail.push(`   Article: ${m.articleTitle || "Untitled"}${uri}`);
     }
+    if (m.articleUrl) detail.push(`   URL: ${m.articleUrl}`);
     return `${head}\n${detail.join("\n")}${formatMentionExtras(m)}`;
   });
 
@@ -293,12 +336,9 @@ export const formatMentionResults: ResponseFormatter = (data) => {
   return lines.join("\n\n---\n\n");
 };
 
-/** Render sentiment, fact level and optional includeFields data for a mention. */
+/** Render entities and optional includeFields data for a mention. */
 function formatMentionExtras(m: Record<string, unknown>): string {
   const lines: string[] = [];
-  if (m.sentenceSentiment != null)
-    lines.push(`   Sentiment: ${m.sentenceSentiment}`);
-  if (m.factLevel) lines.push(`   Fact level: ${m.factLevel}`);
   if (Array.isArray(m.slots) && m.slots.length > 0) {
     const items = (m.slots as Record<string, unknown>[]).map((s) => {
       const label =
@@ -398,7 +438,7 @@ export const formatArticleDetails: ResponseFormatter = (data) => {
 };
 
 /** Format event detail responses (filterTopLevel structure: { "<uri>": { info: {...} } }). */
-export const formatEventDetails: ResponseFormatter = (data) => {
+export const formatEventDetails: ResponseFormatter = (data, params) => {
   if (!data || typeof data !== "object") return "No event details found.";
   const entries = Object.entries(data as Record<string, unknown>);
   if (entries.length === 0) return "No event details found.";
@@ -406,6 +446,15 @@ export const formatEventDetails: ResponseFormatter = (data) => {
   // Detect non-info resultType responses (articles, articleUris, similarEvents)
   // These don't have the { "<uri>": { info: {...} } } shape
   const firstValue = entries[0]![1];
+  const firstArticles = (firstValue as Record<string, unknown> | null)
+    ?.articles;
+  if (firstArticles && typeof firstArticles === "object") {
+    return formatEventArticles(
+      entries[0]![0],
+      firstArticles as Record<string, unknown>,
+      params,
+    );
+  }
   const isInfoShape =
     firstValue &&
     typeof firstValue === "object" &&
@@ -530,10 +579,10 @@ export const formatAggregate: ResponseFormatter = (data, params) => {
   return [...header, ...sections].join("\n\n");
 };
 
-/** Format API usage as key-value pairs. */
+/** Account-level usage; worded so it is not mistaken for a call's "Tokens used" footer. */
 export const formatUsageResults: ResponseFormatter = (data) => {
   const u = data as Record<string, unknown>;
   const used = (u.usedTokens as number) || 0;
   const available = (u.availableTokens as number) || 0;
-  return [`Tokens used: ${used}`, `Tokens available: ${available}`].join("\n");
+  return `Account usage: ${used} tokens used | ${available} available (not a call cost)`;
 };
