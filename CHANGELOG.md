@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-10-13
+
 ### Breaking changes
 
 - **One `search` tool** — `search_articles`, `search_events` and `search_mentions` are replaced by `search` with `kind: "articles" | "events" | "mentions"`. Paging and sorting are generic: `page`, `count`, `sortBy`, `options.sortByAsc` replace `articlesPage/Count/SortBy`, `eventsPage/Count/SortBy` and `mentionsPage/Count/SortBy`. Kind-only params are tagged in their descriptions and rejected with a corrective 400 for the other kinds
