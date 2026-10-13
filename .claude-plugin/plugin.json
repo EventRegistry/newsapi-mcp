@@ -4,7 +4,7 @@
   "version": "2.0.0",
   "description": "Real-time news intelligence from NewsAPI.ai: the hosted MCP server plus research skills for news, due diligence, risk, markets, politics and source analysis",
   "author": {
-    "name": "Erik Novak"
+    "name": "Event Registry d.o.o."
   },
   "homepage": "https://github.com/EventRegistry/newsapi-mcp#readme",
   "repository": "https://github.com/EventRegistry/newsapi-mcp",

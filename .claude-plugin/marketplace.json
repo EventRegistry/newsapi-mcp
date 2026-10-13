@@ -1,7 +1,7 @@
 {
   "name": "newsapi-mcp",
   "description": "NewsAPI.ai plugins for Claude Code",
-  "owner": { "name": "Erik Novak" },
+  "owner": { "name": "Event Registry d.o.o." },
   "plugins": [
     {
       "name": "newsapi",
