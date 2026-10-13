@@ -44,6 +44,7 @@
 
 - **Suggest cache removed** — `suggest` calls the API every time; the cheap endpoints gained nothing from caching, and the "(cached)" token footer is gone
 - **Dependencies** — Lock file bumped to clear `npm audit` findings; no `package.json` range changes
+- **Package metadata** — Event Registry d.o.o. is named as the author of the npm package and the Claude Code plugin; contributors are listed in `package.json`
 
 ## [1.3.1] - 2026-03-18
 
