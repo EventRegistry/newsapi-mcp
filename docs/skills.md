@@ -21,14 +21,14 @@ Claude to use whichever one is connected and logged in.
 
 ## The skills
 
-| Skill | Ask it for | Example questions |
-|-------|------------|-------------------|
-| `/newsapi:news` | What is happening with a topic, what is breaking now, a quick fact, full coverage of a story, which companies announced layoffs or recalls, a topic page update, how much a topic is covered, a multi-angle research report | "What is happening with the Boeing strike?" · "Did the Fed cut rates today?" · "Which companies announced recalls this month?" |
-| `/newsapi:due-diligence` | Adverse media screening, KYC or compliance checks, ESG controversies, company profiles, key people, competitive landscape | "Screen Wirecard for adverse media since 2024." · "Profile Northvolt and its executives." |
-| `/newsapi:risk` | Supply chain disruptions, logistics bottlenecks, sourcing risk, country or regional geopolitical risk | "What is the supply chain risk for shipping through the Red Sea?" · "Assess the political risk in Serbia this quarter." |
-| `/newsapi:markets` | Macro indicators (GDP, inflation, rates, employment), sector performance, company, stock or asset analysis | "What drove Nvidia's stock this month?" · "How is eurozone inflation covered this week?" |
-| `/newsapi:political` | Policy, legislation, regulation, elections, campaigns, coalitions, diplomacy | "Where does the EU Digital Markets Act enforcement stand?" · "Who is leading the Polish presidential campaign?" |
-| `/newsapi:source-analysis` | How outlets cover a story, tone of coverage around an entity, which sources and countries drive the coverage | "Compare how the BBC and Fox News covered the UN climate summit." · "What is the sentiment of coverage of Tesla in German media?" |
+| Skill                      | Ask it for                                                                                                                                                                                                                  | Example questions                                                                                                                 |
+| -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `/newsapi:news`            | What is happening with a topic, what is breaking now, a quick fact, full coverage of a story, which companies announced layoffs or recalls, a topic page update, how much a topic is covered, a multi-angle research report | "What is happening with the Boeing strike?" · "Did the Fed cut rates today?" · "Which companies announced recalls this month?"    |
+| `/newsapi:due-diligence`   | Adverse media screening, KYC or compliance checks, ESG controversies, company profiles, key people, competitive landscape                                                                                                   | "Screen Wirecard for adverse media since 2024." · "Profile Northvolt and its executives."                                         |
+| `/newsapi:risk`            | Supply chain disruptions, logistics bottlenecks, sourcing risk, country or regional geopolitical risk                                                                                                                       | "What is the supply chain risk for shipping through the Red Sea?" · "Assess the political risk in Serbia this quarter."           |
+| `/newsapi:markets`         | Macro indicators (GDP, inflation, rates, employment), sector performance, company, stock or asset analysis                                                                                                                  | "What drove Nvidia's stock this month?" · "How is eurozone inflation covered this week?"                                          |
+| `/newsapi:political`       | Policy, legislation, regulation, elections, campaigns, coalitions, diplomacy                                                                                                                                                | "Where does the EU Digital Markets Act enforcement stand?" · "Who is leading the Polish presidential campaign?"                   |
+| `/newsapi:source-analysis` | How outlets cover a story, tone of coverage around an entity, which sources and countries drive the coverage                                                                                                                | "Compare how the BBC and Fox News covered the UN climate summit." · "What is the sentiment of coverage of Tesla in German media?" |
 
 Every report ends with a usage footer showing the API tokens the research cost.
 
@@ -57,9 +57,18 @@ them with `npm run build:skills` (output in `dist/skills/`).
 
 1. Connect the NewsAPI.ai connector (`https://mcp.newsapi.ai/mcp`) and log in with your
    Event Registry account.
-2. Open **Customize > Skills**, choose **Create skill > Upload a skill** and upload a zip.
-   Repeat for each skill you want. Code execution must be enabled.
-3. Ask a news question; Claude picks the matching skill. There are no slash commands.
+2. Enable code execution under **Settings > Capabilities**; skills need it to read their
+   files.
+3. Open **Customize > Skills**, choose **Create skill > Upload a skill** and upload a zip.
+   Repeat for each skill you want. Uploading a zip again replaces the skill of the same
+   name, which is how you update after a release.
+4. Ask a news question (if Claude uses web search, check **+ → Connectors** in the chat
+   box shows the connector on); Claude
+   picks the matching skill and shows its name at the top of the reply. There are no
+   slash commands.
+
+![Uploaded newsapi-related skills](images/claude-desktop-skills.png)
+<!-- screenshot: images/claude-desktop-code-execution.png (Settings > Capabilities toggle) -->
 
 The desktop copy of a skill is the plugin skill with the Claude Code-only parts removed: no
 `allowed-tools` (the connector's tools are used), the shared reference bundled as
@@ -75,3 +84,5 @@ another name:
    you copied `_reporting.md` to.
 3. A server added as `newsapi` is pre-approved already; for any other name add
    `mcp__<name>__*` to `allowed-tools`.
+
+The slash commands then lose the plugin prefix: `/news`, `/due-diligence`, and so on.

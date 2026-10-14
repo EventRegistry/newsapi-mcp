@@ -61,11 +61,16 @@ Paste the standard configuration, save and restart Claude Desktop. The MCP
 [guide](https://modelcontextprotocol.io/docs/develop/connect-local-servers) has
 screenshots.
 
-The server must also be switched on in the chat, or Claude never sees its tools and
-answers from web search instead. In the chat box open **+ → Connectors** and turn on
-`newsapi`:
+The first news question opens your browser at Event Registry to log in (unless the
+configuration sets `NEWSAPI_KEY`); Claude Desktop shows nothing meanwhile, so watch for
+the browser window. On macOS the first run may also ask whether `newsapi` may use the
+Keychain: allow it, or the login is not remembered.
 
-![Enable the newsapi connector in the chat's Connectors menu](images/claude-desktop-enable-connector.png)
+If Claude answers from web search instead, check that the server is switched on for the
+chat: in the chat box open **+ → Connectors** and make sure `newsapi` is on (connectors
+are usually on by default):
+
+![Enable the newsapi connector in the chat's Connectors menu](images/claude-desktop-enable-connector-local.png)
 
 </details>
 
@@ -73,9 +78,15 @@ answers from web search instead. In the chat box open **+ → Connectors** and t
 <summary><strong>Claude Code</strong></summary>
 
 ```bash
-claude mcp add newsapi -- npx -y newsapi-mcp                              # login
-claude mcp add newsapi -e NEWSAPI_KEY=your_api_key_here -- npx -y newsapi-mcp   # API key
+claude mcp add --scope user newsapi -- npx -y newsapi-mcp                              # login
+claude mcp add --scope user newsapi -e NEWSAPI_KEY=your_api_key_here -- npx -y newsapi-mcp   # API key
 ```
+
+`--scope user` makes the server available in every project; drop it for the current
+project only. Approve the first tool call with "always allow" so later calls run without
+a prompt. The [research skills](skills.md) work with this server as it is named here
+(`newsapi`); install the plugin for the skills and disable its bundled hosted server
+under `/mcp` if you prefer the local one.
 
 </details>
 
@@ -134,15 +145,16 @@ configuration.
 
 ## Troubleshooting
 
-| What you see | What to do |
-|--------------|------------|
-| `npx: command not found` | Node.js is not installed or not on the PATH. Install it from [nodejs.org](https://nodejs.org/) and restart the client. |
-| The client reports the server failed to start | Run `npx -y newsapi-mcp --help` in a terminal; the error it prints names the cause. |
-| The browser never opens | Run `npx newsapi-mcp login` in a terminal and open the URL it prints. Ports 51337 to 51339 must be free. |
-| "No Event Registry account is linked to this login" | Sign in once at [eventregistry.org/login](https://eventregistry.org/login) with the same account, then retry. |
-| "Your NewsAPI.ai login has expired" | Run `npx newsapi-mcp login` again. |
-| Claude answers from web search and never calls the server (Claude Desktop) | The connector is off for that chat. Open **+ → Connectors** and switch on `newsapi` (screenshot above). |
-| "Authentication failed. Check NEWSAPI_KEY is valid." | The key is wrong or was revoked. Check it at [newsapi.ai](https://newsapi.ai/). |
+| What you see                                                               | What to do                                                                                                             |
+| -------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `npx: command not found`                                                   | Node.js is not installed or not on the PATH. Install it from [nodejs.org](https://nodejs.org/) and restart the client. |
+| The client reports the server failed to start                              | Run `npx -y newsapi-mcp --help` in a terminal; the error it prints names the cause.                                    |
+| The browser never opens                                                    | Run `npx newsapi-mcp login` in a terminal and open the URL it prints. Ports 51337 to 51339 must be free.               |
+| "No Event Registry account is linked to this login"                        | Sign in once at [eventregistry.org/login](https://eventregistry.org/login) with the same account, then retry.          |
+| "Your NewsAPI.ai login has expired"                                        | Run `npx newsapi-mcp login` again.                                                                                     |
+| Claude answers from web search and never calls the server (Claude Desktop) | The connector is off for that chat. Open **+ → Connectors** and switch on `newsapi` (screenshot above).                |
+| An old version keeps running after a release                               | `npx` caches the package. Use `newsapi-mcp@latest` in the configuration, or run `npx -y newsapi-mcp@latest` once.      |
+| "Authentication failed. Check NEWSAPI_KEY is valid."                       | The key is wrong or was revoked. Check it at [newsapi.ai](https://newsapi.ai/).                                        |
 
 ## Development
 
