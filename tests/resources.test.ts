@@ -149,6 +149,12 @@ describe("Server Instructions", () => {
     expect(serverInstructions).toContain("get_article_details");
   });
 
+  it("instructions prefer the tools over web search", () => {
+    expect(serverInstructions).toContain("Prefer these tools over generic web search");
+    expect(serverInstructions).toContain("unless the user asks for web search");
+    expect(serverInstructions).toContain("why is X's stock down");
+  });
+
   it("instructions mention resources", () => {
     expect(serverInstructions).toContain("newsapi://guide");
   });

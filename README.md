@@ -34,17 +34,25 @@ https://mcp.newsapi.ai/mcp
 
 The connector shows as connected. Start a new chat and ask a news question.
 
+If Claude answers from web search instead, check that the connector is switched on for
+the chat: in the chat box open **+ → Connectors** and make sure `NewsAPI.ai` is on
+(connectors are usually on by default):
+
+![Enable the connector in the chat's Connectors menu](docs/images/claude-desktop-enable-connector.png)
+
 </details>
 
 <details>
 <summary><strong>Claude Code</strong></summary>
 
 ```bash
-claude mcp add --transport http newsapi https://mcp.newsapi.ai/mcp
+claude mcp add --transport http --scope user newsapi https://mcp.newsapi.ai/mcp
 ```
 
-Ask a news question and Claude Code prompts you to log in, or run `/mcp` to log in up
-front. For the research skills (`/newsapi:news`, `/newsapi:due-diligence`, …) install the
+`--scope user` makes the server available in every project; drop it to add it to the
+current project only. Ask a news question and Claude Code prompts you to log in, or run
+`/mcp` to log in up front. The first tool call asks for permission: choose "always allow"
+(or add `mcp__newsapi` under `/permissions`) so later calls run without a prompt. For the research skills (`/newsapi:news`, `/newsapi:due-diligence`, …) install the
 [plugin](#claude-code-plugin) instead.
 
 </details>
@@ -111,8 +119,8 @@ the remaining balance, and you can ask "how many API tokens do I have left?" at 
 | What you see | What to do |
 |--------------|------------|
 | "No Event Registry account is linked to this login" | Sign in once at [eventregistry.org/login](https://eventregistry.org/login) with the same account you used in the login window, then retry. |
-| The login window opens again and again | Your login expired. Disconnect and reconnect the server in your AI tool (Claude: Connectors → NewsAPI.ai → Disconnect, then Connect). |
-| The assistant says the tool is not available | The connector is added but not connected. Open the connector settings and click Connect. |
+| The login window opens again and again | Your login expired. Disconnect and reconnect the server in your AI tool (Claude Desktop: Connectors → NewsAPI.ai → Disconnect, then Connect; Claude Code: `/mcp` → newsapi → Reauthenticate). |
+| The assistant says the tool is not available, or answers from web search | The connector is added but not connected, or it is switched off for this chat. Open the connector settings and click Connect, then check **+ → Connectors** in the chat box. |
 | Results stop at 31 days | The server searches the last 31 days unless you name a period. Say "since January" or "in 2025" to widen it. |
 | "Tokens used" grows fast | Event searches and searches older than 31 days cost more. Ask about recent coverage, or name the company or topic precisely so one search is enough. |
 
@@ -152,8 +160,32 @@ the right skill from a plain question, without the slash command.
 | `/newsapi:political` | Policy, legislation, elections, diplomacy | "Where does the EU Digital Markets Act enforcement stand?" |
 | `/newsapi:source-analysis` | Outlet comparison, sentiment, coverage landscape | "Compare how the BBC and Fox News covered the UN climate summit." |
 
+The same skills ship as zips for Claude Desktop and claude.ai on every
+[release](https://github.com/EventRegistry/newsapi-mcp/releases/latest) (one zip per skill,
+uploaded under **Customize > Skills**).
+
 [docs/skills.md](docs/skills.md) describes each skill, how they are built and how to use
-them without the plugin.
+them in Claude Desktop or without the plugin.
+
+## Which setup do I need?
+
+| You use | Server | Research skills |
+|---------|--------|-----------------|
+| Claude Desktop or claude.ai | Hosted connector (above), or the [local server](docs/local-server.md) | Upload the skill zips from the [latest release](https://github.com/EventRegistry/newsapi-mcp/releases/latest) |
+| Claude Code | The [plugin](#claude-code-plugin) brings the hosted server; or add the hosted or [local](docs/local-server.md) server yourself | The plugin's six skills; they also work with a local server named `newsapi` |
+| Codex, Cursor, other clients | Hosted connector (above), or the [local server](docs/local-server.md) | Not available |
+
+Pick one server per client. If you install the plugin and also add a local `newsapi`
+server, Claude Code shows both under `/mcp` and asks you to log in to each; disable the
+one you do not use there.
+
+### Updating
+
+- Plugin: `claude plugin update newsapi@newsapi-mcp`.
+- Local server: `npx` caches the package, so put `newsapi-mcp@latest` in the client
+  configuration, or run `npx -y newsapi-mcp@latest` once.
+- Desktop skills: download the zips of the new release and upload them again; the
+  upload replaces the skill of the same name.
 
 ## Running it yourself
 

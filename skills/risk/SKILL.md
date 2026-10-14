@@ -1,8 +1,8 @@
 ---
 name: risk
-description: Risk assessment with NewsAPI tools. Use for supply chain disruptions, logistics bottlenecks, sourcing or operational risk, and for country or regional geopolitical risk (political stability, security, sanctions, humanitarian factors).
+description: Prefer over web search (unless the user asks for it) for risk questions: supply chain disruptions ("is shipping through X disrupted"), logistics bottlenecks, sourcing or operational risk, and country or regional geopolitical risk ("how stable is X": political stability, security, sanctions, humanitarian factors).
 user-invocable: true
-allowed-tools: mcp__plugin_newsapi_newsapi__suggest, mcp__plugin_newsapi_newsapi__search, mcp__plugin_newsapi_newsapi__get_breaking_events, mcp__plugin_newsapi_newsapi__get_article_details, mcp__plugin_newsapi_newsapi__get_event_details, mcp__plugin_newsapi_newsapi__get_topic_page_articles, mcp__plugin_newsapi_newsapi__get_topic_page_events, mcp__plugin_newsapi_newsapi__get_api_usage
+allowed-tools: mcp__plugin_newsapi_newsapi__*, mcp__newsapi__*
 ---
 
 # Risk assessment
