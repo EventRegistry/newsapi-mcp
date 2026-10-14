@@ -43,6 +43,24 @@ the body gives the tool sequence for each kind of question and the report templa
   the model remembers;
 - the report skeleton and the usage footer.
 
+## Claude Desktop and claude.ai
+
+Every release attaches the skills as zips for Claude Desktop and claude.ai, which import one
+skill per zip: `newsapi-<skill>.zip` for each skill, and `newsapi-skills-<version>.zip`
+holding all six. Download them from the
+[latest release](https://github.com/EventRegistry/newsapi-mcp/releases/latest), or build
+them with `npm run build:skills` (output in `dist/skills/`).
+
+1. Connect the NewsAPI.ai connector (`https://mcp.newsapi.ai/mcp`) and log in with your
+   Event Registry account.
+2. Open **Customize > Skills**, choose **Create skill > Upload a skill** and upload a zip.
+   Repeat for each skill you want. Code execution must be enabled.
+3. Ask a news question; Claude picks the matching skill. There are no slash commands.
+
+The desktop copy of a skill is the plugin skill with the Claude Code-only parts removed: no
+`allowed-tools` (the connector's tools are used), the shared reference bundled as
+`reporting.md` next to `SKILL.md`, and a description shortened to the 200-character limit.
+
 ## Using the skills without the plugin
 
 The skills work with any Claude Code setup that has the NewsAPI.ai server connected under

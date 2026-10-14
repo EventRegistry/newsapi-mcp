@@ -152,8 +152,12 @@ the right skill from a plain question, without the slash command.
 | `/newsapi:political` | Policy, legislation, elections, diplomacy | "Where does the EU Digital Markets Act enforcement stand?" |
 | `/newsapi:source-analysis` | Outlet comparison, sentiment, coverage landscape | "Compare how the BBC and Fox News covered the UN climate summit." |
 
+The same skills ship as zips for Claude Desktop and claude.ai on every
+[release](https://github.com/EventRegistry/newsapi-mcp/releases/latest) (one zip per skill,
+uploaded under **Customize > Skills**).
+
 [docs/skills.md](docs/skills.md) describes each skill, how they are built and how to use
-them without the plugin.
+them in Claude Desktop or without the plugin.
 
 ## Running it yourself
 

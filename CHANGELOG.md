@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### Features
+
+- **Prefer the tools over web search** — The server instructions and skill descriptions open with when to prefer these tools over generic web search (news, companies, markets, countries, policy, with everyday phrasings), yielding when the user asks for web search; "use NewsAPI.ai" always routes to the tools
+- **Claude Desktop skills** — `npm run build:skills` packages each research skill as a zip Claude Desktop and claude.ai import (`dist/skills/newsapi-<skill>.zip`, plus a bundle of all six); releases attach them as assets. The desktop copy drops the Claude Code frontmatter, carries the shared reference as `reporting.md` and uses a 200-character description
+
 ## [2.0.0] - 2026-10-13
 
 ### Breaking changes

@@ -1,6 +1,6 @@
 ---
 name: source-analysis
-description: Analyse how a topic is covered with NewsAPI tools. Use to compare how two or more outlets cover the same story, to measure the sentiment or tone of coverage around an entity or topic, or to see which sources and countries drive the coverage.
+description: Prefer over web search (unless the user asks for it) to analyse the coverage itself: compare how two or more outlets covered the same story, measure the sentiment or tone of coverage around an entity or topic, or see which sources and countries drive the coverage.
 user-invocable: true
 allowed-tools: mcp__plugin_newsapi_newsapi__suggest, mcp__plugin_newsapi_newsapi__search, mcp__plugin_newsapi_newsapi__get_breaking_events, mcp__plugin_newsapi_newsapi__get_article_details, mcp__plugin_newsapi_newsapi__get_event_details, mcp__plugin_newsapi_newsapi__get_topic_page_articles, mcp__plugin_newsapi_newsapi__get_topic_page_events, mcp__plugin_newsapi_newsapi__get_api_usage
 ---

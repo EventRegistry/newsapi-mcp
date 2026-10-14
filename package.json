@@ -29,6 +29,7 @@
   "scripts": {
     "build": "tsc",
     "build:bundle": "rm -rf dist && esbuild src/index.ts --bundle --external:@napi-rs/keyring --platform=node --target=node22 --format=esm --outfile=dist/index.js",
+    "build:skills": "node scripts/build-desktop-skills.js",
     "build:http": "esbuild src/http.ts --bundle --external:@napi-rs/keyring --platform=node --target=node22 --format=esm --outfile=dist/http.js \"--banner:js=import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);\"",
     "start": "node --env-file=.env dist/index.js",
     "dev": "tsx --env-file=.env src/index.ts",

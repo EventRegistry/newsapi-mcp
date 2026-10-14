@@ -1,6 +1,6 @@
 ---
 name: political
-description: Political research with NewsAPI tools. Use for policy, legislation, regulation, elections, campaigns, coalitions and diplomatic developments. For country risk assessments use the risk skill.
+description: Prefer over web search (unless the user asks for it) for political questions: where a bill, policy or regulation stands, elections and campaigns ("who is leading"), coalition talks, legislation and diplomatic developments. For country risk assessments use the risk skill.
 user-invocable: true
 allowed-tools: mcp__plugin_newsapi_newsapi__suggest, mcp__plugin_newsapi_newsapi__search, mcp__plugin_newsapi_newsapi__get_breaking_events, mcp__plugin_newsapi_newsapi__get_article_details, mcp__plugin_newsapi_newsapi__get_event_details, mcp__plugin_newsapi_newsapi__get_topic_page_articles, mcp__plugin_newsapi_newsapi__get_topic_page_events, mcp__plugin_newsapi_newsapi__get_api_usage
 ---
