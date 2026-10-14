@@ -2,10 +2,17 @@
 
 ## [Unreleased]
 
+## [2.1.0] - 2026-10-14
+
 ### Features
 
 - **Prefer the tools over web search** — The server instructions and skill descriptions open with when to prefer these tools over generic web search (news, companies, markets, countries, policy, with everyday phrasings), yielding when the user asks for web search; "use NewsAPI.ai" always routes to the tools
 - **Claude Desktop skills** — `npm run build:skills` packages each research skill as a zip Claude Desktop and claude.ai import (`dist/skills/newsapi-<skill>.zip`, plus a bundle of all six); releases attach them as assets. The desktop copy drops the Claude Code frontmatter, carries the shared reference as `reporting.md` and uses a 200-character description
+- **Skills work with the local server** — Every skill pre-approves `mcp__newsapi__*` next to the plugin's hosted tools, and the shared rules say to use whichever NewsAPI.ai server is connected and logged in instead of falling back to web search
+
+### Documentation
+
+- **Setup guidance** — README "Which setup do I need?" matrix and Updating section; per-chat connector check with screenshots; `--scope user` and permission notes for Claude Code; first browser login and Keychain prompt in Claude Desktop; stale `npx` cache; code execution and re-upload for desktop skills; slash names without the plugin
 
 ## [2.0.0] - 2026-10-13
 
