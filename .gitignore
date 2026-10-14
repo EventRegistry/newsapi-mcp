@@ -148,5 +148,7 @@ docs/*
 !docs/local-server.md
 !docs/skills.md
 !docs/how-to-ask.md
+!docs/images/
+!docs/images/*.png
 reports/
 tests_use_cases/.scratch/

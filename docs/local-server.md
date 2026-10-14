@@ -61,6 +61,12 @@ Paste the standard configuration, save and restart Claude Desktop. The MCP
 [guide](https://modelcontextprotocol.io/docs/develop/connect-local-servers) has
 screenshots.
 
+The server must also be switched on in the chat, or Claude never sees its tools and
+answers from web search instead. In the chat box open **+ → Connectors** and turn on
+`newsapi`:
+
+![Enable the newsapi connector in the chat's Connectors menu](images/claude-desktop-enable-connector.png)
+
 </details>
 
 <details>
@@ -135,6 +141,7 @@ configuration.
 | The browser never opens | Run `npx newsapi-mcp login` in a terminal and open the URL it prints. Ports 51337 to 51339 must be free. |
 | "No Event Registry account is linked to this login" | Sign in once at [eventregistry.org/login](https://eventregistry.org/login) with the same account, then retry. |
 | "Your NewsAPI.ai login has expired" | Run `npx newsapi-mcp login` again. |
+| Claude answers from web search and never calls the server (Claude Desktop) | The connector is off for that chat. Open **+ → Connectors** and switch on `newsapi` (screenshot above). |
 | "Authentication failed. Check NEWSAPI_KEY is valid." | The key is wrong or was revoked. Check it at [newsapi.ai](https://newsapi.ai/). |
 
 ## Development

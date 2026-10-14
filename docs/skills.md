@@ -15,6 +15,10 @@ The plugin connects the hosted server at `https://mcp.newsapi.ai/mcp`. The first
 question prompts you to log in with your Event Registry account; `/mcp` logs in up
 front. In permission rules the tools are named `mcp__plugin_newsapi_newsapi__<tool>`.
 
+The skills also work with the [local server](local-server.md) added as `newsapi`
+(`mcp__newsapi__<tool>`): each skill pre-approves both servers, and the shared rules tell
+Claude to use whichever one is connected and logged in.
+
 ## The skills
 
 | Skill | Ask it for | Example questions |
@@ -69,5 +73,5 @@ another name:
 1. Copy `skills/` into your project's `.claude/skills/` directory.
 2. In each `SKILL.md`, replace `${CLAUDE_PLUGIN_ROOT}/skills/_reporting.md` with the path
    you copied `_reporting.md` to.
-3. Change `allowed-tools` to your server's tool names: for a server added as `newsapi`,
-   `mcp__newsapi__<tool>`.
+3. A server added as `newsapi` is pre-approved already; for any other name add
+   `mcp__<name>__*` to `allowed-tools`.

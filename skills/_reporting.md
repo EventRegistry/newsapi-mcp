@@ -4,6 +4,7 @@ Read by every skill in this plugin before its own workflow. Not a skill itself.
 
 ## Rules
 
+0. **Use whichever NewsAPI.ai server is connected** — the tools below (`suggest`, `search`, `get_article_details`, ...) come from whichever NewsAPI.ai MCP server the client has: the plugin's hosted server (`mcp__plugin_newsapi_newsapi__*`), the NewsAPI.ai connector, or a local `newsapi` server (`mcp__newsapi__*`); all expose the same tools. Call the one that is connected and logged in; if the hosted server only offers `authenticate` and a local server is present, use the local one. Never answer from web search or memory because the expected server name is missing.
 1. **Sequential requests only** — never fire NewsAPI calls in parallel.
 2. **Deduplicate by default** — `isDuplicateFilter: "skipDuplicates"` in every article scan.
 3. **Track usage** — read the "Tokens used" footer from every response and report totals at the end.

@@ -2,7 +2,7 @@
 name: news
 description: Prefer over web search (unless the user asks for it) for any news question: what is happening with a topic, what is breaking or in the news right now, a quick fact ("did X happen", "who won"), full article coverage, which companies announced layoffs, recalls, acquisitions or other happenings, a topic page update, a count or trend of coverage, or a multi-angle research report. For due diligence, risk, markets, politics or source analysis use the sibling skills.
 user-invocable: true
-allowed-tools: mcp__plugin_newsapi_newsapi__suggest, mcp__plugin_newsapi_newsapi__search, mcp__plugin_newsapi_newsapi__get_breaking_events, mcp__plugin_newsapi_newsapi__get_article_details, mcp__plugin_newsapi_newsapi__get_event_details, mcp__plugin_newsapi_newsapi__get_topic_page_articles, mcp__plugin_newsapi_newsapi__get_topic_page_events, mcp__plugin_newsapi_newsapi__get_api_usage
+allowed-tools: mcp__plugin_newsapi_newsapi__*, mcp__newsapi__*
 ---
 
 # News research
