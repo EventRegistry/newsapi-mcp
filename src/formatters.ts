@@ -98,6 +98,9 @@ export const formatSuggestEventTypes: ResponseFormatter = (data) => {
     .join("\n\n");
 };
 
+/** Source group suggest results have the same label + uri shape. */
+export const formatSuggestSourceGroups: ResponseFormatter = formatSuggestEventTypes;
+
 /** The "N results (M total) Page X of Y" line closing every paged list. */
 function paginationFooter(
   wrapper: Record<string, unknown> | undefined,

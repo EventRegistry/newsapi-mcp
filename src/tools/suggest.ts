@@ -7,6 +7,7 @@ import {
   formatSuggestEventTypes,
   formatSuggestLocations,
   formatSuggestSources,
+  formatSuggestSourceGroups,
 } from "../formatters.js";
 
 const SUGGEST_TYPES = [
@@ -16,6 +17,7 @@ const SUGGEST_TYPES = [
   "locations",
   "authors",
   "eventTypes",
+  "sourceGroups",
 ] as const;
 
 const SUGGEST_PATHS: Record<string, string> = {
@@ -25,10 +27,13 @@ const SUGGEST_PATHS: Record<string, string> = {
   locations: "/suggestLocationsFast",
   authors: "/suggestAuthorsFast",
   eventTypes: "/eventType/suggestEventTypes",
+  sourceGroups: "/suggestSourceGroups",
 };
 
+const SOURCE_GROUP_COUNT = 100;
+
 /** Lookups that take a prefix only, no language. */
-const PREFIX_ONLY = new Set(["eventTypes"]);
+const PREFIX_ONLY = new Set(["eventTypes", "sourceGroups"]);
 
 const SUGGEST_FORMATTERS: Record<string, ResponseFormatter> = {
   concepts: formatSuggestConcepts,
@@ -37,11 +42,12 @@ const SUGGEST_FORMATTERS: Record<string, ResponseFormatter> = {
   locations: formatSuggestLocations,
   authors: formatSuggestAuthors,
   eventTypes: formatSuggestEventTypes,
+  sourceGroups: formatSuggestSourceGroups,
 };
 
 export const suggest: ToolDef = {
   name: "suggest",
-  description: `Resolve a name to the URI the search filters need (free). Types: concepts (people, orgs, things → conceptUri), categories, sources, locations (→ locationUri / sourceLocationUri), authors, eventTypes (→ eventTypeUri for kind: "mentions"). Keep the prefix short (1-3 words), use English names, prefer established concepts ("Olympic Games", not "2026 Olympics").
+  description: `Resolve a name to the URI the search filters need (free). Types: concepts (people, orgs, things → conceptUri), categories, sources, locations (→ locationUri / sourceLocationUri), authors, eventTypes (→ eventTypeUri for kind: "mentions"), sourceGroups (curated source lists → sourceGroupUri / ignoreSourceGroupUri; an empty prefix lists them). Keep the prefix short (1-3 words), use English names, prefer established concepts ("Olympic Games", not "2026 Olympics").
 Example: suggest({type: "concepts", prefix: "Tesla"})`,
   inputSchema: {
     type: "object",
@@ -75,6 +81,8 @@ Example: suggest({type: "concepts", prefix: "Tesla"})`,
     }
 
     const body = PREFIX_ONLY.has(type) ? { prefix } : { prefix, lang };
+    // The group catalog has ~60 entries; the API default of 20 would cut an empty-prefix listing.
+    if (type === "sourceGroups") Object.assign(body, { count: SOURCE_GROUP_COUNT });
     const { data, tokenUsage } = await apiPost(path, body);
     return { data, tokenUsage: tokenUsage ?? { reqTokens: 0, remaining: 0 } };
   },
