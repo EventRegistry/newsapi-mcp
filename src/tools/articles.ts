@@ -57,6 +57,11 @@ export const contentFilterProps: Record<string, unknown> = {
     description:
       "Language code(s), comma-separated ISO-3 (\"eng\", \"deu\", \"slv\").",
   },
+  openSourcesOnly: {
+    type: "boolean",
+    description:
+      "true keeps only sources that are not behind a paywall (excludes the paywall/paywalled_sources group). Default false: all sources.",
+  },
   dateStart: {
     type: "string",
     description: "Start date inclusive (YYYY-MM-DD).",

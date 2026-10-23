@@ -2,6 +2,17 @@
 
 ## [Unreleased]
 
+## [2.2.0] - 2026-10-23
+
+### Features
+
+- **Open sources only** — `openSourcesOnly: true` on `search` excludes the paywalled source group (`paywall/paywalled_sources`) for every kind and aggregate, both as a flat filter and inside an advanced `query` (`$not`); the default still searches all sources. A note under the result says the exclusion was applied
+- **Source group lookup** — `suggest(type: "sourceGroups")` lists the curated source groups so `options.sourceGroupUri` and `ignoreSourceGroupUri` can be resolved by name; it requests 100 rows because the catalog exceeds the API's default page of 20
+
+### Improvements
+
+- **Toolchain** — Development dependencies move to eslint 10, vitest 5, TypeScript 6.0 and esbuild 0.28; no change to the published package
+
 ## [2.1.0] - 2026-10-14
 
 ### Features

@@ -568,6 +568,12 @@ describe("suggest", () => {
     });
   });
 
+  it('type="sourceGroups" calls the source group endpoint with the prefix only', async () => {
+    await suggest.handler({ type: "sourceGroups", prefix: "", lang: "deu" });
+
+    expect(mockedApiPost).toHaveBeenCalledWith("/suggestSourceGroups", { prefix: "", count: 100 });
+  });
+
   it("passes custom lang parameter", async () => {
     await suggest.handler({ type: "concepts", prefix: "Test", lang: "deu" });
 

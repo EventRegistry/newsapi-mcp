@@ -40,7 +40,10 @@ const ARRAY_FIELDS = new Set([
 ]);
 
 /** Params the server consumes itself and never sends. */
-const LOCAL_PARAMS = new Set(["includeFields", "articleBodyLen"]);
+const LOCAL_PARAMS = new Set(["includeFields", "articleBodyLen", "openSourcesOnly"]);
+
+/** Source group of sources behind a paywall; `openSourcesOnly` excludes it. */
+export const PAYWALLED_SOURCE_GROUP = "paywall/paywalled_sources";
 
 /** Flat filters that become one extra leaf of an advanced query (implicit AND). */
 const QUERY_LEAF_KEYS = [
@@ -236,6 +239,12 @@ export function buildSearchBody(
   for (const [k, v] of Object.entries(params)) {
     if (v === undefined || v === null || LOCAL_PARAMS.has(k) || k === "query") continue;
     body[k] = ARRAY_FIELDS.has(k) ? parseArray(v) : v;
+  }
+  if (params.openSourcesOnly === true) {
+    const groups = (body.ignoreSourceGroupUri as string[] | undefined) ?? [];
+    if (!groups.includes(PAYWALLED_SOURCE_GROUP)) groups.push(PAYWALLED_SOURCE_GROUP);
+    body.ignoreSourceGroupUri = groups;
+    notes.push(`openSourcesOnly: paywalled sources were excluded (ignoreSourceGroupUri: "${PAYWALLED_SOURCE_GROUP}").`);
   }
 
   if (params.query !== undefined) {

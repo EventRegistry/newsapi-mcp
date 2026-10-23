@@ -37,11 +37,11 @@ When the question names a kind of happening (acquisitions, layoffs, product laun
 For quantitative questions (volume over time, who covers it, which entities, tone) set resultType to an aggregate: "timeAggr", "sourceAggr", "conceptAggr", "categoryAggr", "keywordAggr", "sentimentAggr", "locAggr", "authorAggr" ("langAggr" for articles and mentions, "eventTypeAggr" for mentions). One call summarises every match; no scan needed.
 
 ### Building the filter
-- Default: conceptUri (ANDed; conceptOper: "or" for any-of) + optional keyword (exact phrase in the body; keywordLoc: "title" for headlines) + lang + a date window. Exclusions: ignoreConceptUri, ignoreKeyword, ignoreSourceUri. Sources from a country: sourceLocationUri, not sourceUri.
+- Default: conceptUri (ANDed; conceptOper: "or" for any-of) + optional keyword (exact phrase in the body; keywordLoc: "title" for headlines) + lang + a date window. Exclusions: ignoreConceptUri, ignoreKeyword, ignoreSourceUri. Sources from a country: sourceLocationUri, not sourceUri. All sources are searched, paywalled ones included; openSourcesOnly: true when the user wants only freely readable (non-paywalled) sources.
 - Scans: isDuplicateFilter: "skipDuplicates" removes wire copies. Sorting by socialScore surfaces low-authority sources; pair it with options.endSourceRankPercentile.
 - Text logic in ONE keyword string: "Tesla AND (recall OR lawsuit) NOT Musk" (AND, OR, NOT, NEAR/n, NEXT/n, parentheses, quotes). Detected automatically; do not comma-separate inside it.
 - OR across different fields (concept OR keyword OR category) or two ANDed OR-groups: use the query param; flat params you add alongside are merged with it. See the param description for the grammar and examples.
-- Rare filters (sentiment, source rank, authors, locations, source groups, extra exclusions) are under options: {...}. Paging is page / count / sortBy for every kind; a param marked "<kind> only" is rejected for other kinds.
+- Rare filters (sentiment, source rank, authors, locations, source groups from suggest(type: "sourceGroups"), extra exclusions) are under options: {...}. Paging is page / count / sortBy for every kind; a param marked "<kind> only" is rejected for other kinds.
 - Dates and cost: a search within the last 31 days costs 1 API token (articles) or 5 (events) regardless of count; a dateStart more than 31 days back costs 5–10×, no date filter 65×. Without a date filter the server searches the last 31 days and says so. "Recent", "this week", "last month" mean forceMaxDataTimeWindow: 7 or 31, never a calendar month or explicit dates; set dateStart/dateEnd only when the user names a period that lies further back.
 
 ### When to simplify

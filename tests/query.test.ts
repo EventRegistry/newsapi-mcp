@@ -36,6 +36,30 @@ describe("buildSearchBody", () => {
     expect(body.keyword).toEqual(["recall", "lawsuit"]);
   });
 
+  it("openSourcesOnly excludes the paywalled source group", () => {
+    const { body, notes } = buildSearchBody({ conceptUri: "a", openSourcesOnly: true, ignoreSourceGroupUri: "g1" });
+    expect(body.openSourcesOnly).toBeUndefined();
+    expect(body.ignoreSourceGroupUri).toEqual(["g1", "paywall/paywalled_sources"]);
+    expect(notes.some((n) => /paywalled/.test(n))).toBe(true);
+  });
+
+  it("openSourcesOnly becomes $not in an advanced query", () => {
+    const { body } = buildSearchBody({
+      query: { $query: { conceptUri: "a" } },
+      openSourcesOnly: true,
+      dateStart: "2025-01-01",
+    });
+    expect((body.query as { $query: { $not: unknown } }).$query.$not).toEqual({
+      sourceGroupUri: "paywall/paywalled_sources",
+    });
+  });
+
+  it("openSourcesOnly false sends nothing", () => {
+    const { body } = buildSearchBody({ conceptUri: "a", openSourcesOnly: false });
+    expect(body.openSourcesOnly).toBeUndefined();
+    expect(body.ignoreSourceGroupUri).toBeUndefined();
+  });
+
   it("folds flat filters into an advanced query", () => {
     const { body, notes } = buildSearchBody({
       query: { $query: { $or: [{ conceptUri: "a" }, { keyword: "b" }] } },

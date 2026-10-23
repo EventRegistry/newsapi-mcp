@@ -1,12 +1,13 @@
 {
   "name": "newsapi",
   "displayName": "NewsAPI.ai",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "Real-time news intelligence from NewsAPI.ai: the hosted MCP server plus research skills for news, due diligence, risk, markets, politics and source analysis",
   "author": {
     "name": "Event Registry d.o.o."
   },
   "homepage": "https://github.com/EventRegistry/newsapi-mcp#readme",
+  "privacyPolicyUrl": "https://newsapi.ai/privacyPolicy",
   "repository": "https://github.com/EventRegistry/newsapi-mcp",
   "license": "MIT",
   "keywords": [

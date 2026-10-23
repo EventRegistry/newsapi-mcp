@@ -13,6 +13,7 @@ const SHARED_FILTER_KEYS = [
   "sourceGroupUri",
   "locationUri",
   "lang",
+  "openSourcesOnly",
   "dateStart",
   "dateEnd",
   "keywordOper",
