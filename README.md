@@ -7,17 +7,20 @@
 [![MCP](https://img.shields.io/badge/MCP-Streamable_HTTP_%2B_stdio-blue)](https://modelcontextprotocol.io)
 [![MIT License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-Ask your AI assistant about the news. This Model Context Protocol (MCP) server connects
-Claude, Cursor, Codex and other AI tools to [NewsAPI.ai](https://newsapi.ai/) (Event
-Registry): 150,000+ sources in 50+ languages, searched as articles, events (clusters of
-articles about one story) and mentions (sentences that state a happening such as an
-acquisition or a recall).
+Ask your AI assistant about the news. NewsAPI.ai MCP Server connects Claude, Cursor,
+Codex and other AI tools to [NewsAPI.ai](https://newsapi.ai/), a news API developed and
+operated by [Event Registry](https://eventregistry.org/): 150,000+ sources in 50+
+languages, searched as articles, events (clusters of articles about one story) and
+mentions (sentences that state a happening such as an acquisition or a recall).
+
+[Homepage](https://newsapi.ai/) · [Documentation](https://newsapi.ai/documentation?tab=introduction) ·
+[Register](https://newsapi.ai/register) · [Terms of Service](https://newsapi.ai/terms)
 
 Use of the data is subject to the [NewsAPI.ai Terms of Service](https://newsapi.ai/terms).
 
 ## Connect in two minutes
 
-You need an [Event Registry account](https://eventregistry.org/register) (free tier
+You need a [NewsAPI.ai account](https://newsapi.ai/register) (free tier
 included). No download, no API key: add the server address to your AI tool and log in
 when it asks.
 

@@ -1,7 +1,7 @@
 {
   "name": "newsapi-mcp",
   "version": "2.2.0",
-  "description": "MCP server for NewsAPI.ai (Event Registry)",
+  "description": "NewsAPI.ai MCP Server: connects AI assistants to NewsAPI.ai, a news API developed and operated by Event Registry.",
   "author": "Event Registry d.o.o.",
   "contributors": [
     "Erik Novak"
