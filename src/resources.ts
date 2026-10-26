@@ -12,7 +12,7 @@ import { REPORTING_RULES } from "./instructions.js";
 
 export const GUIDE_CONTENT = `# NewsAPI MCP Server Guide
 
-This server provides access to Event Registry's global news database covering 150,000+ sources in 100+ languages. The core suggest → scan → triage → retrieve workflow is described in the server instructions. This guide covers tool details and advanced patterns.
+This server provides access to Event Registry's global news database covering 150,000+ sources in 50+ languages. The core suggest → scan → triage → retrieve workflow is described in the server instructions. This guide covers tool details and advanced patterns.
 
 ## Core Concepts
 

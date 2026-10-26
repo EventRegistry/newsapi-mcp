@@ -5,7 +5,7 @@ finds it in one or two searches.
 
 ## What is in the database
 
-- News articles from 150,000+ sources in 100+ languages, with article information such as
+- News articles from 150,000+ sources in 50+ languages, with article information such as
   publisher, publish time, named entities and sentiment.
 - Events: clusters of articles about one real-world happening, with a summary and an
   article count. One event per story, however many outlets covered it.
@@ -18,11 +18,11 @@ only published news.
 
 ## Three kinds of question
 
-| You want | Ask like | The assistant uses |
-|----------|----------|--------------------|
-| An overview of what is going on | "What is happening with X?", "What are the biggest stories this week?" | events |
-| Specific articles, article information, a given outlet | "What did Reuters write about X?", "Find French articles on X" | articles |
-| Who did what | "Which companies announced layoffs this month?", "Recent acquisitions in biotech" | mentions |
+| You want                                               | Ask like                                                                          | The assistant uses |
+| ------------------------------------------------------ | --------------------------------------------------------------------------------- | ------------------ |
+| An overview of what is going on                        | "What is happening with X?", "What are the biggest stories this week?"            | events             |
+| Specific articles, article information, a given outlet | "What did Reuters write about X?", "Find French articles on X"                    | articles           |
+| Who did what                                           | "Which companies announced layoffs this month?", "Recent acquisitions in biotech" | mentions           |
 
 Numbers are a fourth kind: "How much coverage did X get per day in September?", "Which
 outlets write most about X?", "Is coverage of X positive or negative?" are answered with

@@ -9,7 +9,7 @@
 
 Ask your AI assistant about the news. This Model Context Protocol (MCP) server connects
 Claude, Cursor, Codex and other AI tools to [NewsAPI.ai](https://newsapi.ai/) (Event
-Registry): 150,000+ sources in 100+ languages, searched as articles, events (clusters of
+Registry): 150,000+ sources in 50+ languages, searched as articles, events (clusters of
 articles about one story) and mentions (sentences that state a happening such as an
 acquisition or a recall).
 
@@ -116,26 +116,26 @@ the remaining balance, and you can ask "how many API tokens do I have left?" at 
 
 ### Troubleshooting
 
-| What you see | What to do |
-|--------------|------------|
-| "No Event Registry account is linked to this login" | Sign in once at [eventregistry.org/login](https://eventregistry.org/login) with the same account you used in the login window, then retry. |
-| The login window opens again and again | Your login expired. Disconnect and reconnect the server in your AI tool (Claude Desktop: Connectors → NewsAPI.ai → Disconnect, then Connect; Claude Code: `/mcp` → newsapi → Reauthenticate). |
-| The assistant says the tool is not available, or answers from web search | The connector is added but not connected, or it is switched off for this chat. Open the connector settings and click Connect, then check **+ → Connectors** in the chat box. |
-| Results stop at 31 days | The server searches the last 31 days unless you name a period. Say "since January" or "in 2025" to widen it. |
-| "Tokens used" grows fast | Event searches and searches older than 31 days cost more. Ask about recent coverage, or name the company or topic precisely so one search is enough. |
+| What you see                                                             | What to do                                                                                                                                                                                    |
+| ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| "No Event Registry account is linked to this login"                      | Sign in once at [eventregistry.org/login](https://eventregistry.org/login) with the same account you used in the login window, then retry.                                                    |
+| The login window opens again and again                                   | Your login expired. Disconnect and reconnect the server in your AI tool (Claude Desktop: Connectors → NewsAPI.ai → Disconnect, then Connect; Claude Code: `/mcp` → newsapi → Reauthenticate). |
+| The assistant says the tool is not available, or answers from web search | The connector is added but not connected, or it is switched off for this chat. Open the connector settings and click Connect, then check **+ → Connectors** in the chat box.                  |
+| Results stop at 31 days                                                  | The server searches the last 31 days unless you name a period. Say "since January" or "in 2025" to widen it.                                                                                  |
+| "Tokens used" grows fast                                                 | Event searches and searches older than 31 days cost more. Ask about recent coverage, or name the company or topic precisely so one search is enough.                                          |
 
 ## What the assistant can do
 
-| Tool | Description |
-|------|-------------|
-| `suggest` | Look up URIs for entities, sources, categories, locations and event types by name. Used before searching with URI filters. |
-| `search` | One search tool with `kind`: `articles` (by concepts, sources, categories, dates, language, sentiment), `events` (clusters of related articles about the same happening) or `mentions` (sentences that state a specific event type such as an acquisition, layoffs, a launch or a recall, with entities and article links). Every kind also returns aggregates (`resultType`: coverage over time, top sources, top entities, sentiment). |
-| `get_article_details` | Article information (URL, publisher, date, entities and more) for articles selected from a search. |
-| `get_event_details` | Summary, concepts and articles of an event. |
-| `get_breaking_events` | List the events breaking right now, ranked by breaking score. |
-| `get_topic_page_articles` | Get articles from a saved [Topic Page](https://newsapi.ai) on NewsAPI.ai. |
-| `get_topic_page_events` | Get events from a saved Topic Page on NewsAPI.ai. |
-| `get_api_usage` | Check token usage and plan details for the current account. |
+| Tool                      | Description                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `suggest`                 | Look up URIs for entities, sources, categories, locations and event types by name. Used before searching with URI filters.                                                                                                                                                                                                                                                                                                               |
+| `search`                  | One search tool with `kind`: `articles` (by concepts, sources, categories, dates, language, sentiment), `events` (clusters of related articles about the same happening) or `mentions` (sentences that state a specific event type such as an acquisition, layoffs, a launch or a recall, with entities and article links). Every kind also returns aggregates (`resultType`: coverage over time, top sources, top entities, sentiment). |
+| `get_article_details`     | Article information (URL, publisher, date, entities and more) for articles selected from a search.                                                                                                                                                                                                                                                                                                                                       |
+| `get_event_details`       | Summary, concepts and articles of an event.                                                                                                                                                                                                                                                                                                                                                                                              |
+| `get_breaking_events`     | List the events breaking right now, ranked by breaking score.                                                                                                                                                                                                                                                                                                                                                                            |
+| `get_topic_page_articles` | Get articles from a saved [Topic Page](https://newsapi.ai) on NewsAPI.ai.                                                                                                                                                                                                                                                                                                                                                                |
+| `get_topic_page_events`   | Get events from a saved Topic Page on NewsAPI.ai.                                                                                                                                                                                                                                                                                                                                                                                        |
+| `get_api_usage`           | Check token usage and plan details for the current account.                                                                                                                                                                                                                                                                                                                                                                              |
 
 ## Claude Code plugin
 
@@ -151,14 +151,14 @@ Ask a news question or run a skill; Claude Code prompts you to log in with your 
 Registry account the first time (or run `/mcp` to log in up front). Claude Code also picks
 the right skill from a plain question, without the slash command.
 
-| Skill | Ask it for | Example |
-|-------|------------|---------|
-| `/newsapi:news` | Overviews, article deep dives, happenings, coverage counts, breaking news, topic pages, research reports | "What is happening with the Boeing strike?" |
-| `/newsapi:due-diligence` | Adverse media screening, ESG controversies, company profiles, key people | "Screen Wirecard for adverse media since 2024." |
-| `/newsapi:risk` | Supply chain disruptions, country and regional geopolitical risk | "What is the supply chain risk for shipping through the Red Sea?" |
-| `/newsapi:markets` | Economic indicators and sectors, company and asset analysis | "What drove Nvidia's stock this month?" |
-| `/newsapi:political` | Policy, legislation, elections, diplomacy | "Where does the EU Digital Markets Act enforcement stand?" |
-| `/newsapi:source-analysis` | Outlet comparison, sentiment, coverage landscape | "Compare how the BBC and Fox News covered the UN climate summit." |
+| Skill                      | Ask it for                                                                                               | Example                                                           |
+| -------------------------- | -------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| `/newsapi:news`            | Overviews, article deep dives, happenings, coverage counts, breaking news, topic pages, research reports | "What is happening with the Boeing strike?"                       |
+| `/newsapi:due-diligence`   | Adverse media screening, ESG controversies, company profiles, key people                                 | "Screen Wirecard for adverse media since 2024."                   |
+| `/newsapi:risk`            | Supply chain disruptions, country and regional geopolitical risk                                         | "What is the supply chain risk for shipping through the Red Sea?" |
+| `/newsapi:markets`         | Economic indicators and sectors, company and asset analysis                                              | "What drove Nvidia's stock this month?"                           |
+| `/newsapi:political`       | Policy, legislation, elections, diplomacy                                                                | "Where does the EU Digital Markets Act enforcement stand?"        |
+| `/newsapi:source-analysis` | Outlet comparison, sentiment, coverage landscape                                                         | "Compare how the BBC and Fox News covered the UN climate summit." |
 
 The same skills ship as zips for Claude Desktop and claude.ai on every
 [release](https://github.com/EventRegistry/newsapi-mcp/releases/latest) (one zip per skill,
@@ -169,11 +169,11 @@ them in Claude Desktop or without the plugin.
 
 ## Which setup do I need?
 
-| You use | Server | Research skills |
-|---------|--------|-----------------|
-| Claude Desktop or claude.ai | Hosted connector (above), or the [local server](docs/local-server.md) | Upload the skill zips from the [latest release](https://github.com/EventRegistry/newsapi-mcp/releases/latest) |
-| Claude Code | The [plugin](#claude-code-plugin) brings the hosted server; or add the hosted or [local](docs/local-server.md) server yourself | The plugin's six skills; they also work with a local server named `newsapi` |
-| Codex, Cursor, other clients | Hosted connector (above), or the [local server](docs/local-server.md) | Not available |
+| You use                      | Server                                                                                                                         | Research skills                                                                                               |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------- |
+| Claude Desktop or claude.ai  | Hosted connector (above), or the [local server](docs/local-server.md)                                                          | Upload the skill zips from the [latest release](https://github.com/EventRegistry/newsapi-mcp/releases/latest) |
+| Claude Code                  | The [plugin](#claude-code-plugin) brings the hosted server; or add the hosted or [local](docs/local-server.md) server yourself | The plugin's six skills; they also work with a local server named `newsapi`                                   |
+| Codex, Cursor, other clients | Hosted connector (above), or the [local server](docs/local-server.md)                                                          | Not available                                                                                                 |
 
 Pick one server per client. If you install the plugin and also add a local `newsapi`
 server, Claude Code shows both under `/mcp` and asks you to log in to each; disable the
