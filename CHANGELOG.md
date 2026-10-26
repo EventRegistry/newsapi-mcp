@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fixes
+
+- **Language count** — The README, the how-to-ask guide, the server instructions and the guide resource all state 50+ languages; the server instructions and the guide resource previously said 100+
+
 ## [2.2.0] - 2026-10-23
 
 ### Features
