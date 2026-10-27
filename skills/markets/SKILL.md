@@ -27,7 +27,7 @@ Economic when the subject is an indicator, economy or sector; investing when it 
 
 ## Investing
 
-1. `suggest({type: "concepts", prefix: "<company or asset>"})`
+1. `suggest({type: "concepts", prefix: "<company or asset>"})`; a bare stock ticker or ISIN goes through `idType: "ticker"` or `"isin"` instead of a name
 2. `search({kind: "articles", conceptUri, resultType: "sentimentAggr"})` and `"timeAggr"` for tone and attention over the window
 3. `search({kind: "mentions", conceptUri, eventTypeUri: "et/business/earnings,et/business/revenues,et/business/dividends,et/business/analyst-ratings,et/business/price-targets,et/business/credit-ratings,et/business/acquisitions-mergers,et/business/equity-actions,et/business/products-services/product-release,et/business/labor-issues,et/society/legal", count: 50})` for the dated developments (taxonomy in the shared reference)
 4. `search({kind: "articles", conceptUri, count: 100, articleBodyLen: 0, isDuplicateFilter: "skipDuplicates", keyword: "earnings OR revenue OR guidance OR dividend OR valuation OR analyst OR upgrade OR downgrade OR IPO OR buyback", options: {endSourceRankPercentile: 30}})`

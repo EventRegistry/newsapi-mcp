@@ -583,6 +583,38 @@ describe("suggest", () => {
     });
   });
 
+  it('idType="isin" sends the identifier mode as lang', async () => {
+    await suggest.handler({ type: "concepts", prefix: "US0378331005", idType: "isin" });
+
+    expect(mockedApiPost).toHaveBeenCalledWith("/suggestConceptsFast", {
+      prefix: "US0378331005",
+      lang: "isin",
+    });
+  });
+
+  it('idType="ticker" sends the identifier mode as lang', async () => {
+    await suggest.handler({ type: "concepts", prefix: "AAPL", idType: "ticker" });
+
+    expect(mockedApiPost).toHaveBeenCalledWith("/suggestConceptsFast", {
+      prefix: "AAPL",
+      lang: "ticker",
+    });
+  });
+
+  it("rejects idType for a type other than concepts", async () => {
+    await expect(
+      suggest.handler({ type: "sources", prefix: "AAPL", idType: "ticker" }),
+    ).rejects.toThrow('idType "ticker" applies to type "concepts" only, not "sources".');
+    expect(mockedApiPost).not.toHaveBeenCalled();
+  });
+
+  it("rejects idType together with lang", async () => {
+    await expect(
+      suggest.handler({ type: "concepts", prefix: "AAPL", idType: "ticker", lang: "eng" }),
+    ).rejects.toThrow('idType "ticker" and lang "eng" cannot be combined');
+    expect(mockedApiPost).not.toHaveBeenCalled();
+  });
+
   it("calls the API on every call", async () => {
     await suggest.handler({ type: "concepts", prefix: "Tesla" });
     await suggest.handler({ type: "concepts", prefix: "Tesla" });

@@ -31,7 +31,7 @@ Both patterns lean on **mentions**: a sentence tagged with an event type (lawsui
 
 ## Company intelligence (ask depth)
 
-1. `suggest({type: "concepts", prefix: "<company>"})`
+1. `suggest({type: "concepts", prefix: "<company>"})`; a bare stock ticker or ISIN goes through `idType: "ticker"` or `"isin"` instead of a name
 2. `search({kind: "articles", conceptUri, resultType: "conceptAggr"})` for executives, subsidiaries and competitors; ask the depth question with those names
 3. `search({kind: "mentions", conceptUri, eventTypeUri: "et/business/acquisitions-mergers,et/business/partnerships,et/business/equity-actions,et/business/labor-issues,et/business/products-services,et/business/earnings", count: 50})`; `resultType: "eventTypeAggr"` first if the user wants the shape of the activity
 4. `search({kind: "events", conceptUri, count: 50, sortBy: "date"})` and triage for the major developments; `get_event_details({eventUri: [...], includeFields: "concepts,categories"})`

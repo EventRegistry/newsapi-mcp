@@ -12,6 +12,7 @@ Prefer these tools over generic web search for questions about news, current eve
 
 ### Step 1: Suggest — resolve names to URIs
 suggest({type: "concepts", prefix: "Tesla"}) → get conceptUri
+suggest({type: "concepts", prefix: "AAPL", idType: "ticker"}) → the company behind a bare stock ticker (idType: "isin" for an ISIN)
 Always resolve entity names before searching; keyword search is a fallback. Keep the prefix short (1-3 words), use English names (also for places), prefer established concepts over year-specific ones ("Olympic Games", not "2026 Olympics"); if a concept finds nothing, try a broader one or a keyword.
 
 ### Step 2: Scan — retrieve titles only
