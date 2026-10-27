@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Features
+
+- **Ticker and ISIN lookup** — `suggest(type: "concepts")` takes `idType: "ticker"` or `"isin"` to resolve a stock ticker (`AAPL`) or an ISIN (`US0378331005`) to the company; the API already supported both as `lang` values, but the tool described `lang` only as the language of a name, so models sent identifiers as English text and got unrelated matches. `idType` is rejected for other types and together with `lang`; the tool description, the server instructions and the markets and due-diligence skills name the mode
+
 ### Fixes
 
 - **Language count** — The README, the how-to-ask guide, the server instructions and the guide resource all state 50+ languages; the server instructions and the guide resource previously said 100+
