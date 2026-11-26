@@ -350,6 +350,101 @@ describe("getEventDetails", () => {
     ).rejects.toThrow(/only supports a single eventUri/);
   });
 
+  it("follows a merged event once, names the redirect and sums the tokens", async () => {
+    mockedApiPost.mockResolvedValueOnce({
+      data: {
+        "evt-1": { info: { uri: "evt-1", title: { eng: "Kept" } } },
+        "evt-2": { newEventUri: "evt-9" },
+      },
+      tokenUsage: { reqTokens: 20, remaining: 980 },
+    });
+    mockedApiPost.mockResolvedValueOnce({
+      data: { "evt-9": { info: { uri: "evt-9", title: { eng: "Merged" } } } },
+      tokenUsage: { reqTokens: 20, remaining: 960 },
+    });
+
+    const result = await getEventDetails.handler({
+      eventUri: ["evt-1", "evt-2"],
+    });
+
+    expect(mockedApiPost).toHaveBeenCalledTimes(2);
+    expect(mockedApiPost.mock.calls[1][1]).toMatchObject({
+      resultType: "info",
+      eventUri: ["evt-9"],
+    });
+    expect(Object.keys(result.data as object)).toEqual(["evt-1", "evt-9"]);
+    expect(result.notes).toEqual([
+      "Event evt-2 was merged into evt-9; showing evt-9.",
+    ]);
+    expect(result.tokenUsage).toEqual({ reqTokens: 40, remaining: 960 });
+  });
+
+  it("follows a merged event once for resultType articles", async () => {
+    mockedApiPost.mockResolvedValueOnce({
+      data: { "evt-2": { newEventUri: "evt-9" } },
+      tokenUsage: { reqTokens: 5, remaining: 995 },
+    });
+    mockedApiPost.mockResolvedValueOnce({
+      data: { "evt-9": { articles: { results: [], totalResults: 0 } } },
+      tokenUsage: { reqTokens: 5, remaining: 990 },
+    });
+
+    const result = await getEventDetails.handler({
+      eventUri: "evt-2",
+      resultType: "articles",
+    });
+
+    expect(mockedApiPost.mock.calls[1][1]).toMatchObject({
+      resultType: "articles",
+      eventUri: "evt-9",
+      articlesCount: 10,
+    });
+    expect(Object.keys(result.data as object)).toEqual(["evt-9"]);
+    expect(result.tokenUsage).toEqual({ reqTokens: 10, remaining: 990 });
+  });
+
+  it("keeps the merged entry when the retry is merged too, and never chains", async () => {
+    mockedApiPost.mockResolvedValueOnce({
+      data: { "evt-2": { newEventUri: "evt-9" } },
+    });
+    mockedApiPost.mockResolvedValueOnce({
+      data: { "evt-9": { newEventUri: "evt-10" } },
+    });
+
+    const result = await getEventDetails.handler({ eventUri: "evt-2" });
+
+    expect(mockedApiPost).toHaveBeenCalledTimes(2);
+    expect(result.data).toEqual({ "evt-2": { newEventUri: "evt-9" } });
+    expect(result.notes).toBeUndefined();
+  });
+
+  it("makes no retry when the merge target is already in the answer", async () => {
+    mockedApiPost.mockResolvedValueOnce({
+      data: {
+        "evt-1": { info: { uri: "evt-1" } },
+        "evt-2": { newEventUri: "evt-1" },
+      },
+    });
+
+    const result = await getEventDetails.handler({
+      eventUri: ["evt-1", "evt-2"],
+    });
+
+    expect(mockedApiPost).toHaveBeenCalledTimes(1);
+    expect(Object.keys(result.data as object)).toEqual(["evt-1"]);
+    expect(result.notes).toEqual([
+      "Event evt-2 was merged into evt-1; showing evt-1.",
+    ]);
+  });
+
+  it("makes no retry when no event was merged", async () => {
+    mockedApiPost.mockResolvedValueOnce({
+      data: { "evt-1": { info: { uri: "evt-1" } } },
+    });
+    await getEventDetails.handler({ eventUri: "evt-1" });
+    expect(mockedApiPost).toHaveBeenCalledTimes(1);
+  });
+
   it("sends resultType info with array URIs (existing behavior)", async () => {
     await getEventDetails.handler({
       eventUri: ["evt-1", "evt-2"],
@@ -867,6 +962,62 @@ describe("getBreakingEvents", () => {
     });
     expect(second.topArticle).toBeUndefined();
     expect(result.tokenUsage).toEqual({ reqTokens: 11, remaining: 890 });
+  });
+
+  it("follows a merged event once for its top article", async () => {
+    mockedApiPost.mockResolvedValueOnce({
+      data: { breakingEvents: { results: [{ uri: "eng-1" }] } },
+      tokenUsage: { reqTokens: 1, remaining: 900 },
+    });
+    mockedApiPost.mockResolvedValueOnce({
+      data: { "eng-1": { newEventUri: "eng-7" } },
+      tokenUsage: { reqTokens: 5, remaining: 895 },
+    });
+    mockedApiPost.mockResolvedValueOnce({
+      data: {
+        "eng-7": {
+          articles: {
+            results: [{ title: "T", url: "https://ex.com/t", source: { title: "S" } }],
+          },
+        },
+      },
+      tokenUsage: { reqTokens: 5, remaining: 890 },
+    });
+
+    const result = await getBreakingEvents.handler({
+      includeTopArticleUrl: true,
+    });
+
+    expect(mockedApiPost).toHaveBeenCalledTimes(3);
+    expect(mockedApiPost.mock.calls[2][1]).toMatchObject({ eventUri: "eng-7" });
+    const [evt] = (
+      (result.data as Record<string, unknown>).breakingEvents as {
+        results: Record<string, unknown>[];
+      }
+    ).results;
+    expect(evt.topArticle).toEqual({
+      title: "T",
+      url: "https://ex.com/t",
+      source: "S",
+    });
+    expect(result.tokenUsage).toEqual({ reqTokens: 11, remaining: 890 });
+  });
+
+  it("keeps the last known remaining count when a later call has none", async () => {
+    mockedApiPost.mockResolvedValueOnce({
+      data: { breakingEvents: { results: [{ uri: "eng-1" }] } },
+      tokenUsage: { reqTokens: 1, remaining: 900 },
+    });
+    mockedApiPost.mockResolvedValueOnce({
+      data: { "eng-1": { articles: { results: [] } } },
+      tokenUsage: { reqTokens: 5 },
+    });
+
+    const result = await getBreakingEvents.handler({
+      includeTopArticleUrl: true,
+    });
+
+    expect(result.tokenUsage).toEqual({ reqTokens: 6, remaining: 900 });
   });
 
   it("makes no extra calls without includeTopArticleUrl", async () => {

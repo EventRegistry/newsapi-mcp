@@ -440,20 +440,38 @@ export const formatArticleDetails: ResponseFormatter = (data) => {
   return lines.join("\n\n---\n\n");
 };
 
+/** The event an entry was merged into, when the API answered `{ newEventUri }` alone. */
+export function mergedEventUri(entry: unknown): string | undefined {
+  if (!entry || typeof entry !== "object") return undefined;
+  const keys = Object.keys(entry);
+  const target = (entry as Record<string, unknown>).newEventUri;
+  return keys.length === 1 && typeof target === "string" ? target : undefined;
+}
+
 /** Format event detail responses (filterTopLevel structure: { "<uri>": { info: {...} } }). */
 export const formatEventDetails: ResponseFormatter = (data, params) => {
   if (!data || typeof data !== "object") return "No event details found.";
   const entries = Object.entries(data as Record<string, unknown>);
   if (entries.length === 0) return "No event details found.";
 
+  // a merged event carries only its new URI: tell the caller where to look
+  const mergedNote = (uri: string, target: string) =>
+    `Event ${uri} was merged into ${target}; call get_event_details with ${target}.`;
+  const unmerged = entries.filter(([, value]) => !mergedEventUri(value));
+  if (unmerged.length === 0) {
+    return entries
+      .map(([uri, value]) => mergedNote(uri, mergedEventUri(value)!))
+      .join("\n");
+  }
+
   // Detect non-info resultType responses (articles, articleUris, similarEvents)
   // These don't have the { "<uri>": { info: {...} } } shape
-  const firstValue = entries[0]![1];
+  const firstValue = unmerged[0]![1];
   const firstArticles = (firstValue as Record<string, unknown> | null)
     ?.articles;
   if (firstArticles && typeof firstArticles === "object") {
     return formatEventArticles(
-      entries[0]![0],
+      unmerged[0]![0],
       firstArticles as Record<string, unknown>,
       params,
     );
@@ -468,7 +486,9 @@ export const formatEventDetails: ResponseFormatter = (data, params) => {
     return JSON.stringify(data, null, 2);
   }
 
-  const lines = entries.map(([, value], i) => {
+  const lines = entries.map(([key, value], i) => {
+    const target = mergedEventUri(value);
+    if (target) return `${i + 1}. ${mergedNote(key, target)}`;
     const obj = value as Record<string, unknown> | undefined;
     if (!obj || typeof obj !== "object") return `${i + 1}. (unavailable)`;
     const evt = (obj.info as Record<string, unknown>) ?? obj;

@@ -11,6 +11,11 @@
 - **MCP SDK 2 and protocol revision 2026-07-28** — Both servers run on MCP SDK 2 and speak protocol revision 2026-07-28; clients on older revisions keep working. Every tool is marked read-only and idempotent, and 2026-07-28 clients may cache the tool list and resources for one hour. The hosted server expects the `MCP-Protocol-Version`, `Mcp-Method` and `Mcp-Name` headers on 2026-07-28 requests; see `docs/deployment.md`
 - **Research skills served by the server** — Both servers serve the six research skills (news, due diligence, risk, markets, political, source analysis) to 2026-07-28 clients that support the skills extension, so they update with each server release. Plugin users now get the skills from the server: the plugin no longer ships its own copy. When the server is added with `claude mcp add` under the name `newsapi`, they run as `/newsapi:<skill>`. The sources moved from `skills/` to `src/skills/`, with the endpoint detail split into reference files each skill opens on demand; the Claude Desktop zips are still attached to each release. See `docs/skills.md`
 
+### Fixes
+
+- **Merged events** — `get_event_details` on an event the API merged into another asks once more for the new event and says so under the result ("Event X was merged into Y; showing Y"); before, it printed the raw redirect JSON, or "[Unknown] Untitled (0 articles)" inside a batch, while still charging for the call. When the new event is merged again, the result names the URI to call next. `get_breaking_events` with `includeTopArticleUrl` follows a merged event the same way
+- **Remaining tokens** — The footer shows "Remaining: N" only when the API reports it; before, a missing header printed "Remaining: 0" while the account had tokens left
+
 ## [2.3.0] - 2026-11-06
 
 ### Features
