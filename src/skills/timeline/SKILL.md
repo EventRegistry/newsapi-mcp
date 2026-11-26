@@ -26,7 +26,7 @@ The volume of coverage over time shows the shape of the story; its peaks mark th
 ## Span
 
 - **Named span** ("since January", "over the last six months"): use it, and state its cost in one line before the first call when it reaches past 31 days.
-- **No span named**: ask once — "How far back should the timeline go? The last 31 days costs about 40 API tokens; 90 days costs about 75-90, because each call reaching past 31 days costs more, and more the further back it reaches." Suggest the span the story seems to need.
+- **No span named**: ask once — "How far back should the timeline go? The last 31 days costs about 40 API tokens; 90 days costs about 65-85, because each call reaching past 31 days costs more, and more the further back it reaches." Suggest the span the story seems to need.
 - **Unattended run** (scheduled, headless, no reply expected): ask nothing; use the last 90 days and state it in the Scope line.
 
 ## Budget
@@ -44,7 +44,7 @@ The volume of coverage over time shows the shape of the story; its peaks mark th
 6. Where it stands: step 4 lists the biggest events, so its newest can be weeks old. When the span is longer than 31 days or ends before today, run one more `search({kind: "events", conceptUri, keyword, sortBy: "date", count: 10})` over the default window (5 tokens), and drop events dated after today. Cite the 1-2 newest through step 5's call (5 tokens each); event rows carry no links. Otherwise the latest events of step 4 tell it
 7. Report with the **timeline** template. Monthly totals for the coverage table are sums of the step 3 counts
 
-A 90-day timeline costs about 75-90 tokens: about 10 for step 3, 20 for step 4, 25-40 for step 5 and 5-15 for step 6. A longer span costs more; the response footers are authoritative.
+A 90-day timeline costs about 65-85 tokens: about 10 for step 3, 20 for step 4, 25-40 for step 5 and 10-15 for step 6. A longer span costs more; the response footers are authoritative.
 
 ## Template
 
