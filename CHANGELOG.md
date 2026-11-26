@@ -8,7 +8,7 @@
 
 ### Features
 
-- **Briefing and timeline skills** — Two new research skills. `briefing` reports what changed since a date for a watchlist of up to 10 companies, people, topics or regions: new events, happenings, article counts and tone against the previous period, and share of coverage; its second pattern lists the entities or keywords rising in a topic. It asks nothing on unattended runs and costs about 50-75 API tokens for 10 items. `timeline` shows how a story unfolded: the volume of coverage over time marks the turning points, the biggest events at those peaks say what happened. It asks how far back to go when no span is named, because calls reaching past 31 days cost several times more, and uses 90 days on unattended runs. The news, markets and source-analysis skills point to them
+- **Briefing and timeline skills** — Two new research skills. `briefing` reports what changed since a date for a watchlist of up to 10 companies, people, topics or regions: new events, happenings, article counts and tone against the previous period, and share of coverage; its second pattern lists the entities or keywords rising in a topic. It asks nothing on unattended runs and costs about 50 API tokens for 10 items. `timeline` shows how a story unfolded: the volume of coverage over time marks the turning points, the biggest events at those peaks say what happened. It asks how far back to go when no span is named, because calls reaching past 31 days cost several times more, and uses 90 days on unattended runs. The news, markets and source-analysis skills point to them
 
 ### Improvements
 
