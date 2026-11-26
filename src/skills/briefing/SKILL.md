@@ -78,7 +78,7 @@ Date / Scope (current period vs previous period, items, filters; items not cover
 
 ```
 # Rising Topics: [Topic]
-Date / Scope (current period vs previous period)
+Date / Scope (current period vs previous period; broad risers dropped)
 
 ## Summary
 [What gained attention and why, with inline links]
