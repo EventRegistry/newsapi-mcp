@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Improvements
+
+- **MCP SDK 2 and protocol revision 2026-07-28** — Both servers run on MCP SDK 2 and speak protocol revision 2026-07-28; clients on older revisions keep working. Every tool is marked read-only and idempotent, and 2026-07-28 clients may cache the tool list and resources for one hour. The hosted server expects the `MCP-Protocol-Version`, `Mcp-Method` and `Mcp-Name` headers on 2026-07-28 requests; see `docs/deployment.md`
+
 ## [2.3.0] - 2026-11-06
 
 ### Features

@@ -1,10 +1,11 @@
 import { describe, it, expect, vi, beforeAll, beforeEach, afterAll } from "vitest";
 import type { AddressInfo } from "node:net";
 import type { Server } from "node:http";
-import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
-import { InvalidTokenError } from "@modelcontextprotocol/sdk/server/auth/errors.js";
-import type { OAuthTokenVerifier } from "@modelcontextprotocol/sdk/server/auth/provider.js";
+import { Client, StreamableHTTPClientTransport } from "@modelcontextprotocol/client";
+import { Client as ClientV1 } from "mcp-sdk-v1/client/index.js";
+import { StreamableHTTPClientTransport as TransportV1 } from "mcp-sdk-v1/client/streamableHttp.js";
+import { OAuthError, OAuthErrorCode } from "@modelcontextprotocol/server";
+import type { OAuthTokenVerifier } from "@modelcontextprotocol/express";
 import {
   createLocalJWKSet,
   exportJWK,
@@ -24,6 +25,10 @@ import {
 const realFetch = globalThis.fetch;
 const fetchSpy = vi.fn();
 vi.stubGlobal("fetch", fetchSpy);
+
+/** A rejection the bearer middleware answers with 401 invalid_token. */
+const isInvalidToken = (err: unknown) =>
+  err instanceof OAuthError && err.code === OAuthErrorCode.InvalidToken;
 
 const PUBLIC_URL = "https://mcp.example.test/mcp";
 const ISSUER = "https://auth.example.test";
@@ -90,6 +95,25 @@ function mockApiOk(data: unknown) {
 
 async function connect(token: string): Promise<Client> {
   const client = new Client({ name: "test-client", version: "1.0.0" });
+  const transport = new StreamableHTTPClientTransport(
+    new URL(`${baseUrl}/mcp`),
+    {
+      fetch: realFetch,
+      requestInit: { headers: { Authorization: `Bearer ${token}` } },
+    },
+  );
+  await client.connect(transport);
+  return client;
+}
+
+const NEW_PROTOCOL = "2026-07-28";
+
+/** Connect an SDK 2 client pinned to 2026-07-28, so it cannot fall back. */
+async function connectNewProtocol(token: string): Promise<Client> {
+  const client = new Client(
+    { name: "test-client", version: "1.0.0" },
+    { versionNegotiation: { mode: { pin: NEW_PROTOCOL } } },
+  );
   const transport = new StreamableHTTPClientTransport(
     new URL(`${baseUrl}/mcp`),
     {
@@ -222,6 +246,98 @@ describe("hosted server MCP over HTTP", () => {
   });
 });
 
+describe("hosted server on protocol 2026-07-28", () => {
+  it("lists tools with a valid token", async () => {
+    const client = await connectNewProtocol(await sign());
+    const { tools } = await client.listTools();
+
+    expect(client.getNegotiatedProtocolVersion()).toBe(NEW_PROTOCOL);
+    expect(tools).toHaveLength(8);
+    await client.close();
+  });
+
+  it("sends the caller's token to NewsAPI.ai on a tool call", async () => {
+    mockApiOk([{ uri: "http://en.wikipedia.org/wiki/Tesla", label: "Tesla" }]);
+    const token = await sign();
+    const client = await connectNewProtocol(token);
+    await client.callTool({
+      name: "suggest",
+      arguments: { type: "concepts", prefix: "Tesla" },
+    });
+    await client.close();
+
+    const init = fetchSpy.mock.calls[0][1];
+    expect(init.headers.Authorization).toBe(`Bearer ${token}`);
+    expect(JSON.parse(init.body)).not.toHaveProperty("apiKey");
+  });
+
+  it("rejects a request that has no Mcp-Method header", async () => {
+    const res = await realFetch(`${baseUrl}/mcp`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json, text/event-stream",
+        Authorization: `Bearer ${await sign()}`,
+        "MCP-Protocol-Version": NEW_PROTOCOL,
+      },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "tools/list",
+        params: {
+          _meta: {
+            "io.modelcontextprotocol/protocolVersion": NEW_PROTOCOL,
+            "io.modelcontextprotocol/clientInfo": {
+              name: "test-client",
+              version: "1.0.0",
+            },
+            "io.modelcontextprotocol/clientCapabilities": {},
+          },
+        },
+      }),
+    });
+
+    expect(res.status).toBe(400);
+    expect(await res.json()).toMatchObject({ error: { code: -32020 } });
+  });
+});
+
+describe("hosted server with an SDK 1 client", () => {
+  async function connectV1(token: string): Promise<ClientV1> {
+    const client = new ClientV1({ name: "old-client", version: "1.0.0" });
+    await client.connect(
+      new TransportV1(new URL(`${baseUrl}/mcp`), {
+        fetch: realFetch,
+        requestInit: { headers: { Authorization: `Bearer ${token}` } },
+      }),
+    );
+    return client;
+  }
+
+  it("completes the handshake and lists the tools", async () => {
+    const client = await connectV1(await sign());
+    const { tools } = await client.listTools();
+
+    expect(tools).toHaveLength(8);
+    await client.close();
+  });
+
+  it("sends the caller's token to NewsAPI.ai on a tool call", async () => {
+    mockApiOk([{ uri: "http://en.wikipedia.org/wiki/Tesla", label: "Tesla" }]);
+    const token = await sign();
+    const client = await connectV1(token);
+    await client.callTool({
+      name: "suggest",
+      arguments: { type: "concepts", prefix: "Tesla" },
+    });
+    await client.close();
+
+    expect(fetchSpy.mock.calls[0][1].headers.Authorization).toBe(
+      `Bearer ${token}`,
+    );
+  });
+});
+
 describe("hosted server API errors", () => {
   it("maps an unlinked account to the sign-in message", async () => {
     fetchSpy.mockResolvedValue({
@@ -274,18 +390,18 @@ describe("createJwtVerifier", () => {
   ])("rejects a token with %s", async (_label, claims) => {
     await expect(
       verifier.verifyAccessToken(await sign(claims)),
-    ).rejects.toBeInstanceOf(InvalidTokenError);
+    ).rejects.toSatisfy(isInvalidToken);
   });
 
   it("rejects a token signed by another key", async () => {
     await expect(
       verifier.verifyAccessToken(await sign({}, otherKey)),
-    ).rejects.toBeInstanceOf(InvalidTokenError);
+    ).rejects.toSatisfy(isInvalidToken);
   });
 
   it("rejects a malformed token", async () => {
-    await expect(verifier.verifyAccessToken("not.a.jwt")).rejects.toBeInstanceOf(
-      InvalidTokenError,
+    await expect(verifier.verifyAccessToken("not.a.jwt")).rejects.toSatisfy(
+      isInvalidToken,
     );
   });
 

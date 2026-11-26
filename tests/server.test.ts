@@ -7,9 +7,17 @@ import {
   beforeEach,
   afterAll,
 } from "vitest";
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
+import {
+  createMcpHandler,
+  InMemoryTransport,
+  McpServer,
+} from "@modelcontextprotocol/server";
+import {
+  Client,
+  StreamableHTTPClientTransport,
+} from "@modelcontextprotocol/client";
+import { Client as ClientV1 } from "mcp-sdk-v1/client/index.js";
+import { InMemoryTransport as InMemoryTransportV1 } from "mcp-sdk-v1/inMemory.js";
 import { initClient } from "../src/client.js";
 import { createServer } from "../src/server.js";
 import { REPORTING_REMINDER, REPORTING_RULES } from "../src/instructions.js";
@@ -518,5 +526,113 @@ describe("Hosted server", () => {
     const { tools } = await client.listTools();
     expect(tools[0].description).not.toContain(REPORTING_REMINDER);
     expect(client.getInstructions()).not.toContain(REPORTING_RULES);
+  });
+});
+
+const NEW_PROTOCOL = "2026-07-28";
+const ONE_HOUR_MS = 3_600_000;
+
+/**
+ * Connect a client pinned to protocol 2026-07-28. The handler is the only
+ * way an SDK 2 server speaks that revision; a pinned client fails to connect
+ * instead of falling back to the 2025 handshake.
+ */
+async function connectNewProtocolClient(): Promise<Client> {
+  const handler = createMcpHandler(() => createServer(), {
+    legacy: "stateless",
+  });
+  const newClient = new Client(
+    { name: "test-client", version: "1.0.0" },
+    { versionNegotiation: { mode: { pin: NEW_PROTOCOL } } },
+  );
+  await newClient.connect(
+    new StreamableHTTPClientTransport(new URL("http://server.test/mcp"), {
+      fetch: (input, init) => handler.fetch(new Request(input, init)),
+    }),
+  );
+  return newClient;
+}
+
+describe("MCP server on protocol 2026-07-28", () => {
+  let newClient: Client;
+
+  beforeAll(async () => {
+    newClient = await connectNewProtocolClient();
+  });
+
+  afterAll(async () => {
+    await newClient.close();
+  });
+
+  it("negotiates the 2026-07-28 revision", () => {
+    expect(newClient.getProtocolEra()).toBe("modern");
+    expect(newClient.getNegotiatedProtocolVersion()).toBe(NEW_PROTOCOL);
+  });
+
+  it("lists all eight tools as read-only and idempotent", async () => {
+    const { tools } = await newClient.listTools();
+
+    expect(tools).toHaveLength(8);
+    for (const tool of tools) {
+      expect(tool.annotations).toMatchObject({
+        readOnlyHint: true,
+        idempotentHint: true,
+      });
+    }
+  });
+
+  it("gives the tool list a one-hour public cache lifetime", async () => {
+    const result = await newClient.listTools();
+
+    expect(result.ttlMs).toBe(ONE_HOUR_MS);
+    expect(result.cacheScope).toBe("public");
+  });
+
+  it("gives the resource list a one-hour public cache lifetime", async () => {
+    const result = await newClient.listResources();
+
+    expect(result.ttlMs).toBe(ONE_HOUR_MS);
+    expect(result.cacheScope).toBe("public");
+  });
+
+  it("tells the client its tool and resource lists never change", () => {
+    const capabilities = newClient.getServerCapabilities();
+
+    expect(capabilities?.tools?.listChanged).toBe(false);
+    expect(capabilities?.resources?.listChanged).toBe(false);
+  });
+});
+
+describe("MCP server with an SDK 1 client", () => {
+  let clientV1: ClientV1;
+  let serverV1: McpServer;
+
+  beforeAll(async () => {
+    serverV1 = createServer();
+    clientV1 = new ClientV1({ name: "old-client", version: "1.0.0" });
+    const [clientTransport, serverTransport] =
+      InMemoryTransportV1.createLinkedPair();
+    await Promise.all([
+      clientV1.connect(clientTransport),
+      serverV1.connect(serverTransport),
+    ]);
+  });
+
+  afterAll(async () => {
+    await clientV1.close();
+    await serverV1.close();
+  });
+
+  it("connects and calls get_api_usage", async () => {
+    mockFetchOk({ remainingTokens: 100, usedTokens: 5 });
+
+    const result = await clientV1.callTool({
+      name: "get_api_usage",
+      arguments: {},
+    });
+
+    expect(result.isError).toBeFalsy();
+    const [content] = result.content as { text: string }[];
+    expect(content.text).toContain("5 tokens used");
   });
 });

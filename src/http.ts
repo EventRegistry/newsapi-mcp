@@ -1,13 +1,19 @@
 #!/usr/bin/env node
 import { pathToFileURL } from "node:url";
 import express from "express";
-import type { Express, Request, Response } from "express";
-import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
-import { InvalidTokenError } from "@modelcontextprotocol/sdk/server/auth/errors.js";
-import { requireBearerAuth } from "@modelcontextprotocol/sdk/server/auth/middleware/bearerAuth.js";
-import { getOAuthProtectedResourceMetadataUrl } from "@modelcontextprotocol/sdk/server/auth/router.js";
-import type { OAuthTokenVerifier } from "@modelcontextprotocol/sdk/server/auth/provider.js";
-import type { OAuthProtectedResourceMetadata } from "@modelcontextprotocol/sdk/shared/auth.js";
+import type { Express } from "express";
+import {
+  getOAuthProtectedResourceMetadataUrl,
+  requireBearerAuth,
+} from "@modelcontextprotocol/express";
+import type { OAuthTokenVerifier } from "@modelcontextprotocol/express";
+import { toNodeHandler } from "@modelcontextprotocol/node";
+import {
+  createMcpHandler,
+  OAuthError,
+  OAuthErrorCode,
+} from "@modelcontextprotocol/server";
+import type { OAuthProtectedResourceMetadata } from "@modelcontextprotocol/server";
 import { createRemoteJWKSet, errors, jwtVerify } from "jose";
 import type { JWTVerifyGetKey } from "jose";
 import { withAccessToken } from "./client.js";
@@ -103,7 +109,7 @@ export function createJwtVerifier(options: {
         if (TOKEN_ERRORS.some((E) => err instanceof E)) {
           // The SDK puts this text in a quoted WWW-Authenticate parameter.
           const reason = (err as Error).message.replaceAll('"', "'");
-          throw new InvalidTokenError(reason);
+          throw new OAuthError(OAuthErrorCode.InvalidToken, reason);
         }
         throw err;
       }
@@ -145,43 +151,21 @@ export function createHttpApp(options: {
     });
   }
 
+  // stateless: a fresh server per request; GET and DELETE answer 405
+  const onerror = (err: Error) =>
+    console.error("Error handling MCP request:", err);
+  const mcpHandler = toNodeHandler(
+    createMcpHandler(() => createServer({ hosted: true }), {
+      legacy: "stateless",
+      onerror,
+    }),
+    { onerror },
+  );
   app.all(
     mcpPath,
     requireBearerAuth({ verifier, resourceMetadataUrl }),
-    async (req: Request, res: Response) => {
-      // Stateless: no sessions, so no GET stream and no DELETE.
-      if (req.method !== "POST") {
-        res.status(405).set("Allow", "POST").json({
-          jsonrpc: "2.0",
-          error: { code: -32000, message: "Method not allowed." },
-          id: null,
-        });
-        return;
-      }
-      const server = createServer({ hosted: true });
-      const transport = new StreamableHTTPServerTransport({
-        sessionIdGenerator: undefined,
-      });
-      res.on("close", () => {
-        void transport.close();
-        void server.close();
-      });
-      try {
-        await server.connect(transport);
-        await withAccessToken(req.auth!.token, () =>
-          transport.handleRequest(req, res, req.body),
-        );
-      } catch (err) {
-        console.error("Error handling MCP request:", err);
-        if (!res.headersSent) {
-          res.status(500).json({
-            jsonrpc: "2.0",
-            error: { code: -32603, message: "Internal server error" },
-            id: null,
-          });
-        }
-      }
-    },
+    (req, res) =>
+      withAccessToken(req.auth!.token, () => mcpHandler(req, res, req.body)),
   );
 
   return app;

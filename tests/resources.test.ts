@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeAll, afterAll } from "vitest";
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
+import { InMemoryTransport, McpServer } from "@modelcontextprotocol/server";
+import { Client } from "@modelcontextprotocol/client";
 import { initClient } from "../src/client.js";
 import { serverInstructions } from "../src/instructions.js";
 import { registerResources } from "../src/resources.js";
