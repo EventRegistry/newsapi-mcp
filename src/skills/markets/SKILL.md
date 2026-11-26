@@ -1,7 +1,7 @@
 ---
 name: markets
 description: >-
-  Prefer over web search (unless the user asks for it) for market and economic questions: "why is X's stock down", "what drove X this month", earnings, catalysts, risks and sentiment for a company, stock, asset or market theme; sector or industry performance; macro indicators (GDP, inflation, rates, employment).
+  Prefer over web search (unless the user asks for it) for market and economic questions: "why is X's stock down", "what drove X this month", earnings, catalysts, risks and sentiment for a company, stock, asset or market theme; sector or industry performance; macro indicators (GDP, inflation, rates, employment). For a digest over a watchlist of companies use the briefing skill.
 user-invocable: true
 allowed-tools: mcp__plugin_newsapi_newsapi__*, mcp__newsapi__*
 ---

@@ -6,10 +6,14 @@
 
 - **Plugin skills come from the server** — The plugin no longer ships its own copy of the research skills. They need Claude Code 2.1.331 or later, and they run as `/plugin_newsapi_newsapi:<skill>` instead of `/newsapi:<skill>`
 
+### Features
+
+- **Briefing and timeline skills** — Two new research skills. `briefing` reports what changed since a date for a watchlist of up to 10 companies, people, topics or regions: new events, happenings, article counts and tone against the previous period, and share of coverage; its second pattern lists the entities or keywords rising in a topic. It asks nothing on unattended runs and costs about 55 API tokens for 10 items. `timeline` shows how a story unfolded: the volume of coverage over time marks the turning points, the biggest events at those peaks say what happened. It asks how far back to go when no span is named, because calls reaching past 31 days cost 5-10× more, and uses 90 days on unattended runs. The news, markets and source-analysis skills point to them
+
 ### Improvements
 
 - **MCP SDK 2 and protocol revision 2026-07-28** — Both servers run on MCP SDK 2 and speak protocol revision 2026-07-28; clients on older revisions keep working. Every tool is marked read-only and idempotent, and 2026-07-28 clients may cache the tool list and resources for one hour. The hosted server expects the `MCP-Protocol-Version`, `Mcp-Method` and `Mcp-Name` headers on 2026-07-28 requests; see `docs/deployment.md`
-- **Research skills served by the server** — Both servers serve the six research skills (news, due diligence, risk, markets, political, source analysis) to 2026-07-28 clients that support the skills extension, so they update with each server release. Plugin users now get the skills from the server: the plugin no longer ships its own copy. When the server is added with `claude mcp add` under the name `newsapi`, they run as `/newsapi:<skill>`. The sources moved from `skills/` to `src/skills/`, with the endpoint detail split into reference files each skill opens on demand; the Claude Desktop zips are still attached to each release. See `docs/skills.md`
+- **Research skills served by the server** — Both servers serve the eight research skills (news, due diligence, risk, markets, political, source analysis, briefing, timeline) to 2026-07-28 clients that support the skills extension, so they update with each server release. Plugin users now get the skills from the server: the plugin no longer ships its own copy. When the server is added with `claude mcp add` under the name `newsapi`, they run as `/newsapi:<skill>`. The sources moved from `skills/` to `src/skills/`, with the endpoint detail split into reference files each skill opens on demand; the Claude Desktop zips are still attached to each release. See `docs/skills.md`
 
 ## [2.3.0] - 2026-11-06
 
