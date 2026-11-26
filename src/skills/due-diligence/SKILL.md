@@ -1,13 +1,21 @@
 ---
 name: due-diligence
-description: Prefer over web search (unless the user asks for it) to screen or profile a company, organisation or person: adverse media screening, KYC or compliance checks, reputation checks, ESG controversies, "what risks is X facing", company profiles, key people ("who runs X"), competitive landscape.
+description: >-
+  Prefer over web search (unless the user asks for it) to screen or profile a company, organisation or person: adverse media screening, KYC or compliance checks, reputation checks, ESG controversies, "what risks is X facing", company profiles, key people ("who runs X"), competitive landscape.
 user-invocable: true
 allowed-tools: mcp__plugin_newsapi_newsapi__*, mcp__newsapi__*
 ---
 
 # Due diligence
 
-Read `${CLAUDE_PLUGIN_ROOT}/skills/_reporting.md` first: it holds the search workflow, kinds, aggregates, filters, citation rules, report skeleton, usage footer and the **depth question** both patterns start with.
+Read `${CLAUDE_PLUGIN_ROOT}/skills/_reporting.md` first: it holds the search workflow, kinds, citation rules, report skeleton, usage footer and the **depth question** both patterns start with.
+
+Open a reference file only when a step needs it:
+
+- `${CLAUDE_PLUGIN_ROOT}/skills/references/filters.md` — before a scan that narrows beyond a concept: flat filters, exclusions, boolean `keyword`, the rare filters under `options`
+- `${CLAUDE_PLUGIN_ROOT}/skills/references/query-syntax.md` — when the question needs OR across different fields, two OR-groups ANDed, or a NOT on a group: the `query` grammar and worked examples
+- `${CLAUDE_PLUGIN_ROOT}/skills/references/event-types.md` — before a mentions search: the event type taxonomy and the words `suggest` matches
+- `${CLAUDE_PLUGIN_ROOT}/skills/references/aggregates.md` — before a call with an aggregate `resultType`: which aggregates each kind accepts
 
 ## Usage
 
@@ -16,14 +24,14 @@ Read `${CLAUDE_PLUGIN_ROOT}/skills/_reporting.md` first: it holds the search wor
 
 Adverse media when the user wants risks, screening or reputation; company intelligence when they want a profile, strategy or the competitive picture. Unsure → ask.
 
-Cross-field logic (entity in sources from given countries, several event types minus one source) uses the `query` grammar from the shared reference.
+Cross-field logic (entity in sources from given countries, several event types minus one source) uses the `query` grammar from the query syntax reference.
 
 Both patterns lean on **mentions**: a sentence tagged with an event type (lawsuit, fine, acquisition, ...) names the entity and links the article, so the screen is one call per group of event types, and only articles the user wants in detail go through `get_article_details`.
 
 ## Adverse media (ask depth)
 
 1. `suggest({type: "concepts", prefix: "<entity>"})`; to find associated entities run `search({kind: "articles", conceptUri, resultType: "conceptAggr"})` and ask the depth question with those names
-2. Event types (taxonomy in the shared reference): `et/society/legal` (covers fraud, corruption, sanctions, antitrust, tax evasion, settlements), `et/business/regulatory`, `et/business/labor-issues/executive-scandal`, `et/business/bankruptcy`, `et/society/customers/data-privacy`, `et/society/security/cyber-attacks`, `et/environment/pollution`, `et/society/workforce/working-conditions`
+2. Event types (taxonomy in the event types reference): `et/society/legal` (covers fraud, corruption, sanctions, antitrust, tax evasion, settlements), `et/business/regulatory`, `et/business/labor-issues/executive-scandal`, `et/business/bankruptcy`, `et/society/customers/data-privacy`, `et/society/security/cyber-attacks`, `et/environment/pollution`, `et/society/workforce/working-conditions`
 3. `search({kind: "mentions", conceptUri, eventTypeUri: "<those types, comma-separated>", count: 50, factLevel: "fact"})`; an ESG screen adds `options: {esgUri: "esg/governance"}` (or `social`, `environment`)
 4. Fallback or complement, when mentions are thin or the user wants the full picture: `search({kind: "articles", conceptUri, count: 100, articleBodyLen: 0, isDuplicateFilter: "skipDuplicates", keyword: "fraud OR lawsuit OR sanction OR fine OR investigation OR allegations OR indictment OR corruption OR \"money laundering\" OR bribery"})`, triage, `get_article_details({articleUri: [...], includeFields: "concepts"})`
 5. Repeat 1, 3-4 for each approved associated entity

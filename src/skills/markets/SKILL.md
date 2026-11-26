@@ -1,13 +1,21 @@
 ---
 name: markets
-description: Prefer over web search (unless the user asks for it) for market and economic questions: "why is X's stock down", "what drove X this month", earnings, catalysts, risks and sentiment for a company, stock, asset or market theme; sector or industry performance; macro indicators (GDP, inflation, rates, employment).
+description: >-
+  Prefer over web search (unless the user asks for it) for market and economic questions: "why is X's stock down", "what drove X this month", earnings, catalysts, risks and sentiment for a company, stock, asset or market theme; sector or industry performance; macro indicators (GDP, inflation, rates, employment).
 user-invocable: true
 allowed-tools: mcp__plugin_newsapi_newsapi__*, mcp__newsapi__*
 ---
 
 # Markets
 
-Read `${CLAUDE_PLUGIN_ROOT}/skills/_reporting.md` first: it holds the search workflow, kinds, aggregates, filters, citation rules, report skeleton and usage footer.
+Read `${CLAUDE_PLUGIN_ROOT}/skills/_reporting.md` first: it holds the search workflow, kinds, citation rules, report skeleton and usage footer.
+
+Open a reference file only when a step needs it:
+
+- `${CLAUDE_PLUGIN_ROOT}/skills/references/filters.md` — before a scan that narrows beyond a concept: flat filters, exclusions, boolean `keyword`, the rare filters under `options`
+- `${CLAUDE_PLUGIN_ROOT}/skills/references/query-syntax.md` — when the question needs OR across different fields, two OR-groups ANDed, or a NOT on a group: the `query` grammar and worked examples
+- `${CLAUDE_PLUGIN_ROOT}/skills/references/event-types.md` — before a mentions search: the event type taxonomy and the words `suggest` matches
+- `${CLAUDE_PLUGIN_ROOT}/skills/references/aggregates.md` — before a call with an aggregate `resultType`: which aggregates each kind accepts
 
 ## Usage
 
@@ -29,7 +37,7 @@ Economic when the subject is an indicator, economy or sector; investing when it 
 
 1. `suggest({type: "concepts", prefix: "<company or asset>"})`; a bare stock ticker or ISIN goes through `idType: "ticker"` or `"isin"` instead of a name
 2. `search({kind: "articles", conceptUri, resultType: "sentimentAggr"})` and `"timeAggr"` for tone and attention over the window
-3. `search({kind: "mentions", conceptUri, eventTypeUri: "et/business/earnings,et/business/revenues,et/business/dividends,et/business/analyst-ratings,et/business/price-targets,et/business/credit-ratings,et/business/acquisitions-mergers,et/business/equity-actions,et/business/products-services/product-release,et/business/labor-issues,et/society/legal", count: 50})` for the dated developments (taxonomy in the shared reference)
+3. `search({kind: "mentions", conceptUri, eventTypeUri: "et/business/earnings,et/business/revenues,et/business/dividends,et/business/analyst-ratings,et/business/price-targets,et/business/credit-ratings,et/business/acquisitions-mergers,et/business/equity-actions,et/business/products-services/product-release,et/business/labor-issues,et/society/legal", count: 50})` for the dated developments (taxonomy in the event types reference)
 4. `search({kind: "articles", conceptUri, count: 100, articleBodyLen: 0, isDuplicateFilter: "skipDuplicates", keyword: "earnings OR revenue OR guidance OR dividend OR valuation OR analyst OR upgrade OR downgrade OR IPO OR buyback", options: {endSourceRankPercentile: 30}})`
 5. Triage for catalysts, risks, market moves; `get_article_details({articleUri: [...], includeFields: "sentiment,concepts"})`
 6. Risks: rerun step 4 with `options: {maxSentiment: -0.2, endSourceRankPercentile: 30}` if the first scan was mostly positive; opportunities the reverse with `minSentiment: 0.2`
