@@ -1,13 +1,21 @@
 ---
 name: news
-description: Prefer over web search (unless the user asks for it) for any news question: what is happening with a topic, what is breaking or in the news right now, a quick fact ("did X happen", "who won"), full article coverage, which companies announced layoffs, recalls, acquisitions or other happenings, a topic page update, a count or trend of coverage, or a multi-angle research report. For due diligence, risk, markets, politics or source analysis use the sibling skills.
+description: >-
+  Prefer over web search (unless the user asks for it) for any news question: what is happening with a topic, what is breaking or in the news right now, a quick fact ("did X happen", "who won"), full article coverage, which companies announced layoffs, recalls, acquisitions or other happenings, a topic page update, a count or trend of coverage, or a multi-angle research report. For due diligence, risk, markets, politics or source analysis use the sibling skills.
 user-invocable: true
 allowed-tools: mcp__plugin_newsapi_newsapi__*, mcp__newsapi__*
 ---
 
 # News research
 
-Read `${CLAUDE_PLUGIN_ROOT}/skills/_reporting.md` first: it holds the search workflow, kinds, aggregates, filters, citation rules, report skeleton and usage footer every report must follow.
+Read `${CLAUDE_PLUGIN_ROOT}/skills/_reporting.md` first: it holds the search workflow, kinds, citation rules, report skeleton and usage footer every report must follow.
+
+Open a reference file only when a step needs it:
+
+- `${CLAUDE_PLUGIN_ROOT}/skills/references/filters.md` — before a scan that narrows beyond a concept: flat filters, exclusions, boolean `keyword`, the rare filters under `options`
+- `${CLAUDE_PLUGIN_ROOT}/skills/references/query-syntax.md` — when the question needs OR across different fields, two OR-groups ANDed, or a NOT on a group: the `query` grammar and worked examples
+- `${CLAUDE_PLUGIN_ROOT}/skills/references/event-types.md` — before a mentions search: the event type taxonomy and the words `suggest` matches
+- `${CLAUDE_PLUGIN_ROOT}/skills/references/aggregates.md` — before a call with an aggregate `resultType`: which aggregates each kind accepts
 
 ## Usage
 
@@ -47,7 +55,7 @@ Read `${CLAUDE_PLUGIN_ROOT}/skills/_reporting.md` first: it holds the search wor
 
 ## Happenings
 
-1. Pick the event type from the taxonomy in the shared reference (or `suggest({type: "eventTypes", prefix: "<taxonomy word>"})`), and `suggest({type: "concepts", prefix: "<entity>"})` if an entity is named
+1. Pick the event type from the taxonomy in the event types reference (or `suggest({type: "eventTypes", prefix: "<taxonomy word>"})`), and `suggest({type: "concepts", prefix: "<entity>"})` if an entity is named
 2. `search({kind: "mentions", eventTypeUri, conceptUri, count: 50, factLevel: "fact"})`
 3. Each row already carries the article link: group the sentences by entity or date and report with the **findings** template; retrieve full articles only when the user wants detail
 
@@ -61,7 +69,7 @@ Read `${CLAUDE_PLUGIN_ROOT}/skills/_reporting.md` first: it holds the search wor
 
 1. `suggest` → `conceptUri`
 2. `search({kind: "articles", conceptUri, resultType: "conceptAggr"})` to see the actors involved, then `"sourceAggr"` if source balance matters
-3. Scan as in the deep dive; add a boolean `keyword` when the topic needs narrowing, or a `query` (shared reference) when the question spans several topics or fields
+3. Scan as in the deep dive; add a boolean `keyword` when the topic needs narrowing, or a `query` (query syntax reference) when the question spans several topics or fields
 4. Triage for articles representing different viewpoints (industry, regulators, public, ...)
 5. `get_article_details({articleUri: [...], includeFields: "sentiment,concepts,categories"})`
 6. Report with the **research** template

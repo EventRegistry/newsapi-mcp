@@ -8,6 +8,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 npm run build          # TypeScript compilation (tsc)
 npm run build:bundle   # Production single-file bundle (esbuild → dist/index.js)
 npm run build:http     # Hosted server bundle (esbuild → dist/http.js, used by Dockerfile)
+npm run build:skills     # Claude Desktop skill zips (dist/skills/)
+npm run build:skill-content  # Regenerate src/skills/content.ts after editing src/skills/
 npm run dev            # Dev mode with tsx hot reload
 npm test               # Run all tests (vitest)
 npm run test:watch     # Tests in watch mode
@@ -18,7 +20,7 @@ CI runs on [ubuntu, windows, macos] × [node 20, 22]. Publishing uses `npm publi
 
 ## Architecture
 
-MCP server for NewsAPI.ai (Event Registry). Provides 8 tools: one `search` tool (`kind`: articles, events, mentions), detail lookups, topic pages, suggest and usage.
+MCP server for NewsAPI.ai (Event Registry). Provides 8 tools: one `search` tool (`kind`: articles, events, mentions), detail lookups, topic pages, suggest and usage, and serves six research skills to 2026-07-28 clients.
 
 Two entry points share `createServer()` from `src/server.ts`:
 
@@ -49,6 +51,7 @@ MCP Client → McpServer (SDK) → ToolRegistry handler → apiPost() → NewsAP
 - **`src/response-filter.ts`** — Token optimization. `includeFields` param maps to API include params + post-response field stripping. `filterResponse()` preserves pagination metadata.
 - **`src/formatters.ts`** — Converts JSON responses to compact text. All tools with formatters output human-readable numbered text.
 - **`src/tools/search.ts`** — The `search` tool: assembles the schema from the shared filters plus each kind's `SearchKind` config (`articlesKind`, `eventsKind`, `mentionsKind` in their own files), tags kind-only params in their descriptions, maps the generic `page`/`count`/`sortBy` to the API's per-kind names and rejects params the chosen kind does not accept.
+- **`src/skills/`** — The six research skills: `<name>/SKILL.md` sources, shared rules in `_shared/reporting.md` and `_shared/references/*.md`. `scripts/skill-transform.js` makes each skill self-contained (shared files copied in, plugin paths made relative, `allowed-tools` dropped); `scripts/generate-skill-content.js` (`npm run build:skill-content`) embeds the result in the generated `content.ts`, so both bundles carry the skills. `tests/skills-content.test.ts` fails when `content.ts` is out of date. `src/server.ts` loads the content into a strict `SkillCatalog` once and serves it to 2026-07-28 clients through a `SkillsExtension` with the one-hour `CACHE_HINT`. `scripts/build-desktop-skills.js` zips the same skills for Claude Desktop.
 - **`src/tools/*.ts`** — Tool definitions as `ToolDef` objects with `name`, `description`, `schema` (JSON Schema), `handler`, and optional `formatter`.
 
 ### Default Values
@@ -57,7 +60,7 @@ The search tool defaults to `count=50` (scans ask for 100; events max 50), `arti
 
 ### Testing Patterns
 
-Tests mock `fetch` globally via `vi.stubGlobal("fetch", fetchSpy)`. Server integration tests use `InMemoryTransport.createLinkedPair()` (from the SDK 2 packages) to create connected MCP client/server pairs without network; an in-memory pair speaks revisions up to 2025-11-25, so 2026-07-28 tests go through the stdio or HTTP helper. Old-protocol tests use the SDK 1 client from the dev-only `mcp-sdk-v1` alias. `tests/stdio.test.ts` runs against the bundle, so run `npm run build:bundle` first; without it the file skips with a warning outside CI. Hosted server tests (`tests/http.test.ts`) listen on a local port, keep the real `fetch` for it, and sign tokens with a locally generated key checked through a local JWKS. Login tests (`tests/oauth.test.ts`) inject a fake issuer `fetch`, an in-memory store and a "browser" that hits the real loopback callback.
+Tests mock `fetch` globally via `vi.stubGlobal("fetch", fetchSpy)`. Server integration tests use `InMemoryTransport.createLinkedPair()` (from the SDK 2 packages) to create connected MCP client/server pairs without network; an in-memory pair speaks revisions up to 2025-11-25, so 2026-07-28 tests go through the stdio or HTTP helper. Old-protocol tests use the SDK 1 client from the dev-only `mcp-sdk-v1` alias. `tests/stdio.test.ts` runs against the bundle, so run `npm run build:bundle` first; without it the file skips with a warning outside CI. Hosted server tests (`tests/http.test.ts`) listen on a local port, keep the real `fetch` for it, and sign tokens with a locally generated key checked through a local JWKS. Login tests (`tests/oauth.test.ts`) inject a fake issuer `fetch`, an in-memory store and a "browser" that hits the real loopback callback. `tests/skills-zip.test.ts` runs the real zip build into `dist/skills` during `npm test` and skips with a warning when `zip` or `unzip` is missing; `tests/skills-content.test.ts` fails until `npm run build:skill-content` is rerun after editing `src/skills/`.
 
 ## Codebase Conventions
 

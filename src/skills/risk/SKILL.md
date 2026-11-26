@@ -1,20 +1,28 @@
 ---
 name: risk
-description: Prefer over web search (unless the user asks for it) for risk questions: supply chain disruptions ("is shipping through X disrupted"), logistics bottlenecks, sourcing or operational risk, and country or regional geopolitical risk ("how stable is X": political stability, security, sanctions, humanitarian factors).
+description: >-
+  Prefer over web search (unless the user asks for it) for risk questions: supply chain disruptions ("is shipping through X disrupted"), logistics bottlenecks, sourcing or operational risk, and country or regional geopolitical risk ("how stable is X": political stability, security, sanctions, humanitarian factors).
 user-invocable: true
 allowed-tools: mcp__plugin_newsapi_newsapi__*, mcp__newsapi__*
 ---
 
 # Risk assessment
 
-Read `${CLAUDE_PLUGIN_ROOT}/skills/_reporting.md` first: it holds the search workflow, kinds, aggregates, filters, citation rules, report skeleton, usage footer and the **depth question** both patterns start with.
+Read `${CLAUDE_PLUGIN_ROOT}/skills/_reporting.md` first: it holds the search workflow, kinds, citation rules, report skeleton, usage footer and the **depth question** both patterns start with.
+
+Open a reference file only when a step needs it:
+
+- `${CLAUDE_PLUGIN_ROOT}/skills/references/filters.md` — before a scan that narrows beyond a concept: flat filters, exclusions, boolean `keyword`, the rare filters under `options`
+- `${CLAUDE_PLUGIN_ROOT}/skills/references/query-syntax.md` — when the question needs OR across different fields, two OR-groups ANDed, or a NOT on a group: the `query` grammar and worked examples
+- `${CLAUDE_PLUGIN_ROOT}/skills/references/event-types.md` — before a mentions search: the event type taxonomy and the words `suggest` matches
+- `${CLAUDE_PLUGIN_ROOT}/skills/references/aggregates.md` — before a call with an aggregate `resultType`: which aggregates each kind accepts
 
 ## Usage
 
 - `/newsapi:risk "Red Sea shipping"` — supply chain
 - `/newsapi:risk "Pakistan"` — geopolitical
 
-Supply chain when the subject is a commodity, route, supplier, industry or disruption; geopolitical when it is a country or region. A route, commodity or region often has no single concept: combine them with the `query` grammar from the shared reference (`$or` over concepts and keywords, `$not` for the noise) instead of running one search per name.
+Supply chain when the subject is a commodity, route, supplier, industry or disruption; geopolitical when it is a country or region. A route, commodity or region often has no single concept: combine them with the `query` grammar from the query syntax reference (`$or` over concepts and keywords, `$not` for the noise) instead of running one search per name.
 
 Both patterns combine **mentions** (each disruption or incident as a dated sentence with its entities and article link), **events** (the major developments) and **aggregates** (where and how much).
 
@@ -22,7 +30,7 @@ Both patterns combine **mentions** (each disruption or incident as a dated sente
 
 1. `suggest({type: "concepts", prefix: "<topic/entity/region>"})`
 2. `search({kind: "articles", conceptUri, resultType: "conceptAggr"})` for the suppliers, commodities and routes involved; ask the depth question with those names
-3. `search({kind: "mentions", conceptUri, eventTypeUri: "et/business/labor-issues/workers-strike,et/business/products-services/supply,et/business/products-services/product-recall,et/business/industrial-accidents,et/society/transportation/transportation-disruption,et/society/legal/economic-sanctions,et/society/security/cyber-attacks,et/environment/natural-disasters", count: 50, factLevel: "fact"})` (taxonomy in the shared reference)
+3. `search({kind: "mentions", conceptUri, eventTypeUri: "et/business/labor-issues/workers-strike,et/business/products-services/supply,et/business/products-services/product-recall,et/business/industrial-accidents,et/society/transportation/transportation-disruption,et/society/legal/economic-sanctions,et/society/security/cyber-attacks,et/environment/natural-disasters", count: 50, factLevel: "fact"})` (taxonomy in the event types reference)
 4. `search({kind: "mentions", conceptUri, eventTypeUri, resultType: "locAggr"})` for where the disruptions cluster; `"timeAggr"` if the user asks whether it is getting worse
 5. `search({kind: "events", conceptUri, count: 50, sortBy: "date"})`, triage, `get_event_details({eventUri: [...], includeFields: "concepts,categories"})`; for the key events `get_event_details({eventUri: "<uri>", resultType: "articles", articlesCount: 10})` gives citable rows
 6. For mitigation and outlook detail: `search({kind: "articles", conceptUri, count: 100, articleBodyLen: 0, isDuplicateFilter: "skipDuplicates", keyword: "disruption OR shortage OR delay OR shutdown OR strike OR tariff OR embargo OR recall OR logistics OR reshoring OR diversification"})`, triage, `get_article_details({articleUri: [...], includeFields: "concepts,categories"})`
