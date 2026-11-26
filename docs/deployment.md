@@ -1,10 +1,11 @@
 # Deploying the hosted server
 
 The hosted server (`src/http.ts`) serves the same tools as the npm package over
-MCP's Streamable HTTP transport. It ships as a Docker image built from this
-repo, keeps no sessions, and lets the MCP client log the user in at Event
-Registry's auth server. The server only
-verifies each request's access token and forwards it to NewsAPI.ai.
+MCP's Streamable HTTP transport, through the MCP SDK 2 request handler. It speaks
+the 2026-07-28 protocol revision and the older ones. It ships as a Docker image
+built from this repo, keeps no sessions, and lets the MCP client log the user in
+at Event Registry's auth server. The server only verifies each request's access
+token and forwards it to NewsAPI.ai.
 
 ## Prerequisites
 
@@ -58,7 +59,7 @@ MCP_PUBLIC_URL=https://mcp.example.org/mcp node dist/http.js
 
 | Path | Purpose |
 |------|---------|
-| `POST <MCP_PUBLIC_URL path>` (default `/mcp`) | MCP endpoint. Requires `Authorization: Bearer <token>`. Other methods answer `405`. |
+| `POST <MCP_PUBLIC_URL path>` (default `/mcp`) | MCP endpoint. Requires `Authorization: Bearer <token>`. `GET` and `DELETE` answer `405`. |
 | `GET /.well-known/oauth-protected-resource/<path>` and `GET /.well-known/oauth-protected-resource` | RFC 9728 metadata pointing clients at the issuer. |
 | `GET /healthz` | Liveness check, answers `{"status":"ok"}`. |
 
@@ -73,6 +74,23 @@ clients discover the issuer through the `/.well-known/` paths at the root of the
 public origin, so the proxy must expose them alongside the MCP path. Set
 `MCP_PUBLIC_URL` to exactly what clients will type: scheme, host, and path all
 feed into the `aud` check and the metadata URLs.
+
+### Request headers
+
+Clients on the 2026-07-28 protocol send up to three headers with their requests.
+The proxy must forward all three unchanged:
+
+- `MCP-Protocol-Version`, on every request
+- `Mcp-Method`, on every request
+- `Mcp-Name`, on a request that names a tool, prompt or resource, such as a
+  tool call
+
+The handler rejects a 2026-07-28 request that lacks a header it needs. Clients
+on older revisions send only `MCP-Protocol-Version`; they never send
+`Mcp-Method` or `Mcp-Name`. The proxy is assumed to forward custom headers
+already, so no change is expected. Verify it on your proxy: connect a 2026-07-28
+client through the proxy, list the tools and call one. If the handler reports a
+missing header, the proxy dropped it.
 
 ## Scaling
 
@@ -111,7 +129,8 @@ claude mcp add --transport http newsapi https://mcp.example.org/mcp
 | `401` with a reason mentioning `aud` | `MCP_PUBLIC_URL` differs from the URL the token was issued for. |
 | `401` with a reason mentioning `iss` or signature | Token comes from a different issuer than `MCP_AUTH_ISSUER`. |
 | `405` on the MCP path | Client sent `GET`/`DELETE`; the server is stateless and accepts `POST` only. |
-| `500` with "Error handling MCP request" in logs | Issuer unreachable, or its discovery document has no `jwks_uri`. |
+| `400`, and "Error handling MCP request" naming a missing `Mcp-Method`, `Mcp-Name` or `MCP-Protocol-Version` header in logs | The proxy drops custom headers. Forward them unchanged. |
+| `500`, and "Error handling MCP request" in logs | Issuer unreachable, or its discovery document has no `jwks_uri`. |
 | NewsAPI.ai answers that no account is linked | The user has no Event Registry account yet; sign in once at [eventregistry.org/login](https://eventregistry.org/login). |
 
 Logs go to stderr; the startup line reports the port and public URL.

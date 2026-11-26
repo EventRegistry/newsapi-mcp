@@ -46,17 +46,22 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@modelcontextprotocol/sdk": "^1.26.0",
+    "@modelcontextprotocol/client": "^2.4.0",
+    "@modelcontextprotocol/express": "^2.0.2",
+    "@modelcontextprotocol/node": "^2.1.2",
+    "@modelcontextprotocol/server": "^2.4.0",
     "@types/express": "^5.0.6",
     "@types/node": "^26.6.5",
     "esbuild": "^0.28.2",
     "eslint": "^10.13.0",
     "express": "^5.2.1",
     "jose": "^6.2.12",
+    "mcp-sdk-v1": "npm:@modelcontextprotocol/sdk@^1.32.2",
     "tsx": "^4.19.0",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.54.0",
-    "vitest": "^5.0.5"
+    "vitest": "^5.0.5",
+    "zod": "^4.6.7"
   },
   "dependencies": {
     "@napi-rs/keyring": "^2.1.0"
