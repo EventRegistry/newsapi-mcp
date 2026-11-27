@@ -84,9 +84,8 @@ claude mcp add --scope user newsapi -e NEWSAPI_KEY=your_api_key_here -- npx -y n
 
 `--scope user` makes the server available in every project; drop it for the current
 project only. Approve the first tool call with "always allow" so later calls run without
-a prompt. The [research skills](skills.md) work with this server as it is named here
-(`newsapi`); install the plugin for the skills and disable its bundled hosted server
-under `/mcp` if you prefer the local one.
+a prompt. This server also serves the [research skills](skills.md) to Claude Code 2.1.331 or later;
+named `newsapi` as here, they run as `/newsapi:news` and so on.
 
 </details>
 

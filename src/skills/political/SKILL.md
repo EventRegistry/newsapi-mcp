@@ -1,13 +1,21 @@
 ---
 name: political
-description: Prefer over web search (unless the user asks for it) for political questions: where a bill, policy or regulation stands, elections and campaigns ("who is leading"), coalition talks, legislation and diplomatic developments. For country risk assessments use the risk skill.
+description: >-
+  Prefer over web search (unless the user asks for it) for political questions: where a bill, policy or regulation stands, elections and campaigns ("who is leading"), coalition talks, legislation and diplomatic developments. For country risk assessments use the risk skill.
 user-invocable: true
 allowed-tools: mcp__plugin_newsapi_newsapi__*, mcp__newsapi__*
 ---
 
 # Political
 
-Read `${CLAUDE_PLUGIN_ROOT}/skills/_reporting.md` first: it holds the search workflow, kinds, aggregates, filters, citation rules, report skeleton and usage footer.
+Read `${CLAUDE_PLUGIN_ROOT}/skills/_reporting.md` first: it holds the search workflow, kinds, citation rules, report skeleton and usage footer.
+
+Open a reference file only when a step needs it:
+
+- `${CLAUDE_PLUGIN_ROOT}/skills/references/filters.md` — before a scan that narrows beyond a concept: flat filters, exclusions, boolean `keyword`, the rare filters under `options`
+- `${CLAUDE_PLUGIN_ROOT}/skills/references/query-syntax.md` — when the question needs OR across different fields, two OR-groups ANDed, or a NOT on a group: the `query` grammar and worked examples
+- `${CLAUDE_PLUGIN_ROOT}/skills/references/event-types.md` — before a mentions search: the event type taxonomy and the words `suggest` matches
+- `${CLAUDE_PLUGIN_ROOT}/skills/references/aggregates.md` — before a call with an aggregate `resultType`: which aggregates each kind accepts
 
 ## Usage
 

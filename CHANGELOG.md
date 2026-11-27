@@ -2,6 +2,24 @@
 
 ## [Unreleased]
 
+### Breaking changes
+
+- **Plugin skills come from the server** — The plugin no longer ships its own copy of the research skills. They need Claude Code 2.1.331 or later, and they run as `/plugin_newsapi_newsapi:<skill>` instead of `/newsapi:<skill>`
+
+### Features
+
+- **Briefing and timeline skills** — Two new research skills. `briefing` reports what changed since a date for a watchlist of up to 10 companies, people, topics or regions: new events, happenings, article counts and tone against the previous period, and share of coverage; its second pattern lists the entities or keywords rising in a topic. It asks nothing on unattended runs and costs about 50 API tokens for 10 items. `timeline` shows how a story unfolded: the volume of coverage over time marks the turning points, the biggest events at those peaks say what happened. It asks how far back to go when no span is named, because calls reaching past 31 days cost several times more, and uses 90 days on unattended runs. The news, markets and source-analysis skills point to them
+
+### Improvements
+
+- **MCP SDK 2 and protocol revision 2026-07-28** — Both servers run on MCP SDK 2 and speak protocol revision 2026-07-28; clients on older revisions keep working. Every tool is marked read-only and idempotent, and 2026-07-28 clients may cache the tool list and resources for one hour. The hosted server expects the `MCP-Protocol-Version`, `Mcp-Method` and `Mcp-Name` headers on 2026-07-28 requests; see `docs/deployment.md`
+- **Research skills served by the server** — Both servers serve the eight research skills (news, due diligence, risk, markets, political, source analysis, briefing, timeline) to 2026-07-28 clients that support the skills extension, so they update with each server release. Plugin users now get the skills from the server: the plugin no longer ships its own copy. When the server is added with `claude mcp add` under the name `newsapi`, they run as `/newsapi:<skill>`. The sources moved from `skills/` to `src/skills/`, with the endpoint detail split into reference files each skill opens on demand; the Claude Desktop zips are still attached to each release. See `docs/skills.md`
+
+### Fixes
+
+- **Merged events** — `get_event_details` on an event the API merged into another asks once more for the new event and says so under the result ("Event X was merged into Y; showing Y"); before, it printed the raw redirect JSON, or "[Unknown] Untitled (0 articles)" inside a batch, while still charging for the call. When the new event is merged again, the result names the URI to call next. `get_breaking_events` with `includeTopArticleUrl` follows a merged event the same way
+- **Remaining tokens** — The footer shows "Remaining: N" only when the API reports it; before, a missing header printed "Remaining: 0" while the account had tokens left
+
 ## [2.3.0] - 2026-11-06
 
 ### Features

@@ -2,7 +2,7 @@
   "name": "newsapi",
   "displayName": "NewsAPI.ai",
   "version": "2.3.0",
-  "description": "Real-time news intelligence from NewsAPI.ai: the hosted MCP server plus research skills for news, due diligence, risk, markets, politics and source analysis",
+  "description": "Real-time news intelligence from NewsAPI.ai: the hosted MCP server, which also serves research skills for news, due diligence, risk, markets, politics, source analysis, briefings and timelines",
   "author": {
     "name": "Event Registry d.o.o."
   },

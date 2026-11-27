@@ -3,7 +3,7 @@
  * Provides detailed usage guides, examples, and reference material.
  */
 
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { CacheHint, McpServer } from "@modelcontextprotocol/server";
 import { REPORTING_RULES } from "./instructions.js";
 
 // ============================================================================
@@ -150,7 +150,7 @@ Max 5 concurrent requests allowed. Always make requests sequentially — wait fo
 - Verify URIs are correct via suggest
 
 ## Usage Tracking
-Each response footer shows: "Tokens used: N | Remaining: M". Use get_api_usage for full quota details.`;
+Each response footer shows: "Tokens used: N | Remaining: M", with Remaining only when the API reports it. Use get_api_usage for full quota details.`;
 
 // ============================================================================
 // Examples Resource (~400 words)
@@ -402,6 +402,9 @@ Range: -1 (very negative) to +1 (very positive)
 // Resource Registration
 // ============================================================================
 
+/** Clients may reuse the tool list and resources for one hour, across users. */
+export const CACHE_HINT: CacheHint = { ttlMs: 3_600_000, cacheScope: "public" };
+
 export function registerResources(server: McpServer, hosted = false): void {
   const guide = hosted
     ? `${GUIDE_CONTENT}\n\n${REPORTING_RULES}`
@@ -412,6 +415,7 @@ export function registerResources(server: McpServer, hosted = false): void {
     {
       description: "Comprehensive guide to using the NewsAPI MCP server",
       mimeType: "text/plain",
+      cacheHint: CACHE_HINT,
     },
     async () => ({
       contents: [
@@ -426,6 +430,7 @@ export function registerResources(server: McpServer, hosted = false): void {
     {
       description: "Example tool calls for common NewsAPI use cases",
       mimeType: "text/plain",
+      cacheHint: CACHE_HINT,
     },
     async () => ({
       contents: [
@@ -444,6 +449,7 @@ export function registerResources(server: McpServer, hosted = false): void {
     {
       description: "Reference for includeFields, defaults, and other params",
       mimeType: "text/plain",
+      cacheHint: CACHE_HINT,
     },
     async () => ({
       contents: [

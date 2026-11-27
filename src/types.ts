@@ -7,7 +7,8 @@ export type ResponseFormatter = (
 /** Per-request token usage extracted from API response headers. */
 export interface TokenUsage {
   reqTokens: number;
-  remaining: number;
+  /** Tokens left on the account; unset when the API sent no usable header. */
+  remaining?: number;
 }
 
 /** Wrapper returned by API client and tool handlers. */

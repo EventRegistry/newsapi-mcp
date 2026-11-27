@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { serveStdio } from "@modelcontextprotocol/server/stdio";
 import { initClient, initLogin } from "./client.js";
 import { createSession } from "./oauth.js";
 import { createServer } from "./server.js";
@@ -32,8 +32,10 @@ async function main() {
   if (apiKey) initClient(apiKey);
   else initLogin(createSession());
 
-  const server = createServer();
-  await server.connect(new StdioServerTransport());
+  // serves both an old initialize and the 2026-07-28 server/discover
+  serveStdio(() => createServer(), {
+    onerror: (err) => console.error("MCP stdio error:", err),
+  });
 }
 
 main().catch((err) => {

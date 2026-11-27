@@ -1,13 +1,21 @@
 ---
 name: source-analysis
-description: Prefer over web search (unless the user asks for it) to analyse the coverage itself: compare how two or more outlets covered the same story, measure the sentiment or tone of coverage around an entity or topic, or see which sources and countries drive the coverage.
+description: >-
+  Prefer over web search (unless the user asks for it) to analyse the coverage itself: compare how two or more outlets covered the same story, measure the sentiment or tone of coverage around an entity or topic, or see which sources and countries drive the coverage. For a recurring digest of a watchlist use the briefing skill.
 user-invocable: true
 allowed-tools: mcp__plugin_newsapi_newsapi__*, mcp__newsapi__*
 ---
 
 # Source analysis
 
-Read `${CLAUDE_PLUGIN_ROOT}/skills/_reporting.md` first: it holds the search workflow, kinds, aggregates, filters, citation rules, report skeleton and usage footer.
+Read `${CLAUDE_PLUGIN_ROOT}/skills/_reporting.md` first: it holds the search workflow, kinds, citation rules, report skeleton and usage footer.
+
+Open a reference file only when a step needs it:
+
+- `${CLAUDE_PLUGIN_ROOT}/skills/references/filters.md` — before a scan that narrows beyond a concept: flat filters, exclusions, boolean `keyword`, the rare filters under `options`
+- `${CLAUDE_PLUGIN_ROOT}/skills/references/query-syntax.md` — when the question needs OR across different fields, two OR-groups ANDed, or a NOT on a group: the `query` grammar and worked examples
+- `${CLAUDE_PLUGIN_ROOT}/skills/references/event-types.md` — before a mentions search: the event type taxonomy and the words `suggest` matches
+- `${CLAUDE_PLUGIN_ROOT}/skills/references/aggregates.md` — before a call with an aggregate `resultType`: which aggregates each kind accepts
 
 ## Usage
 
@@ -15,7 +23,7 @@ Read `${CLAUDE_PLUGIN_ROOT}/skills/_reporting.md` first: it holds the search wor
 - `/newsapi:source-analysis "sentiment around Tesla"` — sentiment
 - `/newsapi:source-analysis "who covers the Panama Canal?"` — coverage landscape
 
-Aggregates do the measuring; article scans supply the examples. Comparing groups of outlets or countries in one call is a `query` with `sourceUri` / `sourceLocationUri` under `$or` (grammar in the shared reference).
+Aggregates do the measuring; article scans supply the examples. Comparing groups of outlets or countries in one call is a `query` with `sourceUri` / `sourceLocationUri` under `$or` (grammar in the query syntax reference).
 
 ## Source comparison
 

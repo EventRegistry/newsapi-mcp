@@ -55,8 +55,7 @@ claude mcp add --transport http --scope user newsapi https://mcp.newsapi.ai/mcp
 `--scope user` makes the server available in every project; drop it to add it to the
 current project only. Ask a news question and Claude Code prompts you to log in, or run
 `/mcp` to log in up front. The first tool call asks for permission: choose "always allow"
-(or add `mcp__newsapi` under `/permissions`) so later calls run without a prompt. For the research skills (`/newsapi:news`, `/newsapi:due-diligence`, …) install the
-[plugin](#claude-code-plugin) instead.
+(or add `mcp__newsapi` under `/permissions`) so later calls run without a prompt. The server also serves eight research skills (news, due diligence, risk, markets, political, source analysis, briefing, timeline) to Claude Code 2.1.331 or later; the [plugin](#claude-code-plugin) is the one-step way to add the server and the skills.
 
 </details>
 
@@ -142,8 +141,8 @@ the remaining balance, and you can ask "how many API tokens do I have left?" at 
 
 ## Claude Code plugin
 
-The repository is a Claude Code plugin: it bundles the hosted MCP server and six research
-skills, so one install gives Claude Code both.
+The repository is a Claude Code plugin: it connects the hosted MCP server, and the server
+serves eight research skills, so one install gives Claude Code both.
 
 ```bash
 claude plugin marketplace add EventRegistry/newsapi-mcp
@@ -151,31 +150,37 @@ claude plugin install newsapi@newsapi-mcp
 ```
 
 Ask a news question or run a skill; Claude Code prompts you to log in with your Event
-Registry account the first time (or run `/mcp` to log in up front). Claude Code also picks
-the right skill from a plain question, without the slash command.
+Registry account the first time (or run `/mcp` to log in up front). Claude Code picks
+the right skill from a plain question.
 
-| Skill                      | Ask it for                                                                                               | Example                                                           |
-| -------------------------- | -------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
-| `/newsapi:news`            | Overviews, article deep dives, happenings, coverage counts, breaking news, topic pages, research reports | "What is happening with the Boeing strike?"                       |
-| `/newsapi:due-diligence`   | Adverse media screening, ESG controversies, company profiles, key people                                 | "Screen Wirecard for adverse media since 2024."                   |
-| `/newsapi:risk`            | Supply chain disruptions, country and regional geopolitical risk                                         | "What is the supply chain risk for shipping through the Red Sea?" |
-| `/newsapi:markets`         | Economic indicators and sectors, company and asset analysis                                              | "What drove Nvidia's stock this month?"                           |
-| `/newsapi:political`       | Policy, legislation, elections, diplomacy                                                                | "Where does the EU Digital Markets Act enforcement stand?"        |
-| `/newsapi:source-analysis` | Outlet comparison, sentiment, coverage landscape                                                         | "Compare how the BBC and Fox News covered the UN climate summit." |
+| Skill             | Ask it for                                                                                               | Example                                                           |
+| ----------------- | -------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| `news`            | Overviews, article deep dives, happenings, coverage counts, breaking news, topic pages, research reports | "What is happening with the Boeing strike?"                       |
+| `due-diligence`   | Adverse media screening, ESG controversies, company profiles, key people                                 | "Screen Wirecard for adverse media since 2024."                   |
+| `risk`            | Supply chain disruptions, country and regional geopolitical risk                                         | "What is the supply chain risk for shipping through the Red Sea?" |
+| `markets`         | Economic indicators and sectors, company and asset analysis                                              | "What drove Nvidia's stock this month?"                           |
+| `political`       | Policy, legislation, elections, diplomacy                                                                | "Where does the EU Digital Markets Act enforcement stand?"        |
+| `source-analysis` | Outlet comparison, sentiment, coverage landscape                                                         | "Compare how the BBC and Fox News covered the UN climate summit." |
+| `briefing`        | What changed since a date for a watchlist, competitor and brand tracking, rising topics                  | "What changed for Tesla, BYD and Rivian since Monday?"            |
+| `timeline`        | How a story unfolded over weeks or months, its turning points                                            | "How did the TikTok ban unfold?"                                  |
 
-The same skills ship as zips for Claude Desktop and claude.ai on every
-[release](https://github.com/EventRegistry/newsapi-mcp/releases/latest) (one zip per skill,
-uploaded under **Customize > Skills**).
+Claude Code gets the skills from the server, so they update with each server release; the
+local server serves the same eight. Through the plugin they run as
+`/plugin_newsapi_newsapi:news`; with the server added by `claude mcp add` as `newsapi`
+they run as `/newsapi:news`. Served skills need Claude Code 2.1.331 or later and do not
+load in `claude -p`. Claude Desktop and claude.ai chat do not receive them: the skills ship as zips on
+every [release](https://github.com/EventRegistry/newsapi-mcp/releases/latest) (one zip per
+skill, uploaded under **Customize > Skills**).
 
-[docs/skills.md](docs/skills.md) describes each skill, how they are built and how to use
-them in Claude Desktop or without the plugin.
+[docs/skills.md](docs/skills.md) describes each skill, which clients get them, how they
+are built and how to use them in Claude Desktop.
 
 ## Which setup do I need?
 
 | You use                      | Server                                                                                                                         | Research skills                                                                                               |
 | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------- |
 | Claude Desktop or claude.ai  | Hosted connector (above), or the [local server](docs/local-server.md)                                                          | Upload the skill zips from the [latest release](https://github.com/EventRegistry/newsapi-mcp/releases/latest) |
-| Claude Code                  | The [plugin](#claude-code-plugin) brings the hosted server; or add the hosted or [local](docs/local-server.md) server yourself | The plugin's six skills; they also work with a local server named `newsapi`                                   |
+| Claude Code                  | The [plugin](#claude-code-plugin) brings the hosted server; or add the hosted or [local](docs/local-server.md) server yourself | Served by the hosted server (also through the plugin) or by the local server (Claude Code 2.1.331 or later)   |
 | Codex, Cursor, other clients | Hosted connector (above), or the [local server](docs/local-server.md)                                                          | Not available                                                                                                 |
 
 Pick one server per client. If you install the plugin and also add a local `newsapi`
@@ -184,7 +189,7 @@ one you do not use there.
 
 ### Updating
 
-- Plugin: `claude plugin update newsapi@newsapi-mcp`.
+- Plugin: `claude plugin update newsapi@newsapi-mcp`. The skills update with the server, no plugin update needed.
 - Local server: `npx` caches the package, so put `newsapi-mcp@latest` in the client
   configuration, or run `npx -y newsapi-mcp@latest` once.
 - Desktop skills: download the zips of the new release and upload them again; the

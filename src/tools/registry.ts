@@ -1,4 +1,4 @@
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { McpServer } from "@modelcontextprotocol/server";
 import { ApiError } from "../types.js";
 import type { ApiResponse, ToolDef } from "../types.js";
 import { formatErrorResponse, formatUnknownError } from "../errors.js";
@@ -128,6 +128,7 @@ export class ToolRegistry {
           ? `${tool.description}\n\n${REPORTING_REMINDER}`
           : tool.description,
         inputSchema: z.object(shape),
+        annotations: { readOnlyHint: true, idempotentHint: true },
       },
       async (params) => {
         try {
@@ -168,9 +169,10 @@ export class ToolRegistry {
           }
 
           if (tokenUsage) {
-            text +=
-              `\n\n---\nTokens used: ${tokenUsage.reqTokens}` +
-              ` | Remaining: ${tokenUsage.remaining}`;
+            text += `\n\n---\nTokens used: ${tokenUsage.reqTokens}`;
+            if (tokenUsage.remaining !== undefined) {
+              text += ` | Remaining: ${tokenUsage.remaining}`;
+            }
           }
 
           if (this.hosted) {

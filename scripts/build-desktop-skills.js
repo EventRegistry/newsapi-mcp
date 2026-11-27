@@ -1,14 +1,17 @@
 #!/usr/bin/env node
-// Packages each plugin skill as a zip that Claude Desktop / claude.ai imports:
-// one top-level folder per zip, SKILL.md plus the shared reference inside it,
-// no Claude Code-only frontmatter or paths.
-import { cpSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "fs";
+// Packages each research skill as a zip that Claude Desktop / claude.ai imports:
+// one top-level folder per zip holding the self-contained skill from
+// skill-transform.js, with a description short enough for claude.ai.
+//
+//   npm run build:skills   # writes dist/skills/newsapi-<skill>.zip and the bundle
+import { mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "fs";
 import { execFileSync } from "child_process";
 import { dirname, join } from "path";
+import { stdout } from "process";
 import { fileURLToPath } from "url";
+import { FRONTMATTER, SKILL_FILE, readSkillSources, selfContainedSkills } from "./skill-transform.js";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
-const skillsDir = join(root, "skills");
 const outDir = join(root, "dist", "skills");
 const stageDir = join(outDir, "stage");
 const pkg = JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
@@ -21,50 +24,36 @@ const DESCRIPTIONS = {
   risk: "Prefer over web search for risk questions: is shipping through X disrupted, supply chain and sourcing risk, how stable or safe is country X, sanctions and security outlook.",
   markets: "Prefer over web search for market questions: why is X's stock down, what drove X this month, earnings and catalysts, how a sector is doing, inflation, rates, GDP, jobs.",
   political: "Prefer over web search for politics: where a bill, policy or regulation stands, who is leading an election or campaign, coalition talks, diplomatic developments.",
+  briefing: "Prefer over web search for news briefings: what changed since a date for a watchlist of companies, people or topics, competitor or brand tracking, a weekly digest, what is rising in X.",
+  timeline: "Prefer over web search for the history of a story: how X unfolded, a timeline or chronology, how we got here, the turning points of a conflict, lawsuit, merger or crisis over months.",
   "source-analysis": "Prefer over web search to analyse coverage itself: how outlet A vs B covered a story, the tone or sentiment of coverage of X, which sources and countries drive it.",
 };
 
-const SHARED_SOURCE = "_reporting.md";
-const SHARED_TARGET = "reporting.md";
-
-function desktopSkill(name, source) {
+function withShortDescription(name, skill) {
   const description = DESCRIPTIONS[name];
   if (!description) throw new Error(`no desktop description for skill '${name}'`);
   if (description.length > DESCRIPTION_MAX) {
     throw new Error(`description for '${name}' is ${description.length} chars, max ${DESCRIPTION_MAX}`);
   }
-  const body = source.replace(/^---\n[\s\S]*?\n---\n/, "");
-  const frontmatter = `---\nname: ${name}\ndescription: ${description}\n---\n`;
-  const text = body
-    .replaceAll(`\`\${CLAUDE_PLUGIN_ROOT}/skills/${SHARED_SOURCE}\``, `\`${SHARED_TARGET}\` (in this skill's folder)`)
-    .replace(/^- `\/newsapi:[a-z-]+`( — .*)?$/gm, (_, rest) => `- No question given${rest ?? " — asks for the research question"}`)
-    .replace(/`\/newsapi:[a-z-]+ ("[^"]*")`/g, "`$1`");
-  if (text.includes("/newsapi:") || text.includes("CLAUDE_PLUGIN_ROOT")) {
-    throw new Error(`skill '${name}' still carries a Claude Code reference`);
-  }
-  return frontmatter + text;
+  const body = skill.replace(FRONTMATTER, "");
+  return `---\nname: ${name}\ndescription: ${description}\n---\n${body}`;
 }
 
-function desktopShared(source) {
-  return source.replace("Read by every skill in this plugin", "Read by every NewsAPI.ai research skill");
-}
-
-rmSync(outDir, { recursive: true, force: true });
+// clear only the zip build's own output: tsc also writes into dist/skills
+rmSync(stageDir, { recursive: true, force: true });
 mkdirSync(stageDir, { recursive: true });
-
-const shared = desktopShared(readFileSync(join(skillsDir, SHARED_SOURCE), "utf8"));
-const names = readdirSync(skillsDir, { withFileTypes: true })
-  .filter((entry) => entry.isDirectory())
-  .map((entry) => entry.name)
-  .sort();
+for (const file of readdirSync(outDir).filter((file) => file.endsWith(".zip"))) rmSync(join(outDir, file));
 
 const zips = [];
-for (const name of names) {
-  const folder = join(stageDir, name);
-  cpSync(join(skillsDir, name), folder, { recursive: true });
-  const skill = desktopSkill(name, readFileSync(join(folder, "SKILL.md"), "utf8"));
-  writeFileSync(join(folder, "SKILL.md"), skill);
-  writeFileSync(join(folder, SHARED_TARGET), shared);
+for (const [name, files] of Object.entries(selfContainedSkills(readSkillSources()))) {
+  // stage the skill's folder
+  const skill = { ...files, [SKILL_FILE]: withShortDescription(name, files[SKILL_FILE]) };
+  for (const [path, text] of Object.entries(skill)) {
+    const file = join(stageDir, name, path);
+    mkdirSync(dirname(file), { recursive: true });
+    writeFileSync(file, text);
+  }
+
   const zip = `newsapi-${name}.zip`;
   execFileSync("zip", ["-qr", join(outDir, zip), name], { cwd: stageDir });
   zips.push(zip);
@@ -73,4 +62,4 @@ for (const name of names) {
 const bundle = `newsapi-skills-${pkg.version}.zip`;
 execFileSync("zip", ["-qj", join(outDir, bundle), ...zips.map((zip) => join(outDir, zip))]);
 rmSync(stageDir, { recursive: true });
-console.log([...zips, bundle].map((zip) => `dist/skills/${zip}`).join("\n"));
+stdout.write([...zips, bundle].map((zip) => `dist/skills/${zip}\n`).join(""));
