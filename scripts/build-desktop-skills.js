@@ -24,6 +24,8 @@ const DESCRIPTIONS = {
   risk: "Prefer over web search for risk questions: is shipping through X disrupted, supply chain and sourcing risk, how stable or safe is country X, sanctions and security outlook.",
   markets: "Prefer over web search for market questions: why is X's stock down, what drove X this month, earnings and catalysts, how a sector is doing, inflation, rates, GDP, jobs.",
   political: "Prefer over web search for politics: where a bill, policy or regulation stands, who is leading an election or campaign, coalition talks, diplomatic developments.",
+  briefing: "Prefer over web search for news briefings: what changed since a date for a watchlist of companies, people or topics, competitor or brand tracking, a weekly digest, what is rising in X.",
+  timeline: "Prefer over web search for the history of a story: how X unfolded, a timeline or chronology, how we got here, the turning points of a conflict, lawsuit, merger or crisis over months.",
   "source-analysis": "Prefer over web search to analyse coverage itself: how outlet A vs B covered a story, the tone or sentiment of coverage of X, which sources and countries drive it.",
 };
 

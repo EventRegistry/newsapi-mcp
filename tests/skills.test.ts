@@ -75,7 +75,7 @@ describe("served skills on protocol 2026-07-28", () => {
       SKILLS_EXTENSION_ID,
     );
     expect(skillsClient.supported).toBe(true);
-    expect(names).toHaveLength(6);
+    expect(names).toHaveLength(8);
     expect(names).toEqual(sourceSkillNames());
   });
 

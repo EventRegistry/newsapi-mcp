@@ -1,7 +1,7 @@
 ---
 name: source-analysis
 description: >-
-  Prefer over web search (unless the user asks for it) to analyse the coverage itself: compare how two or more outlets covered the same story, measure the sentiment or tone of coverage around an entity or topic, or see which sources and countries drive the coverage.
+  Prefer over web search (unless the user asks for it) to analyse the coverage itself: compare how two or more outlets covered the same story, measure the sentiment or tone of coverage around an entity or topic, or see which sources and countries drive the coverage. For a recurring digest of a watchlist use the briefing skill.
 user-invocable: true
 allowed-tools: mcp__plugin_newsapi_newsapi__*, mcp__newsapi__*
 ---

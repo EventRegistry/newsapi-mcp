@@ -9,7 +9,7 @@ Read by every skill in this plugin before its own workflow. Not a skill itself.
 2. **Deduplicate by default** — `isDuplicateFilter: "skipDuplicates"` in every article scan.
 3. **Track usage** — read the "Tokens used" footer from every response and report totals at the end.
 4. **Translate keywords** — every `keyword` string below is English; translate it to the language of the task and keep the boolean operators.
-5. **Keep the default window** — a search with no date filter covers the last 31 days at 1 API token (events: 5); "this week" is `forceMaxDataTimeWindow: 7` for articles and events, `dateStart: <7 days ago>` for mentions (which take no `forceMaxDataTimeWindow`). Dates inside the last 31 days cost the same as the default; only a `dateStart` older than 31 days costs 5-10× more, so set one only when the user names such a period.
+5. **Keep the default window** — a search with no date filter covers the last 31 days at 1 API token (events: 5); "this week" is `forceMaxDataTimeWindow: 7` for articles and events, `dateStart: <7 days ago>` for mentions (which take no `forceMaxDataTimeWindow`). Dates inside the last 31 days cost the same as the default; only a `dateStart` older than 31 days costs several times more, so set one only when the user names such a period.
 
 ## Workflow: suggest → scan → triage → retrieve
 

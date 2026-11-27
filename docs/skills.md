@@ -1,6 +1,6 @@
 # Research skills
 
-The NewsAPI.ai server serves six skills. A skill is a research procedure: which tools to
+The NewsAPI.ai server serves eight skills. A skill is a research procedure: which tools to
 call in which order, how many results to read, and how to lay out the report. The server
 sends them to clients that speak MCP protocol 2026-07-28 and support the skills extension,
 so they update with each server release. Claude picks the skill from your question, or you
@@ -61,6 +61,8 @@ A skill runs as `/<server>:<skill>`, and Claude can also run it when you ask for
 | `markets`         | Macro indicators (GDP, inflation, rates, employment), sector performance, company, stock or asset analysis                                                                                                                  | "What drove Nvidia's stock this month?" · "How is eurozone inflation covered this week?"                                          |
 | `political`       | Policy, legislation, regulation, elections, campaigns, coalitions, diplomacy                                                                                                                                                | "Where does the EU Digital Markets Act enforcement stand?" · "Who is leading the Polish presidential campaign?"                   |
 | `source-analysis` | How outlets cover a story, tone of coverage around an entity, which sources and countries drive the coverage                                                                                                                | "Compare how the BBC and Fox News covered the UN climate summit." · "What is the sentiment of coverage of Tesla in German media?" |
+| `briefing`        | What changed since a date for a watchlist of companies, people, topics or regions, competitor and brand tracking, share of coverage, a weekly digest, what is rising in a topic                                             | "What changed for Tesla, BYD and Rivian since Monday?" · "What is rising in climate tech this week?"                              |
+| `timeline`        | How a story unfolded over weeks or months, its turning points and where it stands; asks how far back to go, since coverage older than 31 days costs more                                                                    | "How did the TikTok ban unfold?" · "Give me a timeline of the Boeing 737 MAX crisis since January."                               |
 
 Every report ends with a usage footer showing the API tokens the research cost.
 
@@ -68,7 +70,7 @@ Every report ends with a usage footer showing the API tokens the research cost.
 
 Each skill is a folder in `src/skills/<name>/` with a `SKILL.md`: its frontmatter names
 and describes the skill, the body gives the tool sequence for each kind of question and
-the report template. `src/skills/_shared/reporting.md` holds what the six share:
+the report template. `src/skills/_shared/reporting.md` holds what the eight share:
 
 - the suggest → scan → triage → retrieve workflow (resolve names, list titles, pick the
   relevant ones, read those);
@@ -98,7 +100,7 @@ npm run build:skill-content
 Claude Desktop connectors do not receive served skills, and claude.ai can import a skill by
 zip as well. Every release attaches the skills as zips, which import one
 skill per zip: `newsapi-<skill>.zip` for each skill, and `newsapi-skills-<version>.zip`
-holding all six. Download them from the
+holding all eight. Download them from the
 [latest release](https://github.com/EventRegistry/newsapi-mcp/releases/latest), or build
 them with `npm run build:skills` (output in `dist/skills/`).
 

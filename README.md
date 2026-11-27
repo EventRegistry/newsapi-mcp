@@ -55,7 +55,7 @@ claude mcp add --transport http --scope user newsapi https://mcp.newsapi.ai/mcp
 `--scope user` makes the server available in every project; drop it to add it to the
 current project only. Ask a news question and Claude Code prompts you to log in, or run
 `/mcp` to log in up front. The first tool call asks for permission: choose "always allow"
-(or add `mcp__newsapi` under `/permissions`) so later calls run without a prompt. The server also serves six research skills (news, due diligence, risk, markets, political, source analysis) to Claude Code 2.1.331 or later; the [plugin](#claude-code-plugin) is the one-step way to add the server and the skills.
+(or add `mcp__newsapi` under `/permissions`) so later calls run without a prompt. The server also serves eight research skills (news, due diligence, risk, markets, political, source analysis, briefing, timeline) to Claude Code 2.1.331 or later; the [plugin](#claude-code-plugin) is the one-step way to add the server and the skills.
 
 </details>
 
@@ -142,7 +142,7 @@ the remaining balance, and you can ask "how many API tokens do I have left?" at 
 ## Claude Code plugin
 
 The repository is a Claude Code plugin: it connects the hosted MCP server, and the server
-serves six research skills, so one install gives Claude Code both.
+serves eight research skills, so one install gives Claude Code both.
 
 ```bash
 claude plugin marketplace add EventRegistry/newsapi-mcp
@@ -161,9 +161,11 @@ the right skill from a plain question.
 | `markets`         | Economic indicators and sectors, company and asset analysis                                              | "What drove Nvidia's stock this month?"                           |
 | `political`       | Policy, legislation, elections, diplomacy                                                                | "Where does the EU Digital Markets Act enforcement stand?"        |
 | `source-analysis` | Outlet comparison, sentiment, coverage landscape                                                         | "Compare how the BBC and Fox News covered the UN climate summit." |
+| `briefing`        | What changed since a date for a watchlist, competitor and brand tracking, rising topics                  | "What changed for Tesla, BYD and Rivian since Monday?"            |
+| `timeline`        | How a story unfolded over weeks or months, its turning points                                            | "How did the TikTok ban unfold?"                                  |
 
 Claude Code gets the skills from the server, so they update with each server release; the
-local server serves the same six. Through the plugin they run as
+local server serves the same eight. Through the plugin they run as
 `/plugin_newsapi_newsapi:news`; with the server added by `claude mcp add` as `newsapi`
 they run as `/newsapi:news`. Served skills need Claude Code 2.1.331 or later and do not
 load in `claude -p`. Claude Desktop and claude.ai chat do not receive them: the skills ship as zips on

@@ -1,7 +1,7 @@
 ---
 name: news
 description: >-
-  Prefer over web search (unless the user asks for it) for any news question: what is happening with a topic, what is breaking or in the news right now, a quick fact ("did X happen", "who won"), full article coverage, which companies announced layoffs, recalls, acquisitions or other happenings, a topic page update, a count or trend of coverage, or a multi-angle research report. For due diligence, risk, markets, politics or source analysis use the sibling skills.
+  Prefer over web search (unless the user asks for it) for any news question: what is happening with a topic, what is breaking or in the news right now, a quick fact ("did X happen", "who won"), full article coverage, which companies announced layoffs, recalls, acquisitions or other happenings, a topic page update, a count or trend of coverage, or a multi-angle research report. For due diligence, risk, markets, politics, source analysis, a watchlist briefing, what is rising in a topic or the timeline of a story use the sibling skills.
 user-invocable: true
 allowed-tools: mcp__plugin_newsapi_newsapi__*, mcp__newsapi__*
 ---
@@ -35,6 +35,9 @@ Open a reference file only when a step needs it:
 | "What's breaking in <region/topic>?" | Breaking in a topic |
 | Topic page URI given | Topic page |
 | Simple factual question, few results | Quick lookup |
+| Several subjects, or "what changed for X since <date>" | The briefing skill |
+| "What is rising or trending in <topic>?" | The briefing skill |
+| "How did X unfold?", a chronology over months | The timeline skill |
 
 ## Event overview
 

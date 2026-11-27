@@ -20,7 +20,7 @@ CI runs on [ubuntu, windows, macos] × [node 20, 22]. Publishing uses `npm publi
 
 ## Architecture
 
-MCP server for NewsAPI.ai (Event Registry). Provides 8 tools: one `search` tool (`kind`: articles, events, mentions), detail lookups, topic pages, suggest and usage, and serves six research skills to 2026-07-28 clients.
+MCP server for NewsAPI.ai (Event Registry). Provides 8 tools: one `search` tool (`kind`: articles, events, mentions), detail lookups, topic pages, suggest and usage, and serves eight research skills to 2026-07-28 clients.
 
 Two entry points share `createServer()` from `src/server.ts`:
 
@@ -51,7 +51,7 @@ MCP Client → McpServer (SDK) → ToolRegistry handler → apiPost() → NewsAP
 - **`src/response-filter.ts`** — Token optimization. `includeFields` param maps to API include params + post-response field stripping. `filterResponse()` preserves pagination metadata.
 - **`src/formatters.ts`** — Converts JSON responses to compact text. All tools with formatters output human-readable numbered text.
 - **`src/tools/search.ts`** — The `search` tool: assembles the schema from the shared filters plus each kind's `SearchKind` config (`articlesKind`, `eventsKind`, `mentionsKind` in their own files), tags kind-only params in their descriptions, maps the generic `page`/`count`/`sortBy` to the API's per-kind names and rejects params the chosen kind does not accept.
-- **`src/skills/`** — The six research skills: `<name>/SKILL.md` sources, shared rules in `_shared/reporting.md` and `_shared/references/*.md`. `scripts/skill-transform.js` makes each skill self-contained (shared files copied in, plugin paths made relative, `allowed-tools` dropped); `scripts/generate-skill-content.js` (`npm run build:skill-content`) embeds the result in the generated `content.ts`, so both bundles carry the skills. `tests/skills-content.test.ts` fails when `content.ts` is out of date. `src/server.ts` loads the content into a strict `SkillCatalog` once and serves it to 2026-07-28 clients through a `SkillsExtension` with the one-hour `CACHE_HINT`. `scripts/build-desktop-skills.js` zips the same skills for Claude Desktop.
+- **`src/skills/`** — The eight research skills: `<name>/SKILL.md` sources, shared rules in `_shared/reporting.md` and `_shared/references/*.md`. `scripts/skill-transform.js` makes each skill self-contained (shared files copied in, plugin paths made relative, `allowed-tools` dropped); `scripts/generate-skill-content.js` (`npm run build:skill-content`) embeds the result in the generated `content.ts`, so both bundles carry the skills. `tests/skills-content.test.ts` fails when `content.ts` is out of date. `src/server.ts` loads the content into a strict `SkillCatalog` once and serves it to 2026-07-28 clients through a `SkillsExtension` with the one-hour `CACHE_HINT`. `scripts/build-desktop-skills.js` zips the same skills for Claude Desktop.
 - **`src/tools/*.ts`** — Tool definitions as `ToolDef` objects with `name`, `description`, `schema` (JSON Schema), `handler`, and optional `formatter`.
 
 ### Default Values
