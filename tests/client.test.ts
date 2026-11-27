@@ -219,14 +219,28 @@ describe("apiPost", () => {
     });
   });
 
-  it("defaults missing remaining to 0 when only req-tokens is present", async () => {
+  it("leaves remaining unset when only req-tokens is present", async () => {
     fetchSpy.mockResolvedValue({
       ok: true,
       json: () => Promise.resolve({}),
       headers: { get: (k: string) => (k === "req-tokens" ? "42" : null) },
     });
     const result = await apiPost("/test", {});
-    expect(result.tokenUsage).toEqual({ reqTokens: 42, remaining: 0 });
+    expect(result.tokenUsage).toEqual({ reqTokens: 42, remaining: undefined });
+  });
+
+  it("leaves remaining unset when its header is not a number", async () => {
+    const headerMap = new Map([
+      ["req-tokens", "5"],
+      ["x-ratelimit-remaining", "n/a"],
+    ]);
+    fetchSpy.mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({}),
+      headers: { get: (k: string) => headerMap.get(k) ?? null },
+    });
+    const result = await apiPost("/test", {});
+    expect(result.tokenUsage).toEqual({ reqTokens: 5, remaining: undefined });
   });
 
   it("propagates fetch rejection (not wrapped in ApiError)", async () => {

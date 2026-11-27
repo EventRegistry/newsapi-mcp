@@ -169,9 +169,10 @@ export class ToolRegistry {
           }
 
           if (tokenUsage) {
-            text +=
-              `\n\n---\nTokens used: ${tokenUsage.reqTokens}` +
-              ` | Remaining: ${tokenUsage.remaining}`;
+            text += `\n\n---\nTokens used: ${tokenUsage.reqTokens}`;
+            if (tokenUsage.remaining !== undefined) {
+              text += ` | Remaining: ${tokenUsage.remaining}`;
+            }
           }
 
           if (this.hosted) {

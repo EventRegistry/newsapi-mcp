@@ -8,26 +8,63 @@ import {
   getEventIncludeParams,
   filterResponse,
 } from "../response-filter.js";
-import { formatEventResults, formatEventDetails } from "../formatters.js";
-import type { TokenUsage } from "../types.js";
+import {
+  formatEventResults,
+  formatEventDetails,
+  mergedEventUri,
+} from "../formatters.js";
+import type { ApiResponse, TokenUsage } from "../types.js";
 
 /** Articles returned per event when the caller gives no articlesCount. */
 const EVENT_ARTICLES_DEFAULT_COUNT = 10;
 /** Breaking events that get a top-article lookup; each costs one API call. */
 const TOP_ARTICLE_EVENT_LIMIT = 10;
 
+/** Add the sum of a call's tokens to a running total; the latest known "remaining" wins. */
+function addTokenUsage(
+  total: TokenUsage | undefined,
+  next: TokenUsage | undefined,
+): TokenUsage | undefined {
+  if (!next) return total;
+  if (!total) return { ...next };
+  return {
+    reqTokens: total.reqTokens + next.reqTokens,
+    remaining: next.remaining ?? total.remaining,
+  };
+}
+
+/** Params of the one-article lookup behind includeTopArticleUrl. */
+const TOP_ARTICLE_PARAMS = {
+  resultType: "articles",
+  articlesCount: 1,
+  articlesSortBy: "date",
+  articlesArticleBodyLen: 0,
+};
+
 /** Fetch the newest article of one event: title, source and URL. */
 async function fetchTopArticle(
   eventUri: string,
 ): Promise<{ article?: Record<string, unknown>; tokenUsage?: TokenUsage }> {
-  const { data, tokenUsage } = await apiPost("/event/getEvent", {
+  const first = await apiPost("/event/getEvent", {
     eventUri,
-    resultType: "articles",
-    articlesCount: 1,
-    articlesSortBy: "date",
-    articlesArticleBodyLen: 0,
+    ...TOP_ARTICLE_PARAMS,
   });
-  const entry = (data as Record<string, Record<string, unknown>>)?.[eventUri];
+  let tokenUsage = first.tokenUsage;
+  let entry = (first.data as Record<string, Record<string, unknown>>)?.[
+    eventUri
+  ];
+
+  // a merged event answers with its new URI only: follow it once
+  const target = mergedEventUri(entry);
+  if (target) {
+    const retry = await apiPost("/event/getEvent", {
+      eventUri: target,
+      ...TOP_ARTICLE_PARAMS,
+    });
+    tokenUsage = addTokenUsage(tokenUsage, retry.tokenUsage);
+    entry = (retry.data as Record<string, Record<string, unknown>>)?.[target];
+  }
+
   const results = (entry?.articles as Record<string, unknown> | undefined)
     ?.results as Record<string, unknown>[] | undefined;
   const art = results?.[0];
@@ -40,6 +77,56 @@ async function fetchTopArticle(
     },
     tokenUsage,
   };
+}
+
+/**
+ * Replace each merged entry of a getEvent answer by the event it was merged
+ * into. Asks the API once more for the targets not already in the answer;
+ * an entry whose target is missing or merged again stays as it was.
+ */
+async function followMergedEvents(
+  apiBody: Record<string, unknown>,
+  first: ApiResponse,
+): Promise<ApiResponse> {
+  // find the merged entries
+  const data = (first.data ?? {}) as Record<string, unknown>;
+  const redirects = new Map<string, string>();
+  for (const [uri, entry] of Object.entries(data)) {
+    const target = mergedEventUri(entry);
+    if (target) redirects.set(uri, target);
+  }
+  if (redirects.size === 0) return first;
+
+  // fetch the targets once, never their own targets
+  const isShown = (entry: unknown) =>
+    !!entry && typeof entry === "object" && !mergedEventUri(entry);
+  const missing = [...new Set(redirects.values())].filter(
+    (uri) => !isShown(data[uri]),
+  );
+  let found = data;
+  let tokenUsage = first.tokenUsage;
+  if (missing.length > 0) {
+    const retry = await apiPost("/event/getEvent", {
+      ...apiBody,
+      eventUri: Array.isArray(apiBody.eventUri) ? missing : missing[0],
+    });
+    found = { ...data, ...(retry.data as Record<string, unknown>) };
+    tokenUsage = addTokenUsage(tokenUsage, retry.tokenUsage);
+  }
+
+  // rebuild the answer in the order asked
+  const out: Record<string, unknown> = {};
+  const notes: string[] = [];
+  for (const [uri, entry] of Object.entries(data)) {
+    const target = redirects.get(uri);
+    if (target && isShown(found[target])) {
+      out[target] = found[target];
+      notes.push(`Event ${uri} was merged into ${target}; showing ${target}.`);
+    } else {
+      out[uri] = entry;
+    }
+  }
+  return { data: out, tokenUsage, notes: notes.length ? notes : undefined };
 }
 
 /** Strip each event's articles like a search result: { "<uri>": { articles: {...} } }. */
@@ -61,19 +148,6 @@ function filterEventArticles(
         : entry;
   }
   return out;
-}
-
-/** Add the sum of a call's tokens to a running total; the latest "remaining" wins. */
-function addTokenUsage(
-  total: TokenUsage | undefined,
-  next: TokenUsage | undefined,
-): TokenUsage | undefined {
-  if (!next) return total;
-  if (!total) return { ...next };
-  return {
-    reqTokens: total.reqTokens + next.reqTokens,
-    remaining: next.remaining,
-  };
 }
 
 /** The events API names the sentiment filters differently. */
@@ -298,18 +372,26 @@ COST: "info" costs 20 API tokens per call however many URIs it carries, so batch
       apiBody.articlesArticleBodyLen = params.articlesArticleBodyLen ?? 0;
     }
 
-    const { data, tokenUsage } = await apiPost("/event/getEvent", apiBody);
+    const { data, tokenUsage, notes } = await followMergedEvents(
+      apiBody,
+      await apiPost("/event/getEvent", apiBody),
+    );
 
     if (resultType === "info") {
       return {
         data: filterResponse(data, { resultType: "events", groups }),
         tokenUsage,
+        notes,
       };
     }
     if (resultType === "articles") {
-      return { data: filterEventArticles(data, groups, apiBody), tokenUsage };
+      return {
+        data: filterEventArticles(data, groups, apiBody),
+        tokenUsage,
+        notes,
+      };
     }
-    return { data, tokenUsage };
+    return { data, tokenUsage, notes };
   },
   formatter: formatEventDetails,
 };

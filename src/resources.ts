@@ -150,7 +150,7 @@ Max 5 concurrent requests allowed. Always make requests sequentially — wait fo
 - Verify URIs are correct via suggest
 
 ## Usage Tracking
-Each response footer shows: "Tokens used: N | Remaining: M". Use get_api_usage for full quota details.`;
+Each response footer shows: "Tokens used: N | Remaining: M", with Remaining only when the API reports it. Use get_api_usage for full quota details.`;
 
 // ============================================================================
 // Examples Resource (~400 words)

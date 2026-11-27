@@ -103,7 +103,7 @@ Examples: suggest({type: "concepts", prefix: "Tesla"}); suggest({type: "concepts
     // The group catalog has ~60 entries; the API default of 20 would cut an empty-prefix listing.
     if (type === "sourceGroups") Object.assign(body, { count: SOURCE_GROUP_COUNT });
     const { data, tokenUsage } = await apiPost(path, body);
-    return { data, tokenUsage: tokenUsage ?? { reqTokens: 0, remaining: 0 } };
+    return { data, tokenUsage: tokenUsage ?? { reqTokens: 0 } };
   },
   formatter: (data, params) => {
     const type = params.type as string;

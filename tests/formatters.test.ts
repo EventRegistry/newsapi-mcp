@@ -815,6 +815,38 @@ describe("formatEventDetails", () => {
     expect(result).toContain("A strong earthquake struck.");
   });
 
+  it("names the new URI of a merged event instead of printing raw JSON", () => {
+    const result = formatEventDetails(
+      { "evt-2": { newEventUri: "evt-9" } },
+      {},
+    );
+    expect(result).toBe(
+      "Event evt-2 was merged into evt-9; call get_event_details with evt-9.",
+    );
+  });
+
+  it("prints a merged event as one entry of a batch", () => {
+    const data = {
+      "evt-2": { newEventUri: "evt-9" },
+      "evt-1": {
+        info: {
+          title: { eng: "Kept Event" },
+          eventDate: "2024-06-15",
+          totalArticleCount: 3,
+          uri: "evt-1",
+        },
+      },
+    };
+
+    const result = formatEventDetails(data, {});
+
+    expect(result).toContain(
+      "1. Event evt-2 was merged into evt-9; call get_event_details with evt-9.",
+    );
+    expect(result).toContain("2. [2024-06-15] Kept Event (3 articles)");
+    expect(result).not.toContain("Untitled");
+  });
+
   it("returns empty message for empty/null data", () => {
     expect(formatEventDetails({}, {})).toBe("No event details found.");
     expect(formatEventDetails(null, {})).toBe("No event details found.");

@@ -300,7 +300,7 @@ describe("MCP server E2E", () => {
     expect(content.text).toContain("Remaining: 499999");
   });
 
-  it("shows zero-cost token footer for suggest even without headers", async () => {
+  it("shows zero-cost token footer for suggest without headers and no Remaining", async () => {
     mockFetchOk(
       [
         {
@@ -318,8 +318,21 @@ describe("MCP server E2E", () => {
     });
 
     const content = result.content[0] as { text: string };
-    expect(content.text).toContain("Tokens used: 0 |");
-    expect(content.text).toContain("Remaining: 0");
+    expect(content.text).toContain("Tokens used: 0");
+    expect(content.text).not.toContain("Remaining:");
+  });
+
+  it("omits Remaining from the footer when its header is missing", async () => {
+    mockFetchOk({ articles: { results: [] } }, { "req-tokens": "3" });
+
+    const result = await client.callTool({
+      name: "search",
+      arguments: { kind: "articles", keyword: "no-remaining" },
+    });
+
+    const content = result.content[0] as { text: string };
+    expect(content.text).toContain("Tokens used: 3");
+    expect(content.text).not.toContain("Remaining:");
   });
 
   it("omits token footer when headers are missing", async () => {
@@ -403,6 +416,43 @@ describe("MCP server E2E", () => {
     const lastCall = fetchSpy.mock.calls[fetchSpy.mock.calls.length - 1];
     const body = JSON.parse(lastCall[1].body);
     expect(body.eventUri).toEqual(["evt-1", "evt-2"]);
+  });
+
+  it("follows a merged event once and sums the tokens in the footer", async () => {
+    const answer = (data: unknown, remaining: string) => ({
+      ok: true,
+      json: () => Promise.resolve(data),
+      headers: {
+        get: (k: string) =>
+          ({ "req-tokens": "20", "x-ratelimit-remaining": remaining })[k] ??
+          null,
+      },
+    });
+    fetchSpy.mockClear();
+    fetchSpy
+      .mockResolvedValueOnce(answer({ "evt-2": { newEventUri: "evt-9" } }, "980"))
+      .mockResolvedValueOnce(
+        answer(
+          { "evt-9": { info: { uri: "evt-9", title: { eng: "Merged" } } } },
+          "960",
+        ),
+      );
+
+    const result = await client.callTool({
+      name: "get_event_details",
+      arguments: { eventUri: "evt-2" },
+    });
+
+    expect(fetchSpy).toHaveBeenCalledTimes(2);
+    expect(JSON.parse(fetchSpy.mock.calls[1][1].body).eventUri).toEqual([
+      "evt-9",
+    ]);
+    const text = (result.content[0] as { text: string }).text;
+    expect(text).toContain("Merged");
+    expect(text).toContain(
+      "Note: Event evt-2 was merged into evt-9; showing evt-9.",
+    );
+    expect(text).toContain("Tokens used: 40 | Remaining: 960");
   });
 
   it("advertises resources", async () => {

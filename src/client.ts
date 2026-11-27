@@ -87,9 +87,10 @@ function parseTokenUsage(headers: Headers): TokenUsage | undefined {
   const reqTokens = headers.get("req-tokens");
   const remaining = headers.get("x-ratelimit-remaining");
   if (reqTokens == null && remaining == null) return undefined;
+  const left = remaining == null ? NaN : parseFloat(remaining);
   return {
     reqTokens: reqTokens ? parseFloat(reqTokens) : 0,
-    remaining: remaining ? parseFloat(remaining) : 0,
+    remaining: Number.isNaN(left) ? undefined : left,
   };
 }
 
